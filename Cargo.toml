@@ -1,0 +1,15 @@
+[package]
+name = "thorium_ui"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["crates/*"]
+
+[workspace.dependencies]
+bevy = { version = "0.15.0-dev", features = ["ghost_nodes"] }
+thorium_ui_core = { path = "crates/thorium_ui_core" }
+
+[dependencies]
+bevy = { workspace = true }
+thorium_ui_core = { workspace = true }
