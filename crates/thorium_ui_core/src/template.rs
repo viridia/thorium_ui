@@ -1,16 +1,5 @@
 use bevy::prelude::*;
 
-// pub trait CreateChildren {
-//     fn create_children(&mut self, spawn_children: impl FnOnce(&mut UiBuilder)) -> &mut Self;
-// }
-
-// impl CreateChildren for EntityCommands<'_> {
-//     fn create_children(&mut self, spawn_children: impl FnOnce(&mut UiBuilder)) -> &mut Self {
-//         spawn_children(&mut UiBuilder(self.reborrow()));
-//         self
-//     }
-// }
-
 pub trait UiTemplate {
     fn build(&self, builder: &mut ChildBuilder);
 }
@@ -19,40 +8,12 @@ pub trait InvokeUiTemplate {
     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self;
 }
 
-// impl<'w> InvokeUiTemplate for UiBuilder<'w> {
-//     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
-//         template.build(self);
-//         self
-//     }
-// }
-
-// impl<'w> InvokeUiTemplate for EntityCommands<'w> {
-//     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
-//         template.build(&mut UiBuilder(self.reborrow()));
-//         self
-//     }
-// }
-
 impl<'w> InvokeUiTemplate for ChildBuilder<'w> {
     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
         template.build(self);
         self
     }
 }
-
-// impl<'w> InvokeUiTemplate for EntityCommands<'w> {
-//     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
-//         template.build(&mut UiBuilder(self.reborrow()));
-//         self
-//     }
-// }
-
-// impl<'w> InvokeUiTemplate for ChildBuilder<'w> {
-//     fn invoke<T: UiTemplate>(&mut self, _template: T) -> &mut Self {
-//         // template.build(&mut UiBuilder(self.reborrow()));
-//         self
-//     }
-// }
 
 // {
 //     /// Bevy World

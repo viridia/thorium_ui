@@ -24,22 +24,7 @@ pub(crate) trait AnyEffect {
     fn cleanup(&self, world: &mut DeferredWorld, entity: Entity);
 }
 
-pub struct EffectPlugin;
-
-impl Plugin for EffectPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Update, update_effects);
-        app.world_mut()
-            .register_component_hooks::<EffectCell>()
-            .on_remove(|mut world, entity, _cond| {
-                let cell = world.get_mut::<EffectCell>(entity).unwrap();
-                let comp = cell.0.clone();
-                comp.lock().unwrap().cleanup(&mut world, entity);
-            });
-    }
-}
-
-pub fn update_effects(world: &mut World) {
+pub(crate) fn update_effects(world: &mut World) {
     let mut query = world.query::<(Entity, &EffectCell)>();
     let effects = query
         .iter(world)

@@ -1,7 +1,7 @@
 //! Example which uses states and a switch view.
 
 use bevy::{color::palettes::css, prelude::*, ui};
-use thorium_ui::{EffectPlugin, Switch};
+use thorium_ui::{Switch, ThoriumUiPlugin};
 
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameState {
@@ -15,7 +15,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
-            EffectPlugin,
+            ThoriumUiPlugin,
         ))
         .insert_state(GameState::Intro)
         .add_systems(Startup, setup_view_root)

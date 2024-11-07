@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{EffectPlugin, ForEach};
+use thorium_ui::{ForEach, ThoriumUiPlugin};
 
 fn main() {
     App::new()
@@ -17,7 +17,7 @@ fn main() {
         .init_resource::<Random32>()
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
-            EffectPlugin,
+            ThoriumUiPlugin,
         ))
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (close_on_esc, rotate, update_list))

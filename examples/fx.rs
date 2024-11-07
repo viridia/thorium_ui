@@ -9,14 +9,14 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{EffectPlugin, EntitEffect};
+use thorium_ui::{EntitEffect, ThoriumUiPlugin};
 
 fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
-            EffectPlugin,
+            ThoriumUiPlugin,
         ))
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (close_on_esc, rotate, update_counter))
