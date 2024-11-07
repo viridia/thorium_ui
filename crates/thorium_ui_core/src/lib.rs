@@ -1,3 +1,4 @@
+mod callback;
 mod cond;
 mod effect_cell;
 mod entity_effect;
@@ -7,6 +8,7 @@ mod switch;
 mod template;
 
 use bevy::app::{App, Plugin, Update};
+pub use callback::CreateCallback;
 pub use cond::Cond;
 use effect_cell::{update_effects, EffectCell};
 pub use entity_effect::{EntitEffect, WithEffect};
