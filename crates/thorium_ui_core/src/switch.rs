@@ -1,10 +1,7 @@
 #![allow(clippy::type_complexity)]
 use bevy::{ecs::system::SystemId, prelude::*};
 
-use crate::{
-    effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand},
-    UiBuilder,
-};
+use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
 
 pub trait Switch {
     fn switch<
@@ -30,39 +27,8 @@ impl<'w> Switch for ChildBuilder<'w> {
         value_fn: ValueFn,
         cases_fn: CF,
     ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>> = None;
-
-        let mut case_builder = CaseBuilder {
-            cases: &mut cases,
-            fallback: &mut fallback,
-        };
-        cases_fn(&mut case_builder);
-        self.spawn(EffectCell::new(SwitchEffect {
-            cases,
-            fallback,
-            value_fn: Some(value_fn),
-            value_sys: None,
-            switch_index: usize::MAX - 1, // Means no case selected yet.
-            marker: std::marker::PhantomData,
-        }));
-        self
-    }
-}
-
-impl<'w> Switch for UiBuilder<'w> {
-    fn switch<
-        M: Send + Sync + 'static,
-        P: PartialEq + Send + Sync + 'static,
-        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
-        CF: Fn(&mut CaseBuilder<P>),
-    >(
-        &mut self,
-        value_fn: ValueFn,
-        cases_fn: CF,
-    ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>> = None;
+        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)> = Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>> = None;
 
         let mut case_builder = CaseBuilder {
             cases: &mut cases,
@@ -92,8 +58,8 @@ impl<'w> Switch for WorldChildBuilder<'w> {
         value_fn: ValueFn,
         cases_fn: CF,
     ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>> = None;
+        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)> = Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>> = None;
 
         let mut case_builder = CaseBuilder {
             cases: &mut cases,
@@ -113,12 +79,12 @@ impl<'w> Switch for WorldChildBuilder<'w> {
 }
 
 pub struct CaseBuilder<'a, Value: Send + Sync> {
-    cases: &'a mut Vec<(Value, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)>,
-    fallback: &'a mut Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>>,
+    cases: &'a mut Vec<(Value, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)>,
+    fallback: &'a mut Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
 }
 
 impl<'a, Value: Send + Sync> CaseBuilder<'a, Value> {
-    pub fn case<CF: Send + Sync + 'static + Fn(&mut UiBuilder)>(
+    pub fn case<CF: Send + Sync + 'static + Fn(&mut ChildBuilder)>(
         &mut self,
         value: Value,
         case_fn: CF,
@@ -127,7 +93,7 @@ impl<'a, Value: Send + Sync> CaseBuilder<'a, Value> {
         self
     }
 
-    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut UiBuilder)>(
+    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut ChildBuilder)>(
         &mut self,
         fallback_fn: FF,
     ) -> &mut Self {
@@ -141,8 +107,8 @@ struct SwitchEffect<P, M, ValueFn: IntoSystem<(), P, M>> {
     switch_index: usize,
     value_fn: Option<ValueFn>,
     value_sys: Option<SystemId<(), P>>,
-    cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)>,
-    fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>>,
+    cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)>,
+    fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
     marker: std::marker::PhantomData<M>,
 }
 
@@ -154,7 +120,7 @@ impl<
 {
     /// Adds a new switch case.
     #[allow(dead_code)]
-    pub fn case<F: Fn(&mut UiBuilder) + Send + Sync + 'static>(
+    pub fn case<F: Fn(&mut ChildBuilder) + Send + Sync + 'static>(
         mut self,
         value: P,
         case: F,
@@ -165,7 +131,10 @@ impl<
 
     /// Sets the fallback case.
     #[allow(dead_code)]
-    pub fn fallback<F: Fn(&mut UiBuilder) + Send + Sync + 'static>(mut self, fallback: F) -> Self {
+    pub fn fallback<F: Fn(&mut ChildBuilder) + Send + Sync + 'static>(
+        mut self,
+        fallback: F,
+    ) -> Self {
         self.fallback = Some(Box::new(fallback));
         self
     }
@@ -201,9 +170,13 @@ impl<P: PartialEq + 'static, M, ValueFn: IntoSystem<(), P, M> + 'static> AnyEffe
                     let mut entt = commands.entity(entity);
                     entt.despawn_descendants();
                     if index < self.cases.len() {
-                        (self.cases[index].1)(&mut UiBuilder(world.commands().entity(entity)));
+                        entt.with_children(|builder| {
+                            (self.cases[index].1)(builder);
+                        });
                     } else if let Some(fallback) = self.fallback.as_mut() {
-                        (fallback)(&mut UiBuilder(world.commands().entity(entity)));
+                        entt.with_children(|builder| {
+                            (fallback)(builder);
+                        });
                     };
                 }
             }

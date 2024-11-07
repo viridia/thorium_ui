@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, CreateChildren, EffectPlugin, InvokeUiTemplate, UiTemplate};
+use thorium_ui::{Cond, EffectPlugin, InvokeUiTemplate, UiTemplate};
 
 fn main() {
     App::new()
@@ -45,29 +45,8 @@ fn setup_view_root(mut commands: Commands) {
             },
             BorderColor(css::ALICE_BLUE.into()),
         ))
-        .create_children(|builder| {
-            builder.invoke(Goodbye);
-            builder.cond(
-                |counter: Res<Counter>| counter.count & 1 == 0,
-                |builder| {
-                    builder.spawn(Text::new("hungry"));
-                },
-                |builder| {
-                    builder
-                        .spawn((
-                            Node {
-                                border: ui::UiRect::all(ui::Val::Px(7.)),
-                                ..default()
-                            },
-                            BorderColor(css::MAROON.into()),
-                        ))
-                        .with_children(|builder| {
-                            builder.spawn(Text::new("extra "));
-                        });
-                    builder.spawn(Text::new("thirsty"));
-                },
-            );
-            builder.spawn(Text::new(" world!"));
+        .with_children(|builder| {
+            builder.invoke(Hello).invoke(Conditional).invoke(Subject);
             builder.spawn((
                 Node {
                     border: ui::UiRect::all(ui::Val::Px(3.)),
@@ -78,11 +57,47 @@ fn setup_view_root(mut commands: Commands) {
         });
 }
 
-struct Goodbye;
+struct Hello;
 
-impl UiTemplate for Goodbye {
-    fn build(&self, builder: &mut thorium_ui::UiBuilder) {
-        builder.spawn(Text::new("Goodbye, "));
+impl UiTemplate for Hello {
+    fn build(&self, builder: &mut ChildBuilder) {
+        let mut item = builder.spawn_empty();
+        item.insert(Text::new("Hello, "));
+    }
+}
+
+struct Conditional;
+
+impl UiTemplate for Conditional {
+    fn build(&self, builder: &mut ChildBuilder) {
+        builder.cond(
+            |counter: Res<Counter>| counter.count & 1 == 0,
+            |builder| {
+                builder.spawn(Text::new("hungry "));
+            },
+            |builder| {
+                builder
+                    .spawn((
+                        Node {
+                            border: ui::UiRect::all(ui::Val::Px(7.)),
+                            ..default()
+                        },
+                        BorderColor(css::MAROON.into()),
+                    ))
+                    .with_children(|builder| {
+                        builder.spawn(Text::new("extra "));
+                    });
+                builder.spawn(Text::new("thirsty "));
+            },
+        );
+    }
+}
+
+struct Subject;
+
+impl UiTemplate for Subject {
+    fn build(&self, builder: &mut ChildBuilder) {
+        builder.spawn(Text::new("World!"));
     }
 }
 

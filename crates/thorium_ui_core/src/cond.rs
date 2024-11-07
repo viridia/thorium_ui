@@ -3,20 +3,14 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{
-    effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand},
-    UiBuilder,
-};
+use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
 
 pub trait Cond {
-    /// Create a conditional entity, which will spawn one of two sets of children based on the
-    /// result of the test function. This function will be called every frame, and the children
-    /// will be updated accordingly.
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         test: TestFn,
@@ -29,33 +23,8 @@ impl Cond for ChildBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
-    >(
-        &mut self,
-        test_fn: TestFn,
-        pos: Pos,
-        neg: Neg,
-    ) -> &mut Self {
-        // let test_sys = self.commands().register_system(test);
-        self.spawn(EffectCell::new(CondEffect {
-            state: false,
-            test_fn: Some(test_fn),
-            test_sys: None,
-            pos,
-            neg,
-            marker: std::marker::PhantomData::<M>,
-        }));
-        self
-    }
-}
-
-impl Cond for UiBuilder<'_> {
-    fn cond<
-        M: Send + Sync + 'static,
-        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         test_fn: TestFn,
@@ -79,8 +48,8 @@ impl Cond for WorldChildBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         test_fn: TestFn,
@@ -104,8 +73,8 @@ impl Cond for WorldChildBuilder<'_> {
 struct CondEffect<
     M,
     TestFn: IntoSystem<(), bool, M> + 'static,
-    Pos: Fn(&mut UiBuilder),
-    Neg: Fn(&mut UiBuilder),
+    Pos: Fn(&mut ChildBuilder),
+    Neg: Fn(&mut ChildBuilder),
 > {
     state: bool,
     test_fn: Option<TestFn>,
@@ -115,8 +84,12 @@ struct CondEffect<
     marker: std::marker::PhantomData<M>,
 }
 
-impl<M, TestFn: IntoSystem<(), bool, M>, Pos: Fn(&mut UiBuilder), Neg: Fn(&mut UiBuilder)> AnyEffect
-    for CondEffect<M, TestFn, Pos, Neg>
+impl<
+        M,
+        TestFn: IntoSystem<(), bool, M>,
+        Pos: Fn(&mut ChildBuilder),
+        Neg: Fn(&mut ChildBuilder),
+    > AnyEffect for CondEffect<M, TestFn, Pos, Neg>
 {
     fn update(&mut self, world: &mut World, entity: Entity) {
         let mut first = false;
@@ -137,9 +110,13 @@ impl<M, TestFn: IntoSystem<(), bool, M>, Pos: Fn(&mut UiBuilder), Neg: Fn(&mut U
                 let mut entt = world.entity_mut(entity);
                 entt.despawn_descendants();
                 if test {
-                    (self.pos)(&mut UiBuilder(world.commands().entity(entity)));
+                    world.commands().entity(entity).with_children(|builder| {
+                        (self.pos)(builder);
+                    });
                 } else {
-                    (self.neg)(&mut UiBuilder(world.commands().entity(entity)));
+                    world.commands().entity(entity).with_children(|builder| {
+                        (self.neg)(builder);
+                    });
                 }
                 self.state = test;
             }

@@ -8,7 +8,6 @@ use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 use crate::{
     effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand},
     lcs::lcs,
-    UiBuilder,
 };
 
 pub trait ForEach {
@@ -17,8 +16,8 @@ pub trait ForEach {
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemIter: 'static + Iterator<Item = Item>,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -32,8 +31,8 @@ pub trait ForEach {
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemIter: 'static + Iterator<Item = Item>,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -49,8 +48,8 @@ impl ForEach for ChildBuilder<'_> {
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemIter: 'static + Iterator<Item = Item>,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -75,62 +74,8 @@ impl ForEach for ChildBuilder<'_> {
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemIter: 'static + Iterator<Item = Item>,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
-    >(
-        &mut self,
-        items_fn: ItemFn,
-        cmp: CmpFn,
-        each: EachFn,
-        fallback: FallbackFn,
-    ) -> &mut Self {
-        self.spawn(EffectCell(Arc::new(Mutex::new(ForEachEffect {
-            items_fn: Some(items_fn),
-            item_sys: None,
-            cmp,
-            each,
-            fallback,
-            state: Vec::new(),
-            marker: std::marker::PhantomData,
-        }))));
-        self
-    }
-}
-
-impl ForEach for UiBuilder<'_> {
-    fn for_each<
-        M: Send + Sync + 'static,
-        Item: Send + Sync + 'static + Clone + PartialEq,
-        ItemIter: 'static + Iterator<Item = Item>,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
-    >(
-        &mut self,
-        items_fn: ItemFn,
-        each: EachFn,
-        fallback: FallbackFn,
-    ) -> &mut Self {
-        self.spawn(EffectCell(Arc::new(Mutex::new(ForEachEffect {
-            items_fn: Some(items_fn),
-            item_sys: None,
-            cmp: PartialEq::eq,
-            each,
-            fallback,
-            state: Vec::new(),
-            marker: std::marker::PhantomData,
-        }))));
-        self
-    }
-
-    fn for_each_cmp<
-        M: Send + Sync + 'static,
-        Item: Send + Sync + 'static + Clone,
-        CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        ItemIter: 'static + Iterator<Item = Item>,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -164,8 +109,8 @@ struct ForEachEffect<
     CmpFn: Fn(&Item, &Item) -> bool,
     ItemIter: Iterator<Item = Item>,
     ItemFn: IntoSystem<(), ItemIter, M>,
-    EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-    FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
+    EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+    FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
 > where
     Self: Send + Sync,
 {
@@ -184,8 +129,8 @@ impl<
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         ItemIter: Iterator<Item = Item>,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     > ForEachEffect<M, Item, CmpFn, ItemIter, ItemFn, EachFn, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
@@ -226,10 +171,9 @@ impl<
             // Build new elements
             for i in next_range {
                 let child_id = world.spawn(GhostNode::default()).id();
-                (self.each)(
-                    &next_items[i],
-                    &mut UiBuilder(world.commands().entity(child_id)),
-                );
+                world.commands().entity(child_id).with_children(|builder| {
+                    (self.each)(&next_items[i], builder);
+                });
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -266,10 +210,9 @@ impl<
             // Insertions
             for i in next_range.start..next_start {
                 let child_id = world.spawn(GhostNode::default()).id();
-                (self.each)(
-                    &next_items[i],
-                    &mut UiBuilder(world.commands().entity(child_id)),
-                );
+                world.commands().entity(child_id).with_children(|builder| {
+                    (self.each)(&next_items[i], builder);
+                });
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -309,10 +252,9 @@ impl<
             // Insertions
             for i in next_end..next_range.end {
                 let child_id = world.spawn(GhostNode::default()).id();
-                (self.each)(
-                    &next_items[i],
-                    &mut UiBuilder(world.commands().entity(child_id)),
-                );
+                world.commands().entity(child_id).with_children(|builder| {
+                    (self.each)(&next_items[i], builder);
+                });
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -328,8 +270,8 @@ impl<
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         ItemIter: Iterator<Item = Item> + 'static,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut UiBuilder),
-        FallbackFn: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     > AnyEffect for ForEachEffect<M, Item, CmpFn, ItemIter, ItemFn, EachFn, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {
@@ -367,7 +309,9 @@ impl<
             if prev_len > 0 || first {
                 // Transitioning from non-empty to empty, generate fallback.
                 world.entity_mut(parent).despawn_descendants();
-                (self.fallback)(&mut UiBuilder(world.commands().entity(parent)));
+                world.commands().entity(parent).with_children(|builder| {
+                    (self.fallback)(builder);
+                });
             }
         } else {
             if prev_len == 0 {
