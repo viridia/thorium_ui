@@ -8,6 +8,7 @@ use bevy::{
 
 /// Component which holds a type-erased entity effect. An effect represents some dynamic mutation
 /// of the entity's state.
+/// Note: If Bevy had trait queries, we wouldn't the Arc/Mutex.
 #[derive(Component)]
 #[require(GhostNode)]
 pub struct EffectCell(pub(crate) Arc<Mutex<dyn AnyEffect + 'static + Sync + Send>>);
