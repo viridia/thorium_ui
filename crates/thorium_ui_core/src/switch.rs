@@ -47,6 +47,37 @@ impl<'w> Switch for ChildBuilder<'w> {
     }
 }
 
+impl<'w> Switch for WorldChildBuilder<'w> {
+    fn switch<
+        M: Send + Sync + 'static,
+        P: PartialEq + Send + Sync + 'static,
+        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+        CF: Fn(&mut CaseBuilder<P>),
+    >(
+        &mut self,
+        value_fn: ValueFn,
+        cases_fn: CF,
+    ) -> &mut Self {
+        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)> = Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>> = None;
+
+        let mut case_builder = CaseBuilder {
+            cases: &mut cases,
+            fallback: &mut fallback,
+        };
+        cases_fn(&mut case_builder);
+        self.spawn(EffectCell::new(SwitchEffect {
+            cases,
+            fallback,
+            value_fn: Some(value_fn),
+            value_sys: None,
+            switch_index: usize::MAX - 1, // Means no case selected yet.
+            marker: std::marker::PhantomData,
+        }));
+        self
+    }
+}
+
 pub struct CaseBuilder<'a, Value: Send + Sync> {
     cases: &'a mut Vec<(Value, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)>,
     fallback: &'a mut Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
