@@ -40,7 +40,7 @@ impl<'w> InvokeUiTemplate for EntityCommands<'w> {
 //     }
 // }
 
-pub struct UiBuilder<'w>(EntityCommands<'w>);
+pub struct UiBuilder<'w>(pub(crate) EntityCommands<'w>);
 
 // {
 //     /// Bevy World

@@ -9,11 +9,14 @@ use crate::{
 };
 
 pub trait Cond {
+    /// Create a conditional entity, which will spawn one of two sets of children based on the
+    /// result of the test function. This function will be called every frame, and the children
+    /// will be updated accordingly.
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         test: TestFn,
@@ -26,8 +29,8 @@ impl Cond for ChildBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         test_fn: TestFn,
@@ -51,8 +54,8 @@ impl Cond for UiBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         test_fn: TestFn,
@@ -76,8 +79,8 @@ impl Cond for WorldChildBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut UiBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut UiBuilder) + Send + Sync + 'static,
     >(
         &mut self,
         test_fn: TestFn,
@@ -101,8 +104,8 @@ impl Cond for WorldChildBuilder<'_> {
 struct CondEffect<
     M,
     TestFn: IntoSystem<(), bool, M> + 'static,
-    Pos: Fn(&mut ChildBuilder),
-    Neg: Fn(&mut ChildBuilder),
+    Pos: Fn(&mut UiBuilder),
+    Neg: Fn(&mut UiBuilder),
 > {
     state: bool,
     test_fn: Option<TestFn>,
@@ -112,12 +115,8 @@ struct CondEffect<
     marker: std::marker::PhantomData<M>,
 }
 
-impl<
-        M,
-        TestFn: IntoSystem<(), bool, M>,
-        Pos: Fn(&mut ChildBuilder),
-        Neg: Fn(&mut ChildBuilder),
-    > AnyEffect for CondEffect<M, TestFn, Pos, Neg>
+impl<M, TestFn: IntoSystem<(), bool, M>, Pos: Fn(&mut UiBuilder), Neg: Fn(&mut UiBuilder)> AnyEffect
+    for CondEffect<M, TestFn, Pos, Neg>
 {
     fn update(&mut self, world: &mut World, entity: Entity) {
         let mut first = false;
@@ -138,13 +137,9 @@ impl<
                 let mut entt = world.entity_mut(entity);
                 entt.despawn_descendants();
                 if test {
-                    world.commands().entity(entity).with_children(|builder| {
-                        (self.pos)(builder);
-                    });
+                    (self.pos)(&mut UiBuilder(world.commands().entity(entity)));
                 } else {
-                    world.commands().entity(entity).with_children(|builder| {
-                        (self.neg)(builder);
-                    });
+                    (self.neg)(&mut UiBuilder(world.commands().entity(entity)));
                 }
                 self.state = test;
             }

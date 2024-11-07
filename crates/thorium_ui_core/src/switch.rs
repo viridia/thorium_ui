@@ -30,8 +30,8 @@ impl<'w> Switch for ChildBuilder<'w> {
         value_fn: ValueFn,
         cases_fn: CF,
     ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>> = None;
+        let mut cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)> = Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>> = None;
 
         let mut case_builder = CaseBuilder {
             cases: &mut cases,
@@ -61,8 +61,8 @@ impl<'w> Switch for UiBuilder<'w> {
         value_fn: ValueFn,
         cases_fn: CF,
     ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>> = None;
+        let mut cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)> = Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>> = None;
 
         let mut case_builder = CaseBuilder {
             cases: &mut cases,
@@ -92,8 +92,8 @@ impl<'w> Switch for WorldChildBuilder<'w> {
         value_fn: ValueFn,
         cases_fn: CF,
     ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>> = None;
+        let mut cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)> = Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>> = None;
 
         let mut case_builder = CaseBuilder {
             cases: &mut cases,
@@ -113,12 +113,12 @@ impl<'w> Switch for WorldChildBuilder<'w> {
 }
 
 pub struct CaseBuilder<'a, Value: Send + Sync> {
-    cases: &'a mut Vec<(Value, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)>,
-    fallback: &'a mut Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
+    cases: &'a mut Vec<(Value, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)>,
+    fallback: &'a mut Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>>,
 }
 
 impl<'a, Value: Send + Sync> CaseBuilder<'a, Value> {
-    pub fn case<CF: Send + Sync + 'static + Fn(&mut ChildBuilder)>(
+    pub fn case<CF: Send + Sync + 'static + Fn(&mut UiBuilder)>(
         &mut self,
         value: Value,
         case_fn: CF,
@@ -127,7 +127,7 @@ impl<'a, Value: Send + Sync> CaseBuilder<'a, Value> {
         self
     }
 
-    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut ChildBuilder)>(
+    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut UiBuilder)>(
         &mut self,
         fallback_fn: FF,
     ) -> &mut Self {
@@ -141,8 +141,8 @@ struct SwitchEffect<P, M, ValueFn: IntoSystem<(), P, M>> {
     switch_index: usize,
     value_fn: Option<ValueFn>,
     value_sys: Option<SystemId<(), P>>,
-    cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)>,
-    fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
+    cases: Vec<(P, Box<dyn Fn(&mut UiBuilder) + Send + Sync>)>,
+    fallback: Option<Box<dyn Fn(&mut UiBuilder) + Send + Sync>>,
     marker: std::marker::PhantomData<M>,
 }
 
@@ -154,7 +154,7 @@ impl<
 {
     /// Adds a new switch case.
     #[allow(dead_code)]
-    pub fn case<F: Fn(&mut ChildBuilder) + Send + Sync + 'static>(
+    pub fn case<F: Fn(&mut UiBuilder) + Send + Sync + 'static>(
         mut self,
         value: P,
         case: F,
@@ -165,10 +165,7 @@ impl<
 
     /// Sets the fallback case.
     #[allow(dead_code)]
-    pub fn fallback<F: Fn(&mut ChildBuilder) + Send + Sync + 'static>(
-        mut self,
-        fallback: F,
-    ) -> Self {
+    pub fn fallback<F: Fn(&mut UiBuilder) + Send + Sync + 'static>(mut self, fallback: F) -> Self {
         self.fallback = Some(Box::new(fallback));
         self
     }
@@ -204,13 +201,9 @@ impl<P: PartialEq + 'static, M, ValueFn: IntoSystem<(), P, M> + 'static> AnyEffe
                     let mut entt = commands.entity(entity);
                     entt.despawn_descendants();
                     if index < self.cases.len() {
-                        entt.with_children(|builder| {
-                            (self.cases[index].1)(builder);
-                        });
+                        (self.cases[index].1)(&mut UiBuilder(world.commands().entity(entity)));
                     } else if let Some(fallback) = self.fallback.as_mut() {
-                        entt.with_children(|builder| {
-                            (fallback)(builder);
-                        });
+                        (fallback)(&mut UiBuilder(world.commands().entity(entity)));
                     };
                 }
             }
