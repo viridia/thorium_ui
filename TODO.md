@@ -3,7 +3,6 @@
 - Mutable
 - Derived
 - Callback
+- Signal
 - Button demo
-- Hover
 - Focus
-- headless

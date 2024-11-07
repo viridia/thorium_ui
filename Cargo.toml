@@ -9,7 +9,9 @@ members = ["crates/*"]
 [workspace.dependencies]
 bevy = { version = "0.15.0-dev", features = ["ghost_nodes"] }
 thorium_ui_core = { path = "crates/thorium_ui_core" }
+thorium_ui_headless = { path = "crates/thorium_ui_headless" }
 
 [dependencies]
 bevy = { workspace = true }
 thorium_ui_core = { workspace = true }
+thorium_ui_headless = { workspace = true }

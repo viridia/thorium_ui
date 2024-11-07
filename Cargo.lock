@@ -3933,6 +3933,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "thorium_ui_core",
+ "thorium_ui_headless",
 ]
 
 [[package]]
@@ -3945,6 +3946,10 @@ dependencies = [
 [[package]]
 name = "thorium_ui_headless"
 version = "0.1.0"
+dependencies = [
+ "bevy",
+ "thorium_ui_core",
+]
 
 [[package]]
 name = "thread_local"

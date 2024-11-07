@@ -1,14 +1,10 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use bevy::app::{App, Plugin, Update};
+pub mod hover;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub struct ThoriumUiHeadlessPlugin;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+impl Plugin for ThoriumUiHeadlessPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, hover::update_hover_states);
     }
 }
