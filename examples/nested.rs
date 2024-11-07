@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, EffectPlugin, InvokeUiTemplate, UiTemplate};
+use thorium_ui::{Cond, CreateChildren, EffectPlugin, InvokeUiTemplate, UiTemplate};
 
 fn main() {
     App::new()
@@ -45,7 +45,7 @@ fn setup_view_root(mut commands: Commands) {
             },
             BorderColor(css::ALICE_BLUE.into()),
         ))
-        .with_children(|builder| {
+        .create_children(|builder| {
             builder.invoke(Goodbye);
             builder.cond(
                 |counter: Res<Counter>| counter.count & 1 == 0,

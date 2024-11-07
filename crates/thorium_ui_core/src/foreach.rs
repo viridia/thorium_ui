@@ -8,6 +8,7 @@ use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 use crate::{
     effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand},
     lcs::lcs,
+    UiBuilder,
 };
 
 pub trait ForEach {
@@ -43,6 +44,60 @@ pub trait ForEach {
 }
 
 impl ForEach for ChildBuilder<'_> {
+    fn for_each<
+        M: Send + Sync + 'static,
+        Item: Send + Sync + 'static + Clone + PartialEq,
+        ItemIter: 'static + Iterator<Item = Item>,
+        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+    >(
+        &mut self,
+        items_fn: ItemFn,
+        each: EachFn,
+        fallback: FallbackFn,
+    ) -> &mut Self {
+        self.spawn(EffectCell(Arc::new(Mutex::new(ForEachEffect {
+            items_fn: Some(items_fn),
+            item_sys: None,
+            cmp: PartialEq::eq,
+            each,
+            fallback,
+            state: Vec::new(),
+            marker: std::marker::PhantomData,
+        }))));
+        self
+    }
+
+    fn for_each_cmp<
+        M: Send + Sync + 'static,
+        Item: Send + Sync + 'static + Clone,
+        CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
+        ItemIter: 'static + Iterator<Item = Item>,
+        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
+        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+    >(
+        &mut self,
+        items_fn: ItemFn,
+        cmp: CmpFn,
+        each: EachFn,
+        fallback: FallbackFn,
+    ) -> &mut Self {
+        self.spawn(EffectCell(Arc::new(Mutex::new(ForEachEffect {
+            items_fn: Some(items_fn),
+            item_sys: None,
+            cmp,
+            each,
+            fallback,
+            state: Vec::new(),
+            marker: std::marker::PhantomData,
+        }))));
+        self
+    }
+}
+
+impl ForEach for UiBuilder<'_> {
     fn for_each<
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,

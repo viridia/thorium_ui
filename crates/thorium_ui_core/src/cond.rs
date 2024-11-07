@@ -3,7 +3,10 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::{
+    effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand},
+    UiBuilder,
+};
 
 pub trait Cond {
     fn cond<
@@ -20,6 +23,31 @@ pub trait Cond {
 }
 
 impl Cond for ChildBuilder<'_> {
+    fn cond<
+        M: Send + Sync + 'static,
+        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
+        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+    >(
+        &mut self,
+        test_fn: TestFn,
+        pos: Pos,
+        neg: Neg,
+    ) -> &mut Self {
+        // let test_sys = self.commands().register_system(test);
+        self.spawn(EffectCell::new(CondEffect {
+            state: false,
+            test_fn: Some(test_fn),
+            test_sys: None,
+            pos,
+            neg,
+            marker: std::marker::PhantomData::<M>,
+        }));
+        self
+    }
+}
+
+impl Cond for UiBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,

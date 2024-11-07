@@ -11,4 +11,4 @@ pub use effect_cell::EffectPlugin;
 pub use entity_effect::{EntitEffect, WithEffect};
 pub use foreach::ForEach;
 pub use switch::Switch;
-pub use template::{InvokeUiTemplate, UiBuilder, UiTemplate};
+pub use template::{CreateChildren, InvokeUiTemplate, UiBuilder, UiTemplate};
