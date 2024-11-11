@@ -180,7 +180,3 @@ branch entities are children of that condition node. When the condition changes,
 clears the children of the conditional node. Only the children of the condition node are affected,
 other siblings of the condition node are not touched. Without ghost nodes, we would have to track
 exactly which child nodes were created by the branch, so that we could erase them later.
-
-```
-
-```
