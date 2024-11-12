@@ -97,26 +97,23 @@ fn compute_inherited_style(
     let mut styles = ComputedFontStyles::default();
     let mut ancestor = entity;
     loop {
+        if styles.font.is_none() {
+            if let Ok(font) = inherited_font.get(ancestor) {
+                styles.font = Some(font.0.clone());
+            }
+        }
+        if styles.color.is_none() {
+            if let Ok(color) = inherited_color.get(ancestor) {
+                styles.color = Some(color.0);
+            }
+        }
+        if styles.font_size.is_none() {
+            if let Ok(size) = inherited_size.get(ancestor) {
+                styles.font_size = Some(size.0);
+            }
+        }
         if styles.is_final() {
             break;
-        }
-        if let Ok(font) = inherited_font.get(ancestor) {
-            styles.font = Some(font.0.clone());
-            if styles.is_final() {
-                break;
-            }
-        }
-        if let Ok(color) = inherited_color.get(ancestor) {
-            styles.color = Some(color.0);
-            if styles.is_final() {
-                break;
-            }
-        }
-        if let Ok(size) = inherited_size.get(ancestor) {
-            styles.font_size = Some(size.0);
-            if styles.is_final() {
-                break;
-            }
         }
         if let Ok(parent) = parents.get(ancestor) {
             ancestor = parent.get();

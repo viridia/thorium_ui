@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     colors, rounded_corners::RoundedCorners, size::Size, text_styles::UseInheritedTextStyles,
-    typography, InheritableFontSize,
+    typography, InheritableFontColor, InheritableFontSize,
 };
 use bevy::{
     a11y::{
@@ -52,7 +52,7 @@ pub(crate) fn style_button(ent: &mut EntityCommands) {
         node.border = ui::UiRect::all(ui::Val::Px(0.0));
     });
     ent.insert(CursorIcon::System(SystemCursorIcon::Pointer));
-    // .color(colors::FOREGROUND)
+    ent.insert(InheritableFontColor(colors::FOREGROUND.into()));
 }
 
 pub(crate) fn style_button_bg(ent: &mut EntityCommands) {

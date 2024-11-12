@@ -11,7 +11,7 @@ use thorium_ui::{
 };
 use thorium_ui_controls::{
     colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant,
-    ThoriumUiControlsPlugin, UseInheritedTextStyles,
+    InheritableFontColor, ThoriumUiControlsPlugin, UseInheritedTextStyles,
 };
 
 fn style_test(ent: &mut EntityCommands) {
@@ -27,6 +27,7 @@ fn style_test(ent: &mut EntityCommands) {
         node.row_gap = ui::Val::Px(4.);
     });
     ent.insert(BackgroundColor(colors::U1.into()));
+    ent.insert(InheritableFontColor(colors::DIM.into()));
 }
 
 fn style_row(ent: &mut EntityCommands) {
@@ -64,7 +65,7 @@ fn setup_view_root(mut commands: Commands) {
         .observe(handle_tab_navigation)
         .style(style_test)
         .with_children(|builder| {
-            builder.spawn(Text::new("Variants"));
+            builder.spawn((Text::new("Variants"), UseInheritedTextStyles));
             builder
                 .spawn(Node::default())
                 .style(style_row)
@@ -90,7 +91,7 @@ fn setup_view_root(mut commands: Commands) {
                         )
                         .invoke(Button::new().minimal(true).labeled("Minimal"));
                 });
-            builder.spawn(Text::new("Variants (disabled)"));
+            builder.spawn((Text::new("Variants (disabled)"), UseInheritedTextStyles));
             builder
                 .spawn(Node::default())
                 .style(style_row)
@@ -122,7 +123,7 @@ fn setup_view_root(mut commands: Commands) {
                                 .disabled(true),
                         );
                 });
-            builder.spawn(Text::new("Size"));
+            builder.spawn((Text::new("Size"), UseInheritedTextStyles));
             builder
                 .spawn(Node::default())
                 .style(style_row)
@@ -136,7 +137,7 @@ fn setup_view_root(mut commands: Commands) {
                         .invoke(Button::new().labeled("Size: Xxs").size(Size::Xxs))
                         .invoke(Button::new().labeled("Size: Xxxs").size(Size::Xxxs));
                 });
-            builder.spawn(Text::new("Corners"));
+            builder.spawn((Text::new("Corners"), UseInheritedTextStyles));
             builder
                 .spawn(Node::default())
                 .style(style_row)
