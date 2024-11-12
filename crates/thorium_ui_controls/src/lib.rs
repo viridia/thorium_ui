@@ -1,4 +1,7 @@
-use bevy::app::{Plugin, PostUpdate};
+use bevy::{
+    app::{Plugin, PostUpdate},
+    asset::embedded_asset,
+};
 
 pub mod colors;
 pub mod rounded_corners;
@@ -19,6 +22,13 @@ pub struct ThoriumUiControlsPlugin;
 
 impl Plugin for ThoriumUiControlsPlugin {
     fn build(&self, app: &mut bevy::app::App) {
+        embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-Bold.ttf");
+        embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-BoldItalic.ttf");
+        embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-Medium.ttf");
+        embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-MediumItalic.ttf");
+        embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-Regular.ttf");
+        embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-Italic.ttf");
+
         app
         .add_plugins(ThoriumUiHeadlessPlugin)
             // .add_observer(toggle_state::toggle_on_key_input)

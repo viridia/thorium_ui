@@ -1,6 +1,7 @@
 use bevy::app::{App, Plugin, Update};
 mod disabled;
 pub mod focus;
+pub mod handle;
 pub mod hover;
 pub mod tab_navigation;
 

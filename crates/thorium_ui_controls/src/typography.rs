@@ -1,6 +1,6 @@
 use bevy::prelude::EntityCommands;
 
-use crate::InheritableFontSize;
+use crate::{InheritableFont, InheritableFontSize};
 
 pub const FONT_SIZE: f32 = 14.0;
 pub const DEFAULT_FONT: &str =
@@ -10,14 +10,12 @@ pub const STRONG_FONT: &str =
 
 /// Default text style for UI.
 pub fn text_default(ent: &mut EntityCommands) {
-    // ent.insert(InheritableFont(DEFAULT_FONT));
-    // ss.font(DEFAULT_FONT).font_size(14);
-    ent.insert(InheritableFontSize(FONT_SIZE));
+    ent.insert(InheritableFontSize(FONT_SIZE))
+        .insert(InheritableFont::from_path(DEFAULT_FONT));
 }
 
 /// When we need to emphasize a label
 pub fn text_strong(ent: &mut EntityCommands) {
-    // ent.insert(InheritableFont(STRONG_FONT));
-    // ss.font(STRONG_FONT).font_size(14);
-    ent.insert(InheritableFontSize(FONT_SIZE));
+    ent.insert(InheritableFontSize(FONT_SIZE))
+        .insert(InheritableFont::from_path(STRONG_FONT));
 }
