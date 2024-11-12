@@ -4,7 +4,7 @@ mod effect_cell;
 mod entity_effect;
 mod foreach;
 mod lcs;
-// mod memo;
+mod memo;
 mod switch;
 mod template;
 
@@ -14,6 +14,7 @@ pub use cond::Cond;
 use effect_cell::update_effects;
 pub use entity_effect::{EntitEffect, WithEffect};
 pub use foreach::ForEach;
+pub use memo::{CreateMemo, Memo, ReadMemo};
 pub use switch::Switch;
 pub use template::{InvokeUiTemplate, UiTemplate};
 
