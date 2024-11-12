@@ -3,6 +3,7 @@ use bevy::{
     picking::{focus::HoverMap, pointer::PointerId},
     prelude::*,
 };
+// use thorium_ui_core::Signal;
 
 /// Component which indicates that the entity is interested in knowing when the mouse is hovering
 /// over it or any of its children.
@@ -52,10 +53,10 @@ impl IsHovering for DeferredWorld<'_> {
 //     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool>;
 // }
 
-// impl<'w> CreateHoverSignal for UiBuilder<'w> {
+// impl<'w> CreateHoverSignal for EntityCommands<'w> {
 //     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool> {
-//         self.world_mut().entity_mut(target).insert(Hovering(false));
-//         let hovering = self.create_derived(move |rcx| {
+//         self.insert(Hovering(false));
+//         let hovering = self.create_memo(move |rcx| {
 //             rcx.read_component::<Hovering>(target)
 //                 .map(|h| h.0)
 //                 .unwrap_or(false)

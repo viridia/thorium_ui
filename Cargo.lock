@@ -3932,6 +3932,16 @@ name = "thorium_ui"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "thorium_ui_controls",
+ "thorium_ui_core",
+ "thorium_ui_headless",
+]
+
+[[package]]
+name = "thorium_ui_controls"
+version = "0.1.0"
+dependencies = [
+ "bevy",
  "thorium_ui_core",
  "thorium_ui_headless",
 ]

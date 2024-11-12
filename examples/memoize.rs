@@ -48,18 +48,15 @@ fn setup_view_root(mut commands: Commands) {
         ))
         .with_children(|builder| {
             let even = builder.create_memo(|counter: Res<Counter>| counter.count & 1 == 0, false);
-
-            builder.spawn(Text::new("Goodbye, "));
             builder.cond(
-                move |mut world: DeferredWorld| world.read_memo(even),
+                move |world: DeferredWorld| world.read_memo(even),
                 |builder| {
-                    builder.spawn(Text::new("hungry"));
+                    builder.spawn(Text::new("even"));
                 },
                 |builder| {
-                    builder.spawn(Text::new("thirsty"));
+                    builder.spawn(Text::new("odd"));
                 },
             );
-            builder.spawn(Text::new(" world!"));
         });
 }
 

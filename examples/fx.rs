@@ -47,13 +47,11 @@ fn setup_view_root(mut commands: Commands) {
         .effect(
             |counter: Res<Counter>| counter.count & 1 == 0,
             |even, entity| {
-                entity.entry::<BorderColor>().and_modify(|mut border| {
-                    border.0 = if even {
-                        css::MAROON.into()
-                    } else {
-                        css::LIME.into()
-                    };
-                });
+                entity.insert(BorderColor(if even {
+                    css::MAROON.into()
+                } else {
+                    css::LIME.into()
+                }));
             },
         )
         .with_children(|builder| {

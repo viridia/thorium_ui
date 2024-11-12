@@ -70,13 +70,11 @@ impl UiTemplate for Hoverable {
         item.with_child(Text::new("Hover me!")).effect(
             move |world: DeferredWorld| world.is_hovering(id),
             |hovering, entity| {
-                entity.entry::<BorderColor>().and_modify(|mut border| {
-                    border.0 = if hovering {
-                        css::LIME.into()
-                    } else {
-                        css::DARK_GREEN.into()
-                    };
-                });
+                entity.insert(BorderColor(if hovering {
+                    css::LIME.into()
+                } else {
+                    css::DARK_GREEN.into()
+                }));
             },
         );
     }

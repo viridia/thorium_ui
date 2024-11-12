@@ -147,11 +147,11 @@ entity.effect(
     |counter: Res<Counter>| counter.count & 1 == 0,
     |even, entity| {
         entity.entry::<BorderColor>().and_modify(|mut border| {
-            border.0 = if even {
+            entity.insert(BorderColor(if even {
                 css::MAROON.into()
             } else {
                 css::LIME.into()
-            };
+            }));
         });
     },
 )

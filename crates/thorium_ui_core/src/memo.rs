@@ -130,25 +130,51 @@ impl CreateMemo for Commands<'_, '_> {
 /// Methods for reading a memoized computation.
 pub trait ReadMemo {
     /// Reads the memoized value from the given memo.
-    fn read_memo<P: PartialEq + Clone + Send + Sync + 'static>(&mut self, memo: Memo<P>) -> P;
+    fn read_memo<P: Clone + Send + Sync + 'static>(&self, memo: Memo<P>) -> P;
+
+    /// Read the value of a mutable variable using a mapping function. This adds any dependencies of
+    /// the derived signal to the current tracking scope.
+    fn read_memo_map<P, U, F: Fn(&P) -> U>(&self, derived: &Memo<P>, f: F) -> U
+    where
+        P: Send + Sync + 'static;
 }
 
 impl ReadMemo for World {
-    fn read_memo<P: PartialEq + Clone + Send + Sync + 'static>(&mut self, memo: Memo<P>) -> P {
+    fn read_memo<P: Clone + Send + Sync + 'static>(&self, memo: Memo<P>) -> P {
         self.entity(memo.entity)
             .get::<MemoValue<P>>()
             .unwrap()
             .0
             .clone()
     }
+
+    fn read_memo_map<P, U, F: Fn(&P) -> U>(&self, memo: &Memo<P>, f: F) -> U
+    where
+        P: Send + Sync + 'static,
+    {
+        self.entity(memo.entity)
+            .get::<MemoValue<P>>()
+            .map(|value| f(&value.0))
+            .unwrap()
+    }
 }
 
 impl ReadMemo for DeferredWorld<'_> {
-    fn read_memo<P: PartialEq + Clone + Send + Sync + 'static>(&mut self, memo: Memo<P>) -> P {
+    fn read_memo<P: Clone + Send + Sync + 'static>(&self, memo: Memo<P>) -> P {
         self.entity(memo.entity)
             .get::<MemoValue<P>>()
             .unwrap()
             .0
             .clone()
+    }
+
+    fn read_memo_map<P, U, F: Fn(&P) -> U>(&self, memo: &Memo<P>, f: F) -> U
+    where
+        P: Send + Sync + 'static,
+    {
+        self.entity(memo.entity)
+            .get::<MemoValue<P>>()
+            .map(|value| f(&value.0))
+            .unwrap()
     }
 }

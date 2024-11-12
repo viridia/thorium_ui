@@ -5,6 +5,9 @@ mod entity_effect;
 mod foreach;
 mod lcs;
 mod memo;
+mod mutable;
+mod signal;
+mod style;
 mod switch;
 mod template;
 
@@ -15,6 +18,9 @@ use effect_cell::update_effects;
 pub use entity_effect::{EntitEffect, WithEffect};
 pub use foreach::ForEach;
 pub use memo::{CreateMemo, Memo, ReadMemo};
+pub use mutable::{CreateMutable, Mutable, ReadMutable, WriteMutable};
+pub use signal::{IntoSignal, Signal};
+pub use style::{StyleEntity, StyleHandle, StyleTuple};
 pub use switch::Switch;
 pub use template::{InvokeUiTemplate, UiTemplate};
 
