@@ -44,7 +44,9 @@ impl<M, P: PartialEq + Clone + Send + Sync + 'static, I: IntoSystem<(), P, M> + 
         };
 
         let value = world.run_system(system).unwrap();
-        let mut entt = world.entity_mut(entity);
+        let Ok(mut entt) = world.get_entity_mut(entity) else {
+            return;
+        };
         let mut value_ref = entt.get_mut::<MemoValue<P>>().unwrap();
         if value_ref.0 != value {
             value_ref.0 = value;

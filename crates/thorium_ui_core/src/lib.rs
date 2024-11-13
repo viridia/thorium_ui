@@ -26,9 +26,9 @@ pub use style::{StyleEntity, StyleHandle, StyleTuple};
 pub use switch::Switch;
 pub use template::{InvokeUiTemplate, UiTemplate};
 
-pub struct ThoriumUiPlugin;
+pub struct ThoriumUiCorePlugin;
 
-impl Plugin for ThoriumUiPlugin {
+impl Plugin for ThoriumUiCorePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, update_effects);
     }

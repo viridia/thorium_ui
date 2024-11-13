@@ -16,9 +16,6 @@ pub struct IconButton {
     /// Asset path for the icon
     pub icon: HandleOrOwnedPath<Image>,
 
-    /// Color variant - default, primary or danger.
-    // pub variant: Signal<ButtonVariant>,
-
     /// Button size.
     pub size: Size,
 
@@ -52,12 +49,6 @@ impl IconButton {
             ..default()
         }
     }
-
-    /// Set the button color variant.
-    // pub fn variant(mut self, variant: impl IntoSignal<ButtonVariant>) -> Self {
-    //     self.variant = variant.into_signal();
-    //     self
-    // }
 
     /// Set whether to render the button in a 'minimal' style with no background and reduced padding.
     pub fn minimal(mut self, minimal: bool) -> Self {
@@ -128,8 +119,8 @@ impl UiTemplate for IconButton {
             size: self.size,
             disabled,
             style: StyleHandle::new((
-                |ent: &mut EntityCommands| {
-                    ent.entry::<Node>().and_modify(|mut node| {
+                |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(|mut node| {
                         node.padding = ui::UiRect::axes(ui::Val::Px(4.0), ui::Val::Px(0.0))
                     });
                 },

@@ -12,7 +12,7 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    EntitEffect, InvokeUiTemplate, ThoriumUiHeadlessPlugin, ThoriumUiPlugin, UiTemplate,
+    EntitEffect, InvokeUiTemplate, ThoriumUiHeadlessPlugin, ThoriumUiCorePlugin, UiTemplate,
 };
 
 fn main() {
@@ -20,7 +20,7 @@ fn main() {
         .init_resource::<Counter>()
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
-            ThoriumUiPlugin,
+            ThoriumUiCorePlugin,
             ThoriumUiHeadlessPlugin,
         ))
         .add_systems(Startup, (setup, setup_view_root))

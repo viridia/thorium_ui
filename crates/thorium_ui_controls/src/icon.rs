@@ -68,8 +68,8 @@ impl UiTemplate for Icon {
         builder
             .spawn((UiImage { ..default() }, UiImageHandle(icon)))
             .style((
-                move |ent: &mut EntityCommands| {
-                    ent.entry::<Node>().and_modify(move |mut node| {
+                move |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
                         node.width = ui::Val::Px(size.x);
                         node.height = ui::Val::Px(size.y);
                     });

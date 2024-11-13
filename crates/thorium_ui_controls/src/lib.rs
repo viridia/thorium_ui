@@ -12,20 +12,24 @@ mod image_handle;
 mod materials;
 pub mod rounded_corners;
 pub mod size;
-// mod slider;
+mod slider;
+pub mod spacer;
 mod text_styles;
 pub mod typography;
+
+use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
+use text_styles::{set_initial_text_style, update_text_styles};
+use thorium_ui_headless::ThoriumUiHeadlessPlugin;
 
 pub use button::{Button, ButtonVariant};
 pub use icon::Icon;
 pub use icon_button::IconButton;
-use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
-use text_styles::{set_initial_text_style, update_text_styles};
+pub use slider::Slider;
+pub use spacer::Spacer;
 pub use text_styles::{
     InheritableFont, InheritableFontColor, InheritableFontSize, UseInheritedTextStyles,
 };
-use thorium_ui_headless::ThoriumUiHeadlessPlugin;
-pub use thorium_ui_headless::{CoreButton, CoreButtonPressed};
+pub use thorium_ui_headless::{CoreButtonPressed, ValueChange};
 
 pub struct ThoriumUiControlsPlugin;
 

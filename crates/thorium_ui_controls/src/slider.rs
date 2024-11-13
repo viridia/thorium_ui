@@ -1,5 +1,4 @@
 use bevy::{
-    color::LinearRgba,
     ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
@@ -7,39 +6,55 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::*;
+use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
 
-use crate::{colors, materials::SliderRectMaterial, typography};
+use crate::{
+    colors, materials::SliderRectMaterial, rounded_corners::RoundedCorners, typography, IconButton,
+    InheritableFontColor, InheritableFontSize, Spacer, UseInheritedTextStyles,
+};
 
-fn style_slider(ss: &mut EntityCommands) {
-    // ss.min_width(64).height(20);
+fn style_slider(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
+        node.min_width = ui::Val::Px(64.);
+        node.height = ui::Val::Px(20.);
+    });
 }
 
-fn style_overlay(ss: &mut EntityCommands) {
-    // ss.display(ui::Display::Flex)
-    //     .flex_direction(ui::FlexDirection::Row)
-    //     .align_items(ui::AlignItems::Center)
-    //     .position(ui::PositionType::Absolute)
-    //     .left(0)
-    //     .top(0)
-    //     .bottom(0)
-    //     .right(0)
-    //     .cursor(CursorIcon::System(SystemCursorIcon::ColResize));
+fn style_overlay(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
+        node.display = ui::Display::Flex;
+        node.flex_direction = ui::FlexDirection::Row;
+        node.align_items = ui::AlignItems::Center;
+        node.position_type = ui::PositionType::Absolute;
+        node.left = ui::Val::Px(0.);
+        node.top = ui::Val::Px(0.);
+        node.bottom = ui::Val::Px(0.);
+        node.right = ui::Val::Px(0.);
+    });
+    ec.insert(CursorIcon::System(SystemCursorIcon::ColResize));
 }
 
-fn style_slider_button(ss: &mut EntityCommands) {
-    // ss.height(20.).padding(0).max_width(12).flex_grow(0.2);
+fn style_slider_button(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
+        node.height = ui::Val::Px(20.);
+        node.padding = ui::UiRect::all(ui::Val::Px(0.));
+        node.max_width = ui::Val::Px(12.);
+        node.flex_grow = 0.2;
+    });
 }
 
-fn style_label(ss: &mut EntityCommands) {
-    // ss.flex_grow(1.)
-    //     .display(ui::Display::Flex)
-    //     .flex_direction(ui::FlexDirection::Row)
-    //     .align_items(ui::AlignItems::Center)
-    //     .justify_content(ui::JustifyContent::Center)
-    //     .height(ui::Val::Percent(100.))
-    //     .font_size(14)
-    //     .padding((6, 0))
-    //     .color(colors::FOREGROUND);
+fn style_label(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
+        node.display = ui::Display::Flex;
+        node.flex_direction = ui::FlexDirection::Row;
+        node.align_items = ui::AlignItems::Center;
+        node.justify_content = ui::JustifyContent::Center;
+        node.height = ui::Val::Percent(100.);
+        node.padding = ui::UiRect::axes(ui::Val::Px(6.), ui::Val::Px(0.));
+        node.flex_grow = 1.;
+    });
+    ec.insert(InheritableFontSize(14.));
+    ec.insert(InheritableFontColor(colors::FOREGROUND.into()));
 }
 
 /// Horizontal slider widget
@@ -163,14 +178,12 @@ impl Default for Slider {
 
 impl UiTemplate for Slider {
     fn build(&self, builder: &mut ChildBuilder) {
-        let slider_id = builder
-            .spawn((
-                MaterialNode::<SliderRectMaterial>::default(),
-                Name::new("Slider"),
-            ))
-            .id();
-        // let drag_state = builder.create_mutable::<DragState>(DragState::default());
-        let show_buttons = Signal::Constant(true);
+        let mut slider = builder.spawn((
+            MaterialNode::<SliderRectMaterial>::default(),
+            Name::new("Slider"),
+            Hovering::default(),
+        ));
+        // let slider_id = slider.id();
 
         // Pain point: Need to capture all props for closures.
         let min = self.min;
@@ -181,49 +194,61 @@ impl UiTemplate for Slider {
         let step = self.step;
         let on_change = self.on_change;
 
-        let mut ui_materials = builder
-            .world_mut()
-            .get_resource_mut::<Assets<SliderRectMaterial>>()
-            .unwrap();
-        let material = ui_materials.add(SliderRectMaterial {
-            color_lo: LinearRgba::from(colors::U1).to_vec4(),
-            color_hi: LinearRgba::from(colors::U3).to_vec4(),
-            value: Vec4::new(0.5, 0., 0., 0.),
-            radius: RoundedCorners::All.to_vec(4.),
-        });
-        let material_id = material.id();
+        let dec_click =
+            slider.create_callback(move |world: DeferredWorld, mut commands: Commands| {
+                let min = min.get(&world);
+                let max = max.get(&world);
+                let next_value = (value.get(&world) - step).clamp(min, max);
+                if let Some(on_change) = on_change {
+                    commands.run_system_with_input(on_change, next_value);
+                }
+            });
 
-        // Effect to update the material with the slider position.
-        builder.create_effect(move |ecx| {
-            let min = min.get(ecx);
-            let max = max.get(ecx);
-            let value = value.get(ecx);
-            let pos = if max > min {
-                (value - min) / (max - min)
-            } else {
-                0.
-            };
+        let inc_click =
+            slider.create_callback(move |world: DeferredWorld, mut commands: Commands| {
+                let min = min.get(&world);
+                let max = max.get(&world);
+                let next_value = (value.get(&world) + step).clamp(min, max);
+                if let Some(on_change) = on_change {
+                    commands.run_system_with_input(on_change, next_value);
+                }
+            });
 
-            let mut ui_materials = ecx
-                .world_mut()
-                .get_resource_mut::<Assets<SliderRectMaterial>>()
-                .unwrap();
-            let material = ui_materials.get_mut(material_id).unwrap();
-            material.value.x = pos;
-        });
-
-        builder
-            .entity_mut(slider_id)
-            .styles((typography::text_default, style_slider, self.style.clone()))
-            .insert(MaterialNode(material.clone()))
+        slider
+            .style((typography::text_default, style_slider, self.style.clone()))
             .effect(
-                move |rcx| CoreSlider::new(value.get(rcx), min.get(rcx), max.get(rcx)),
-                |slider, ent| {
-                    ent.insert(slider);
+                move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
+                |(value, min, max), ent| {
+                    let core_slider = CoreSlider { value, min, max };
+                    let material_handle = ent
+                        .get::<MaterialNode<SliderRectMaterial>>()
+                        .unwrap()
+                        .0
+                        .clone();
+                    let mut ui_materials = unsafe {
+                        ent.world_mut()
+                            .get_resource_mut::<Assets<SliderRectMaterial>>()
+                            .unwrap()
+                    };
+                    if material_handle == Handle::default() {
+                        let material = ui_materials.add(SliderRectMaterial {
+                            color_lo: LinearRgba::from(colors::U1).to_vec4(),
+                            color_hi: LinearRgba::from(colors::U3).to_vec4(),
+                            value: Vec4::new(core_slider.thumb_position(), 0., 0., 0.),
+                            radius: RoundedCorners::All.to_vec(4.),
+                        });
+                        ent.insert((core_slider, MaterialNode(material)));
+                    } else {
+                        ui_materials.get_mut(&material_handle).unwrap().value.x =
+                            core_slider.thumb_position();
+                        ent.insert(core_slider);
+                    }
                 },
             )
             .observe(
-                move |mut trigger: Trigger<ValueChange<f32>>, mut world: DeferredWorld| {
+                move |mut trigger: Trigger<ValueChange<f32>>,
+                      world: DeferredWorld,
+                      mut commands: Commands| {
                     trigger.propagate(false);
                     let event = trigger.event();
                     let rounding = f32::powi(10., precision as i32);
@@ -232,40 +257,26 @@ impl UiTemplate for Slider {
                         .clamp(min.get(&world), max.get(&world));
                     if value != new_value {
                         if let Some(on_change) = on_change {
-                            world.run_callback(on_change, new_value);
+                            commands.run_system_with_input(on_change, new_value);
                         }
                     }
                 },
             )
-            .create_children(|builder| {
-                let dec_disabled =
-                    builder.create_derived(move |rcx| value.get(rcx) <= min.get(rcx));
-                let dec_click =
-                    builder.create_callback(move |_in: In<()>, mut world: DeferredWorld| {
-                        let min = min.get(&world);
-                        let max = max.get(&world);
-                        let next_value = (value.get(&world) - step).clamp(min, max);
-                        if let Some(on_change) = on_change {
-                            world.run_callback(on_change, next_value);
-                        }
-                    });
-                let inc_disabled =
-                    builder.create_derived(move |rcx| value.get(rcx) >= max.get(rcx));
-                let inc_click =
-                    builder.create_callback(move |_in: In<()>, mut world: DeferredWorld| {
-                        let min = min.get(&world);
-                        let max = max.get(&world);
-                        let next_value = (value.get(&world) + step).clamp(min, max);
-                        if let Some(on_change) = on_change {
-                            world.run_callback(on_change, next_value);
-                        }
-                    });
+            .with_children(|builder| {
+                let dec_disabled = builder.create_memo(
+                    move |world: DeferredWorld| value.get(&world) <= min.get(&world),
+                    false,
+                );
+                let inc_disabled = builder.create_memo(
+                    move |world: DeferredWorld| value.get(&world) >= max.get(&world),
+                    false,
+                );
                 builder
                     .spawn((Node::default(), Name::new("Slider::Overlay")))
                     .style(style_overlay)
-                    .create_children(move |builder| {
+                    .with_children(move |builder| {
                         builder.cond(
-                            show_buttons,
+                            move || true,
                             move |builder| {
                                 builder.invoke(
                             IconButton::new(
@@ -282,20 +293,24 @@ impl UiTemplate for Slider {
                         builder
                             .spawn(Node::default())
                             .style(style_label)
-                            .create_children(|builder| {
+                            .with_children(|builder| {
                                 if let Some(label) = label {
-                                    builder.text(label);
+                                    builder.spawn((Text::new(label), UseInheritedTextStyles));
                                     builder.invoke(Spacer);
                                 }
-                                builder.text_computed({
-                                    move |rcx| {
-                                        let value = value.get(rcx);
-                                        format!("{:.*}", precision, value)
-                                    }
-                                });
+                                builder
+                                    .spawn((Text::new(""), UseInheritedTextStyles))
+                                    .effect(
+                                        move |world: DeferredWorld| value.get(&world),
+                                        move |value, ent| {
+                                            ent.entry::<Text>().and_modify(|mut text| {
+                                                text.0 = format!("{:.*}", precision, value);
+                                            });
+                                        },
+                                    );
                             });
                         builder.cond(
-                            show_buttons,
+                            move || true,
                             move |builder| {
                                 builder.invoke(
                                 IconButton::new(

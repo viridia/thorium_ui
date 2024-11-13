@@ -42,8 +42,8 @@ pub enum ButtonVariant {
     Selected,
 }
 
-pub(crate) fn style_button(ent: &mut EntityCommands) {
-    ent.entry::<Node>().and_modify(|mut node| {
+pub(crate) fn style_button(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
         node.display = ui::Display::Flex;
         node.flex_direction = ui::FlexDirection::Row;
         node.justify_content = ui::JustifyContent::Center;
@@ -52,12 +52,12 @@ pub(crate) fn style_button(ent: &mut EntityCommands) {
         node.padding = ui::UiRect::axes(ui::Val::Px(12.0), ui::Val::Px(0.0));
         node.border = ui::UiRect::all(ui::Val::Px(0.0));
     });
-    ent.insert(CursorIcon::System(SystemCursorIcon::Pointer));
-    ent.insert(InheritableFontColor(colors::FOREGROUND.into()));
+    ec.insert(CursorIcon::System(SystemCursorIcon::Pointer));
+    ec.insert(InheritableFontColor(colors::FOREGROUND.into()));
 }
 
-pub(crate) fn style_button_bg(ent: &mut EntityCommands) {
-    ent.entry::<Node>().and_modify(|mut node| {
+pub(crate) fn style_button_bg(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
         node.display = ui::Display::Grid;
         node.position_type = ui::PositionType::Absolute;
         node.left = ui::Val::Px(0.0);
@@ -224,8 +224,8 @@ impl UiTemplate for Button {
             .style((
                 typography::text_default,
                 style_button,
-                move |ent: &mut EntityCommands| {
-                    ent.entry::<Node>().and_modify(move |mut node| {
+                move |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
                         node.min_height = ui::Val::Px(size.height());
                         node.min_width = ui::Val::Px(size.height().floor());
                         if minimal {
@@ -237,7 +237,7 @@ impl UiTemplate for Button {
                             );
                         }
                     });
-                    ent.insert(InheritableFontSize(size.font_size()));
+                    ec.insert(InheritableFontSize(size.font_size()));
                 },
                 self.style.clone(),
             ))

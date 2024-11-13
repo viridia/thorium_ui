@@ -1,6 +1,9 @@
 use bevy::{
     ecs::{component::ComponentId, system::SystemId, world::DeferredWorld},
-    prelude::{BuildChildren, Component, Entity, EntityCommands, In, IntoSystem, SystemInput},
+    prelude::{
+        BuildChildren, ChildBuild, ChildBuilder, Component, Entity, EntityCommands, In, IntoSystem,
+        SystemInput,
+    },
     ui::experimental::GhostNode,
 };
 
@@ -53,6 +56,28 @@ impl CreateCallback for EntityCommands<'_> {
     ) -> SystemId<In<A>, ()> {
         let system_id = self.commands().register_system(callback);
         self.with_child(CallbackCell(system_id));
+        system_id
+    }
+}
+
+impl CreateCallback for ChildBuilder<'_> {
+    fn create_callback<M, I: IntoSystem<(), (), M> + 'static>(
+        &mut self,
+        callback: I,
+    ) -> SystemId<(), ()> {
+        let mut entity = self.spawn_empty();
+        let system_id = entity.commands().register_system(callback);
+        entity.insert(CallbackCell(system_id));
+        system_id
+    }
+
+    fn create_callback_arg<M, A: Send + Sync + 'static, I: IntoSystem<In<A>, (), M> + 'static>(
+        &mut self,
+        callback: I,
+    ) -> SystemId<In<A>, ()> {
+        let mut entity = self.spawn_empty();
+        let system_id = entity.commands().register_system(callback);
+        entity.insert(CallbackCell(system_id));
         system_id
     }
 }

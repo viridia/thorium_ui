@@ -6,12 +6,14 @@ pub mod focus;
 pub mod handle;
 pub mod hover;
 pub mod tab_navigation;
+mod value_change;
 
 pub use core_button::{CoreButton, CoreButtonPressed};
 pub use core_slider::CoreSlider;
 pub use disabled::{InteractionDisabled, IsInteractionDisabled};
 use focus::InputDispatchPlugin;
 use tab_navigation::KeyboardFocusVisible;
+pub use value_change::ValueChange;
 
 pub struct ThoriumUiHeadlessPlugin;
 

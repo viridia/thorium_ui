@@ -11,7 +11,7 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
-    CreateCallback, InvokeUiTemplate, ThoriumUiHeadlessPlugin, ThoriumUiPlugin, UiTemplate,
+    CreateCallback, InvokeUiTemplate, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiTemplate,
 };
 
 fn main() {
@@ -19,7 +19,7 @@ fn main() {
         .init_resource::<Counter>()
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
-            ThoriumUiPlugin,
+            ThoriumUiCorePlugin,
             ThoriumUiHeadlessPlugin,
         ))
         .add_systems(Startup, (setup, setup_view_root))

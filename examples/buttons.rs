@@ -3,15 +3,15 @@
 use bevy::{prelude::*, ui};
 use thorium_ui::{
     tab_navigation::{handle_tab_navigation, TabGroup},
-    InvokeUiTemplate, StyleEntity, ThoriumUiPlugin,
+    InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, IconButton,
     InheritableFontColor, ThoriumUiControlsPlugin, UseInheritedTextStyles,
 };
 
-fn style_test(ent: &mut EntityCommands) {
-    ent.entry::<Node>().and_modify(|mut node| {
+fn style_test(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
         node.display = Display::Flex;
         node.flex_direction = FlexDirection::Column;
         node.position_type = PositionType::Absolute;
@@ -22,12 +22,12 @@ fn style_test(ent: &mut EntityCommands) {
         node.padding = ui::UiRect::all(Val::Px(3.));
         node.row_gap = ui::Val::Px(4.);
     });
-    ent.insert(BackgroundColor(colors::U1.into()));
-    ent.insert(InheritableFontColor(colors::DIM.into()));
+    ec.insert(BackgroundColor(colors::BACKGROUND.into()));
+    ec.insert(InheritableFontColor(colors::DIM.into()));
 }
 
-fn style_row(ent: &mut EntityCommands) {
-    ent.entry::<Node>().and_modify(|mut node| {
+fn style_row(ec: &mut EntityCommands) {
+    ec.entry::<Node>().and_modify(|mut node| {
         node.display = Display::Flex;
         node.flex_direction = FlexDirection::Row;
         node.align_items = AlignItems::Center;
@@ -38,7 +38,7 @@ fn style_row(ent: &mut EntityCommands) {
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, ThoriumUiPlugin, ThoriumUiControlsPlugin))
+        .add_plugins((DefaultPlugins, ThoriumUiCorePlugin, ThoriumUiControlsPlugin))
         .add_systems(Startup, setup_view_root)
         .add_systems(Update, close_on_esc)
         .run();
