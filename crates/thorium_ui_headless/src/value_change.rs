@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-// TODO: Move this
 #[derive(Clone, Debug, Component)]
 pub struct ValueChange<T>(pub T);
 
