@@ -14,7 +14,7 @@ pub trait ForEach {
     fn for_each<
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
-        ItemIter: 'static + Iterator<Item = Item>,
+        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
@@ -29,7 +29,7 @@ pub trait ForEach {
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        ItemIter: 'static + Iterator<Item = Item>,
+        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
@@ -46,7 +46,7 @@ impl ForEach for ChildBuilder<'_> {
     fn for_each<
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
-        ItemIter: 'static + Iterator<Item = Item>,
+        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
@@ -56,14 +56,15 @@ impl ForEach for ChildBuilder<'_> {
         each: EachFn,
         fallback: FallbackFn,
     ) -> &mut Self {
-        self.spawn(EffectCell(Arc::new(Mutex::new(ForEachEffect {
-            items_fn: Some(items_fn),
-            item_sys: None,
+        let mut ent = self.spawn_empty();
+        let item_sys = ent.commands().register_system(items_fn);
+        ent.insert(EffectCell(Arc::new(Mutex::new(ForEachEffect {
+            item_sys,
             cmp: PartialEq::eq,
             each,
             fallback,
             state: Vec::new(),
-            marker: std::marker::PhantomData,
+            first: true,
         }))));
         self
     }
@@ -72,7 +73,7 @@ impl ForEach for ChildBuilder<'_> {
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        ItemIter: 'static + Iterator<Item = Item>,
+        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
         ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
@@ -83,14 +84,15 @@ impl ForEach for ChildBuilder<'_> {
         each: EachFn,
         fallback: FallbackFn,
     ) -> &mut Self {
-        self.spawn(EffectCell(Arc::new(Mutex::new(ForEachEffect {
-            items_fn: Some(items_fn),
-            item_sys: None,
+        let mut ent = self.spawn_empty();
+        let item_sys = ent.commands().register_system(items_fn);
+        ent.insert(EffectCell(Arc::new(Mutex::new(ForEachEffect {
+            item_sys,
             cmp,
             each,
             fallback,
             state: Vec::new(),
-            marker: std::marker::PhantomData,
+            first: true,
         }))));
         self
     }
@@ -104,34 +106,29 @@ struct ListItem<Item: Clone> {
 
 /// A reaction that handles the conditional rendering logic.
 struct ForEachEffect<
-    M,
     Item: Clone,
     CmpFn: Fn(&Item, &Item) -> bool,
     ItemIter: Iterator<Item = Item>,
-    ItemFn: IntoSystem<(), ItemIter, M>,
     EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
     FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
 > where
     Self: Send + Sync,
 {
-    items_fn: Option<ItemFn>,
-    item_sys: Option<SystemId<(), ItemIter>>,
+    item_sys: SystemId<(), ItemIter>,
     cmp: CmpFn,
     each: EachFn,
     fallback: FallbackFn,
     state: Vec<ListItem<Item>>,
-    marker: std::marker::PhantomData<M>,
+    first: bool,
 }
 
 impl<
-        M: Send + Sync + 'static,
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         ItemIter: Iterator<Item = Item>,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-    > ForEachEffect<M, Item, CmpFn, ItemIter, ItemFn, EachFn, FallbackFn>
+    > ForEachEffect<Item, CmpFn, ItemIter, EachFn, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
     /// array items. Matching items are patched, other items are inserted or deleted.
@@ -265,28 +262,16 @@ impl<
 }
 
 impl<
-        M: Send + Sync + 'static,
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         ItemIter: Iterator<Item = Item> + 'static,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-    > AnyEffect for ForEachEffect<M, Item, CmpFn, ItemIter, ItemFn, EachFn, FallbackFn>
+    > AnyEffect for ForEachEffect<Item, CmpFn, ItemIter, EachFn, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {
-        let mut first = false;
-        if let Some(items_fn) = self.items_fn.take() {
-            self.item_sys = Some(world.register_system(items_fn));
-            first = true;
-        }
-
-        let Some(items_sys) = self.item_sys else {
-            return;
-        };
-
         // Create a reactive context and call the test condition.
-        let items: Vec<Item> = match world.run_system(items_sys) {
+        let items: Vec<Item> = match world.run_system(self.item_sys) {
             Ok(items) => items.collect(),
             Err(_) => Vec::default(),
         };
@@ -306,7 +291,8 @@ impl<
         self.state = std::mem::take(&mut next_state);
 
         if next_len == 0 {
-            if prev_len > 0 || first {
+            if prev_len > 0 || self.first {
+                self.first = false;
                 // Transitioning from non-empty to empty, generate fallback.
                 world.entity_mut(parent).despawn_descendants();
                 world.commands().entity(parent).with_children(|builder| {
@@ -323,8 +309,8 @@ impl<
     }
 
     fn cleanup(&self, world: &mut bevy::ecs::world::DeferredWorld, _entity: Entity) {
-        if let Some(items_sys) = self.item_sys {
-            world.commands().queue(UnregisterSystemCommand(items_sys));
-        }
+        world
+            .commands()
+            .queue(UnregisterSystemCommand(self.item_sys));
     }
 }

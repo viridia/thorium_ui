@@ -21,29 +21,16 @@ impl<P> Memo<P> {
     }
 }
 
-pub(crate) struct MemoEffect<M, P: PartialEq + Clone, I: IntoSystem<(), P, M>> {
-    factory: Option<I>,
-    system: Option<SystemId<(), P>>,
-    marker: PhantomData<M>,
+pub(crate) struct MemoEffect<P: PartialEq + Clone> {
+    system: SystemId<(), P>,
 }
 
 #[derive(Component)]
 pub(crate) struct MemoValue<P>(P);
 
-impl<M, P: PartialEq + Clone + Send + Sync + 'static, I: IntoSystem<(), P, M> + 'static> AnyEffect
-    for MemoEffect<M, P, I>
-{
+impl<P: PartialEq + Clone + Send + Sync + 'static> AnyEffect for MemoEffect<P> {
     fn update(&mut self, world: &mut World, entity: Entity) {
-        let system = match self.system {
-            Some(sys) => sys,
-            None => {
-                let sys = world.register_system(self.factory.take().unwrap());
-                self.system = Some(sys);
-                sys
-            }
-        };
-
-        let value = world.run_system(system).unwrap();
+        let value = world.run_system(self.system).unwrap();
         let Ok(mut entt) = world.get_entity_mut(entity) else {
             return;
         };
@@ -54,9 +41,7 @@ impl<M, P: PartialEq + Clone + Send + Sync + 'static, I: IntoSystem<(), P, M> + 
     }
 
     fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        if let Some(system) = self.system {
-            world.commands().queue(UnregisterSystemCommand(system));
-        }
+        world.commands().queue(UnregisterSystemCommand(self.system));
     }
 }
 
@@ -85,18 +70,14 @@ impl CreateMemo for ChildBuilder<'_> {
         factory: I,
         default_value: P,
     ) -> Memo<P> {
-        let entity = self
-            .spawn((
-                EffectCell::new(MemoEffect {
-                    factory: Some(factory),
-                    system: None,
-                    marker: PhantomData,
-                }),
-                MemoValue(default_value),
-            ))
-            .id();
+        let mut entity = self.spawn_empty();
+        let system = entity.commands().register_system(factory);
+        entity.insert((
+            EffectCell::new(MemoEffect { system }),
+            MemoValue(default_value),
+        ));
         Memo {
-            entity,
+            entity: entity.id(),
             marker: PhantomData,
         }
     }
@@ -112,18 +93,14 @@ impl CreateMemo for Commands<'_, '_> {
         factory: I,
         default_value: P,
     ) -> Memo<P> {
-        let entity = self
-            .spawn((
-                EffectCell::new(MemoEffect {
-                    factory: Some(factory),
-                    system: None,
-                    marker: PhantomData,
-                }),
-                MemoValue(default_value),
-            ))
-            .id();
+        let mut entity = self.spawn_empty();
+        let system = entity.commands().register_system(factory);
+        entity.insert((
+            EffectCell::new(MemoEffect { system }),
+            MemoValue(default_value),
+        ));
         Memo {
-            entity,
+            entity: entity.id(),
             marker: PhantomData,
         }
     }
