@@ -1,16 +1,12 @@
 //! Example of a simple UI layout
 
-use bevy::{
-    asset::io::{file::FileAssetReader, AssetSource},
-    prelude::*,
-    ui,
-};
+use bevy::{prelude::*, ui};
 use thorium_ui::{
     tab_navigation::{handle_tab_navigation, TabGroup},
     InvokeUiTemplate, StyleEntity, ThoriumUiPlugin,
 };
 use thorium_ui_controls::{
-    colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant,
+    colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, IconButton,
     InheritableFontColor, ThoriumUiControlsPlugin, UseInheritedTextStyles,
 };
 
@@ -42,14 +38,6 @@ fn style_row(ent: &mut EntityCommands) {
 
 fn main() {
     App::new()
-        .register_asset_source(
-            "obsidian_ui",
-            AssetSource::build().with_reader(|| {
-                Box::new(FileAssetReader::new(
-                    "crates/bevy_reactor_obsidian/src/assets",
-                ))
-            }),
-        )
         .add_plugins((DefaultPlugins, ThoriumUiPlugin, ThoriumUiControlsPlugin))
         .add_systems(Startup, setup_view_root)
         .add_systems(Update, close_on_esc)
@@ -174,46 +162,71 @@ fn setup_view_root(mut commands: Commands) {
                                 .corners(RoundedCorners::None),
                         );
                 });
-            // builder.text("IconButton");
-            // builder
-            //     .spawn(Node::default())
-            //     .style(style_row)
-            //     .create_children(|builder| {
-            //         builder
-            //             .invoke(IconButton::new("obsidian_ui://icons/chevron_left.png"))
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
-            //             );
-            //     });
-            // builder.text("IconButton Size");
-            // builder
-            //     .spawn(Node::default())
-            //     .style(style_row)
-            //     .create_children(|builder| {
-            //         builder
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
-            //             )
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
-            //             )
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
-            //             )
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
-            //             )
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
-            //             )
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
-            //             )
-            //             .invoke(
-            //                 IconButton::new("obsidian_ui://icons/chevron_left.png")
-            //                     .size(Size::Xxxs),
-            //             );
-            //     });
+            builder.spawn((Text::new("IconButton"), UseInheritedTextStyles));
+            builder
+                .spawn(Node::default())
+                .style(style_row)
+                .with_children(|builder| {
+                    builder
+                        .invoke(IconButton::new(
+                            "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                        ))
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .minimal(true),
+                        );
+                });
+            builder.spawn((Text::new("IconButton Size"), UseInheritedTextStyles));
+            builder
+                .spawn(Node::default())
+                .style(style_row)
+                .with_children(|builder| {
+                    builder
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .size(Size::Xl),
+                        )
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .size(Size::Lg),
+                        )
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .size(Size::Md),
+                        )
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .size(Size::Sm),
+                        )
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .size(Size::Xs),
+                        )
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .size(Size::Xxs),
+                        )
+                        .invoke(
+                            IconButton::new(
+                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                            )
+                            .size(Size::Xxxs),
+                        );
+                });
             // builder.text("ToolPalette");
             // builder
             //     .spawn(Node::default())
@@ -225,20 +238,20 @@ fn setup_view_root(mut commands: Commands) {
             //                     ToolButton::new()
             //                         .children(|builder| {
             //                             builder.invoke(Icon::new(
-            //                                 "obsidian_ui://icons/chevron_left.png",
+            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
             //                             ));
             //                         })
             //                         .selected(true)
             //                         .corners(RoundedCorners::TopLeft),
             //                 )
             //                 .invoke(ToolButton::new().children(|builder| {
-            //                     builder.invoke(Icon::new("obsidian_ui://icons/chevron_left.png"));
+            //                     builder.invoke(Icon::new("embedded://thorium_ui_controls/assets/icons/chevron_left.png"));
             //                 }))
             //                 .invoke(
             //                     ToolButton::new()
             //                         .children(|builder| {
             //                             builder.invoke(Icon::new(
-            //                                 "obsidian_ui://icons/chevron_left.png",
+            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
             //                             ));
             //                         })
             //                         .corners(RoundedCorners::TopRight),
@@ -247,19 +260,19 @@ fn setup_view_root(mut commands: Commands) {
             //                     ToolButton::new()
             //                         .children(|builder| {
             //                             builder.invoke(Icon::new(
-            //                                 "obsidian_ui://icons/chevron_left.png",
+            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
             //                             ));
             //                         })
             //                         .corners(RoundedCorners::BottomLeft),
             //                 )
             //                 .invoke(ToolButton::new().children(|builder| {
-            //                     builder.invoke(Icon::new("obsidian_ui://icons/chevron_left.png"));
+            //                     builder.invoke(Icon::new("embedded://thorium_ui_controls/assets/icons/chevron_left.png"));
             //                 }))
             //                 .invoke(
             //                     ToolButton::new()
             //                         .children(|builder| {
             //                             builder.invoke(Icon::new(
-            //                                 "obsidian_ui://icons/chevron_left.png",
+            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
             //                             ));
             //                         })
             //                         .corners(RoundedCorners::BottomRight),
