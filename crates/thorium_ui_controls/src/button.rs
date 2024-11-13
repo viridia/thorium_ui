@@ -16,12 +16,13 @@ use bevy::{
     window::SystemCursorIcon,
     winit::cursor::CursorIcon,
 };
-use thorium_ui_core::{IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate};
+use thorium_ui_core::{
+    InsertWhen, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+};
 use thorium_ui_headless::{
-    focus::{FocusKeyboardInput, KeyboardFocus},
     hover::{Hovering, IsHovering},
-    tab_navigation::{IsFocused, KeyboardFocusVisible, TabIndex},
-    InteractionDisabled, IsDisabled,
+    tab_navigation::{AutoFocus, IsFocused, TabIndex},
+    CoreButton, CoreButtonPressed, InteractionDisabled, IsInteractionDisabled,
 };
 
 /// The variant determines the button's color scheme
@@ -64,14 +65,6 @@ pub(crate) fn style_button_bg(ent: &mut EntityCommands) {
         node.top = ui::Val::Px(0.0);
         node.bottom = ui::Val::Px(0.0);
     });
-}
-
-#[derive(Component)]
-pub struct ButtonPressed(pub bool);
-
-#[derive(Component)]
-pub(crate) struct ButtonState {
-    on_click: Option<SystemId>,
 }
 
 /// Button widget
@@ -219,6 +212,7 @@ impl UiTemplate for Button {
 
         let corners = self.corners;
         let minimal = self.minimal;
+        let disabled = self.disabled;
 
         let size = self.size;
         let on_click = self.on_click;
@@ -247,15 +241,17 @@ impl UiTemplate for Button {
                 },
                 self.style.clone(),
             ))
-            // TODO
-            // .insert_when(self.disabled, || InteractionDisabled)
             .insert((
                 TabIndex(self.tab_index),
-                ButtonPressed(false),
-                ButtonState { on_click },
+                CoreButtonPressed(false),
+                CoreButton { on_click },
                 AccessibilityNode::from(NodeBuilder::new(Role::Button)),
             ))
-            // .insert_when(self.autofocus, || AutoFocus)
+            .insert_when(
+                move |world: DeferredWorld| disabled.get(&world),
+                || InteractionDisabled,
+            )
+            .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
                 builder
                     .spawn((Node::default(), Name::new("Button::Background")))
@@ -268,12 +264,12 @@ impl UiTemplate for Button {
                             } else {
                                 let entity = world.entity(button_id);
                                 let pressed = entity
-                                    .get::<ButtonPressed>()
+                                    .get::<CoreButtonPressed>()
                                     .map(|pressed| pressed.0)
                                     .unwrap_or_default();
                                 button_bg_color(
                                     variant.get(&world),
-                                    world.is_disabled(button_id),
+                                    world.is_interaction_disabled(button_id),
                                     pressed,
                                     world.is_hovering(button_id),
                                 )
@@ -321,93 +317,5 @@ pub(crate) fn button_bg_color(
         (_, true, true) => base_color.lighter(0.07),
         (_, false, true) => base_color.lighter(0.03),
         _ => base_color,
-    }
-}
-
-pub(crate) fn button_on_key_event(
-    mut trigger: Trigger<FocusKeyboardInput>,
-    q_state: Query<(&ButtonState, Has<InteractionDisabled>)>,
-    mut commands: Commands,
-) {
-    if let Ok((bstate, disabled)) = q_state.get(trigger.entity()) {
-        if !disabled {
-            let event = &trigger.event().0;
-            if !event.repeat
-                && (event.key_code == KeyCode::Enter || event.key_code == KeyCode::Space)
-            {
-                if let Some(on_click) = bstate.on_click {
-                    trigger.propagate(false);
-                    commands.run_system(on_click);
-                }
-            }
-        }
-    }
-}
-
-pub(crate) fn button_on_pointer_click(
-    mut trigger: Trigger<Pointer<Click>>,
-    mut q_state: Query<(&ButtonState, &mut ButtonPressed, Has<InteractionDisabled>)>,
-    mut commands: Commands,
-) {
-    if let Ok((bstate, pressed, disabled)) = q_state.get_mut(trigger.entity()) {
-        trigger.propagate(false);
-        if pressed.0 && !disabled {
-            // println!("Click: {}", pressed.0);
-            if let Some(on_click) = bstate.on_click {
-                commands.run_system(on_click);
-            }
-        }
-    }
-}
-
-pub(crate) fn button_on_pointer_down(
-    mut trigger: Trigger<Pointer<Down>>,
-    mut q_state: Query<(&mut ButtonPressed, Has<InteractionDisabled>)>,
-    mut focus: ResMut<KeyboardFocus>,
-    mut focus_visible: ResMut<KeyboardFocusVisible>,
-) {
-    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
-        trigger.propagate(false);
-        if !disabled {
-            pressed.0 = true;
-            focus.0 = Some(trigger.entity());
-            focus_visible.0 = false;
-        }
-    }
-}
-
-pub(crate) fn button_on_pointer_up(
-    mut trigger: Trigger<Pointer<Up>>,
-    mut q_state: Query<(&mut ButtonPressed, Has<InteractionDisabled>)>,
-) {
-    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
-        trigger.propagate(false);
-        if !disabled {
-            pressed.0 = false;
-        }
-    }
-}
-
-pub(crate) fn button_on_pointer_drag_end(
-    mut trigger: Trigger<Pointer<DragEnd>>,
-    mut q_state: Query<(&mut ButtonPressed, Has<InteractionDisabled>)>,
-) {
-    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
-        trigger.propagate(false);
-        if !disabled {
-            pressed.0 = false;
-        }
-    }
-}
-
-pub(crate) fn button_on_pointer_cancel(
-    mut trigger: Trigger<Pointer<Cancel>>,
-    mut q_state: Query<(&mut ButtonPressed, Has<InteractionDisabled>)>,
-) {
-    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
-        trigger.propagate(false);
-        if !disabled {
-            pressed.0 = false;
-        }
     }
 }

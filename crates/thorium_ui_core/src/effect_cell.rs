@@ -11,7 +11,7 @@ use bevy::{
 /// Note: If Bevy had trait queries, we wouldn't the Arc/Mutex.
 #[derive(Component)]
 #[require(GhostNode)]
-#[component(on_remove = on_remove_effect)]
+#[component(on_add = on_add_effect, on_remove = on_remove_effect)]
 pub struct EffectCell(pub(crate) Arc<Mutex<dyn AnyEffect + 'static + Sync + Send>>);
 
 impl EffectCell {
@@ -32,6 +32,12 @@ pub(crate) trait AnyEffect {
     // ) -> bool {
     //     false
     // }
+}
+
+fn on_add_effect(mut world: DeferredWorld, entity: Entity, _cid: ComponentId) {
+    let cell = world.get_mut::<EffectCell>(entity).unwrap();
+    let _comp = cell.0.clone();
+    // comp.lock().unwrap().cleanup(&mut world, entity);
 }
 
 fn on_remove_effect(mut world: DeferredWorld, entity: Entity, _cid: ComponentId) {

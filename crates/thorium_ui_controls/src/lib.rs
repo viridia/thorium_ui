@@ -11,12 +11,13 @@ pub mod typography;
 
 mod button;
 
-pub use button::{Button, ButtonPressed, ButtonVariant};
+pub use button::{Button, ButtonVariant};
 use text_styles::{set_initial_text_style, update_text_styles};
 pub use text_styles::{
     InheritableFont, InheritableFontColor, InheritableFontSize, UseInheritedTextStyles,
 };
 use thorium_ui_headless::ThoriumUiHeadlessPlugin;
+pub use thorium_ui_headless::{CoreButton, CoreButtonPressed};
 
 pub struct ThoriumUiControlsPlugin;
 
@@ -33,12 +34,6 @@ impl Plugin for ThoriumUiControlsPlugin {
         .add_plugins(ThoriumUiHeadlessPlugin)
             // .add_observer(toggle_state::toggle_on_key_input)
             // .add_observer(toggle_state::toggle_on_pointer_click)
-            .add_observer(button::button_on_key_event)
-            .add_observer(button::button_on_pointer_down)
-            .add_observer(button::button_on_pointer_up)
-            .add_observer(button::button_on_pointer_click)
-            .add_observer(button::button_on_pointer_drag_end)
-            .add_observer(button::button_on_pointer_cancel)
         // .add_observer(barrier::barrier_on_key_input)
         // .add_observer(barrier::barrier_on_pointer_down)
         // .add_observer(core_slider::slider_on_drag_start)

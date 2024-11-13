@@ -8,19 +8,19 @@ use bevy::{
 pub struct InteractionDisabled;
 
 /// Trait which defines a method to check if an entity is disabled.
-pub trait IsDisabled {
+pub trait IsInteractionDisabled {
     /// Returns true if the given entity is disabled.
-    fn is_disabled(&self, entity: Entity) -> bool;
+    fn is_interaction_disabled(&self, entity: Entity) -> bool;
 }
 
-impl IsDisabled for DeferredWorld<'_> {
-    fn is_disabled(&self, entity: Entity) -> bool {
+impl IsInteractionDisabled for DeferredWorld<'_> {
+    fn is_interaction_disabled(&self, entity: Entity) -> bool {
         self.get::<InteractionDisabled>(entity).is_some()
     }
 }
 
-impl IsDisabled for World {
-    fn is_disabled(&self, entity: Entity) -> bool {
+impl IsInteractionDisabled for World {
+    fn is_interaction_disabled(&self, entity: Entity) -> bool {
         self.get::<InteractionDisabled>(entity).is_some()
     }
 }

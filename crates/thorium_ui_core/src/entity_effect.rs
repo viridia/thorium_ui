@@ -11,6 +11,7 @@ use bevy::{
 
 use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
 
+/// General dynamic effect which can be applied to an entity.
 pub struct WithEffect<P, M, DepsFn: IntoSystem<(), P, M>, EffectFn: Fn(P, &mut EntityWorldMut)> {
     deps_fn: DepsFn,
     effect_fn: EffectFn,
