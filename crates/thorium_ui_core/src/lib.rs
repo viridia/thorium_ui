@@ -17,7 +17,7 @@ pub use callback::CreateCallback;
 pub use cond::Cond;
 use effect_cell::update_effects;
 pub use entity_effect::{EntitEffect, WithEffect};
-pub use foreach::ForEach;
+pub use foreach::{ForEach, ListItems};
 pub use insert_when::InsertWhen;
 pub use memo::{CreateMemo, Memo, ReadMemo};
 pub use mutable::{CreateMutable, Mutable, ReadMutable, WriteMutable};

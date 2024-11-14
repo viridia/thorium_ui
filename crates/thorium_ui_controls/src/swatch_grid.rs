@@ -5,8 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateCallback, ForEach, IntoSignal, InvokeUiTemplate, Signal, StyleEntity, StyleHandle,
-    StyleTuple, UiTemplate,
+    CreateCallback, ForEach, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleEntity,
+    StyleHandle, StyleTuple, UiTemplate,
 };
 
 use crate::colors;
@@ -140,18 +140,20 @@ impl UiTemplate for SwatchGrid {
             ))
             .with_children(|builder| {
                 builder.for_each(
-                    move |world: DeferredWorld| {
+                    move |mut items: InMut<ListItems<Option<(Srgba, bool)>>>,
+                          world: DeferredWorld| {
                         let colors = colors.get_clone(&world);
                         let selected_color = selected.get(&world);
-                        (0..num_cells).map(move |i| {
+                        items.clear();
+                        (0..num_cells).for_each(move |i| {
                             if i < colors.len() {
                                 let color = colors[i];
                                 let is_selected = selected_color == color;
-                                Some((color, is_selected))
+                                items.push(Some((color, is_selected)));
                             } else {
-                                None
+                                items.push(None);
                             }
-                        })
+                        });
                     },
                     move |color, builder| match color {
                         Some((color, selected)) => {

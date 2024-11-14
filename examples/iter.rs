@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{ForEach, ThoriumUiCorePlugin};
+use thorium_ui::{ForEach, ListItems, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -48,7 +48,9 @@ fn setup_view_root(mut commands: Commands) {
         ))
         .with_children(|builder| {
             builder.for_each(
-                |list: Res<List>| list.items.clone().into_iter(),
+                |mut items: InMut<ListItems<String>>, list: Res<List>| {
+                    items.clone_from_iter(list.items.iter().cloned());
+                },
                 move |suit, builder| {
                     let suit = suit.clone();
                     let suit2 = suit.clone();

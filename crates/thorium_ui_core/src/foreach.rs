@@ -10,12 +10,39 @@ use crate::{
     lcs::lcs,
 };
 
+pub struct ListItems<Item: Clone> {
+    items: Vec<Item>,
+    changed: bool,
+}
+
+impl<Item: Clone> ListItems<Item> {
+    pub fn clone_from(&mut self, items: &Vec<Item>) {
+        self.items.clone_from(items);
+        self.changed = true;
+    }
+
+    pub fn clone_from_iter<I: Iterator<Item = Item>>(&mut self, items: I) {
+        self.items.extend(items);
+        self.changed = true;
+    }
+
+    pub fn push(&mut self, item: Item) {
+        self.items.push(item);
+        self.changed = true;
+    }
+
+    pub fn clear(&mut self) {
+        self.items.clear();
+        self.changed = true;
+    }
+}
+
 pub trait ForEach {
     fn for_each<
+        'a: 'static,
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
-        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
@@ -26,11 +53,11 @@ pub trait ForEach {
     ) -> &mut Self;
 
     fn for_each_cmp<
+        'a: 'static,
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
@@ -44,10 +71,10 @@ pub trait ForEach {
 
 impl ForEach for ChildBuilder<'_> {
     fn for_each<
+        'a: 'static,
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
-        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
@@ -70,11 +97,11 @@ impl ForEach for ChildBuilder<'_> {
     }
 
     fn for_each_cmp<
+        'a: 'static,
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        ItemIter: Iterator<Item = Item> + Send + Sync + 'static,
-        ItemFn: IntoSystem<(), ItemIter, M> + Send + Sync + 'static,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
     >(
@@ -106,15 +133,15 @@ struct ListItem<Item: Clone> {
 
 /// A reaction that handles the conditional rendering logic.
 struct ForEachEffect<
-    Item: Clone,
+    'a,
+    Item: Clone + 'static,
     CmpFn: Fn(&Item, &Item) -> bool,
-    ItemIter: Iterator<Item = Item>,
     EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
     FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
 > where
     Self: Send + Sync,
 {
-    item_sys: SystemId<(), ItemIter>,
+    item_sys: SystemId<InMut<'a, ListItems<Item>>, ()>,
     cmp: CmpFn,
     each: EachFn,
     fallback: FallbackFn,
@@ -123,12 +150,12 @@ struct ForEachEffect<
 }
 
 impl<
+        'a,
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        ItemIter: Iterator<Item = Item>,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-    > ForEachEffect<Item, CmpFn, ItemIter, EachFn, FallbackFn>
+    > ForEachEffect<'a, Item, CmpFn, EachFn, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
     /// array items. Matching items are patched, other items are inserted or deleted.
@@ -262,49 +289,54 @@ impl<
 }
 
 impl<
+        'a,
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        ItemIter: Iterator<Item = Item> + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-    > AnyEffect for ForEachEffect<Item, CmpFn, ItemIter, EachFn, FallbackFn>
+    > AnyEffect for ForEachEffect<'a, Item, CmpFn, EachFn, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {
         // Create a reactive context and call the test condition.
-        let items: Vec<Item> = match world.run_system(self.item_sys) {
-            Ok(items) => items.collect(),
-            Err(_) => Vec::default(),
+        let mut items = ListItems::<Item> {
+            items: Vec::new(),
+            changed: false,
         };
-        let mut next_state: Vec<ListItem<Item>> = Vec::with_capacity(items.len());
-        let next_len = items.len();
-        let prev_len = self.state.len();
+        world
+            .run_system_with_input(self.item_sys, &mut items)
+            .unwrap();
+        if items.changed || self.first {
+            let mut next_state: Vec<ListItem<Item>> = Vec::with_capacity(items.items.len());
+            let next_len = items.items.len();
+            let prev_len = self.state.len();
 
-        self.build_recursive(
-            world,
-            &self.state,
-            0..prev_len,
-            &items,
-            0..next_len,
-            &mut next_state,
-        );
-        let children: Vec<Entity> = next_state.iter().map(|i| i.child).collect();
-        self.state = std::mem::take(&mut next_state);
+            self.build_recursive(
+                world,
+                &self.state,
+                0..prev_len,
+                &items.items,
+                0..next_len,
+                &mut next_state,
+            );
+            let children: Vec<Entity> = next_state.iter().map(|i| i.child).collect();
+            self.state = std::mem::take(&mut next_state);
 
-        if next_len == 0 {
-            if prev_len > 0 || self.first {
-                self.first = false;
-                // Transitioning from non-empty to empty, generate fallback.
-                world.entity_mut(parent).despawn_descendants();
-                world.commands().entity(parent).with_children(|builder| {
-                    (self.fallback)(builder);
-                });
+            if next_len == 0 {
+                if prev_len > 0 || self.first {
+                    self.first = false;
+                    // Transitioning from non-empty to empty, generate fallback.
+                    world.entity_mut(parent).despawn_descendants();
+                    world.commands().entity(parent).with_children(|builder| {
+                        (self.fallback)(builder);
+                    });
+                }
+            } else {
+                if prev_len == 0 {
+                    // Transitioning from non-empty to empty, delete fallback.
+                    world.entity_mut(parent).despawn_descendants();
+                }
+                world.entity_mut(parent).replace_children(&children);
             }
-        } else {
-            if prev_len == 0 {
-                // Transitioning from non-empty to empty, delete fallback.
-                world.entity_mut(parent).despawn_descendants();
-            }
-            world.entity_mut(parent).replace_children(&children);
         }
     }
 
