@@ -2,6 +2,7 @@ use bevy::app::{App, Plugin, Update};
 mod core_button;
 mod core_slider;
 mod core_toggle;
+mod cursor;
 mod disabled;
 pub mod focus;
 pub mod handle;
@@ -22,7 +23,7 @@ pub struct ThoriumUiHeadlessPlugin;
 impl Plugin for ThoriumUiHeadlessPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputDispatchPlugin)
-            .add_systems(Update, hover::update_hover_states)
+            .add_systems(Update, (hover::update_hover_states, cursor::update_cursor))
             .add_observer(core_button::button_on_key_event)
             .add_observer(core_button::button_on_pointer_down)
             .add_observer(core_button::button_on_pointer_up)

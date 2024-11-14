@@ -183,9 +183,7 @@ impl UiTemplate for Slider {
             Name::new("Slider"),
             Hovering::default(),
         ));
-        // let slider_id = slider.id();
 
-        // Pain point: Need to capture all props for closures.
         let min = self.min;
         let max = self.max;
         let value = self.value;

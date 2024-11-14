@@ -12,8 +12,8 @@ use crate::{
 
 #[derive(Component)]
 pub struct CoreToggle {
-    pub(crate) checked: Signal<bool>,
-    pub(crate) on_change: Option<SystemId<In<bool>>>,
+    pub checked: Signal<bool>,
+    pub on_change: Option<SystemId<In<bool>>>,
 }
 
 pub(crate) fn toggle_on_key_input(

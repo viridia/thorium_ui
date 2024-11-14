@@ -4,8 +4,12 @@ use bevy::{
     ui::UiMaterialPlugin,
 };
 
+pub mod animation;
 mod button;
+mod checkbox;
 pub mod colors;
+mod disclosure_toggle;
+mod gradient_slider;
 mod icon;
 mod icon_button;
 mod image_handle;
@@ -14,6 +18,7 @@ pub mod rounded_corners;
 pub mod size;
 mod slider;
 pub mod spacer;
+mod spinbox;
 mod swatch;
 mod swatch_grid;
 mod text_styles;
@@ -24,10 +29,14 @@ use text_styles::{set_initial_text_style, update_text_styles};
 use thorium_ui_headless::ThoriumUiHeadlessPlugin;
 
 pub use button::{Button, ButtonVariant};
+pub use checkbox::Checkbox;
+pub use disclosure_toggle::DisclosureToggle;
+pub use gradient_slider::{ColorGradient, GradientSlider};
 pub use icon::Icon;
 pub use icon_button::IconButton;
 pub use slider::Slider;
 pub use spacer::Spacer;
+pub use spinbox::SpinBox;
 pub use swatch::Swatch;
 pub use swatch_grid::SwatchGrid;
 pub use text_styles::{
@@ -71,9 +80,7 @@ impl Plugin for ThoriumUiControlsPlugin {
             UiMaterialPlugin::<SliderRectMaterial>::default(),
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
             // animation::BistableTransitionPlugin,
-            // animation::AnimatedTransitionPlugin,
-            // controls::ControlEventsPlugin,
-            // InputDispatchPlugin,
+            animation::AnimatedTransitionPlugin,
         ));
 
         app.add_plugins(ThoriumUiHeadlessPlugin);
