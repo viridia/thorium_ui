@@ -14,6 +14,8 @@ pub mod rounded_corners;
 pub mod size;
 mod slider;
 pub mod spacer;
+mod swatch;
+mod swatch_grid;
 mod text_styles;
 pub mod typography;
 
@@ -26,6 +28,8 @@ pub use icon::Icon;
 pub use icon_button::IconButton;
 pub use slider::Slider;
 pub use spacer::Spacer;
+pub use swatch::Swatch;
+pub use swatch_grid::SwatchGrid;
 pub use text_styles::{
     InheritableFont, InheritableFontColor, InheritableFontSize, UseInheritedTextStyles,
 };

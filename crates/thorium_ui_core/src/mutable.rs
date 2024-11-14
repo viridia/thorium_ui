@@ -2,6 +2,8 @@ use std::marker::PhantomData;
 
 use bevy::{ecs::world::DeferredWorld, prelude::*, ui::experimental::GhostNode};
 
+use crate::Signal;
+
 /// Contains a mutable reactive value.
 #[derive(Component)]
 pub(crate) struct MutableCell<T>(pub(crate) T);
@@ -46,10 +48,10 @@ impl<T> Mutable<T>
 where
     T: PartialEq + Send + Sync + 'static,
 {
-    // /// Returns a signal for this [`Mutable`] with Copy semantics.
-    // pub fn signal(&self) -> Signal<T> {
-    //     Signal::Mutable(*self)
-    // }
+    /// Returns a signal for this [`Mutable`] with Copy semantics.
+    pub fn signal(&self) -> Signal<T> {
+        Signal::Mutable(*self)
+    }
 
     /// Get a reference to the value of this [`Mutable`].
     ///
