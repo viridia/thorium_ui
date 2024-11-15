@@ -10,7 +10,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, CreateMemo, ReadMemo, ThoriumUiCorePlugin};
+use thorium_ui::{CreateCond, CreateMemo, ReadMemo, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()

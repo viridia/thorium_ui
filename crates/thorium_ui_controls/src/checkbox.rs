@@ -13,7 +13,7 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Cond, InsertWhen, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    CreateCond, InsertWhen, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},

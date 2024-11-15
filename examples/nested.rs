@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, InvokeUiTemplate, ThoriumUiCorePlugin, UiTemplate};
+use thorium_ui::{CreateCond, InvokeUiTemplate, ThoriumUiCorePlugin, UiTemplate};
 
 fn main() {
     App::new()

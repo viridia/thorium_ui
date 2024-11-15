@@ -3,7 +3,7 @@ use bevy::{ecs::system::SystemId, prelude::*};
 
 use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
 
-pub trait Switch {
+pub trait CreateSwitch {
     fn switch<
         M: Send + Sync + 'static,
         P: PartialEq + Send + Sync + 'static,
@@ -16,7 +16,7 @@ pub trait Switch {
     ) -> &mut Self;
 }
 
-impl<'w> Switch for ChildBuilder<'w> {
+impl<'w> CreateSwitch for ChildBuilder<'w> {
     fn switch<
         M: Send + Sync + 'static,
         P: PartialEq + Send + Sync + 'static,

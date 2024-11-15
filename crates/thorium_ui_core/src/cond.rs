@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
 
-pub trait Cond {
+pub trait CreateCond {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
@@ -19,7 +19,7 @@ pub trait Cond {
     ) -> &mut Self;
 }
 
-impl Cond for ChildBuilder<'_> {
+impl CreateCond for ChildBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
@@ -46,7 +46,7 @@ impl Cond for ChildBuilder<'_> {
     }
 }
 
-impl Cond for WorldChildBuilder<'_> {
+impl CreateCond for WorldChildBuilder<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,

@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateCallback, ForEach, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleEntity,
+    CreateCallback, CreateForEach, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleEntity,
     StyleHandle, StyleTuple, UiTemplate,
 };
 

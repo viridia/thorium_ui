@@ -37,7 +37,7 @@ impl<Item: Clone> ListItems<Item> {
     }
 }
 
-pub trait ForEach {
+pub trait CreateForEach {
     fn for_each<
         'a: 'static,
         M: Send + Sync + 'static,
@@ -69,7 +69,7 @@ pub trait ForEach {
     ) -> &mut Self;
 }
 
-impl ForEach for ChildBuilder<'_> {
+impl CreateForEach for ChildBuilder<'_> {
     fn for_each<
         'a: 'static,
         M: Send + Sync + 'static,

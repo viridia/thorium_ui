@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{ForEach, ListItems, ThoriumUiCorePlugin};
+use thorium_ui::{CreateForEach, ListItems, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
