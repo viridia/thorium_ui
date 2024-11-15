@@ -19,6 +19,7 @@ pub mod size;
 mod slider;
 pub mod spacer;
 mod spinbox;
+mod splitter;
 mod swatch;
 mod swatch_grid;
 mod text_styles;
@@ -38,6 +39,7 @@ pub use icon_button::IconButton;
 pub use slider::Slider;
 pub use spacer::Spacer;
 pub use spinbox::SpinBox;
+pub use splitter::{Splitter, SplitterDirection};
 pub use swatch::Swatch;
 pub use swatch_grid::SwatchGrid;
 pub use text_styles::{
