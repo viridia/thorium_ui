@@ -1,8 +1,4 @@
 # TODO
 
-- Mutable
-- Derived
-- Callback
-- Signal
-- Button demo
-- Focus
+- Dialog animation starts one frame too late; visible glitch.
+- Need "prime the pump" for effects.
