@@ -6,8 +6,8 @@ use thorium_ui::{
     InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
-    colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, IconButton,
-    InheritableFontColor, ThoriumUiControlsPlugin, UseInheritedTextStyles,
+    colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, Icon, IconButton,
+    InheritableFontColor, ThoriumUiControlsPlugin, ToolButton, ToolPalette, UseInheritedTextStyles,
 };
 
 fn style_test(ec: &mut EntityCommands) {
@@ -178,7 +178,8 @@ fn setup_view_root(mut commands: Commands) {
                             .minimal(true),
                         );
                 });
-            builder.spawn((Text::new("IconButton Size"), UseInheritedTextStyles));
+
+                builder.spawn((Text::new("IconButton Size"), UseInheritedTextStyles));
             builder
                 .spawn(Node::default())
                 .style(style_row)
@@ -227,58 +228,59 @@ fn setup_view_root(mut commands: Commands) {
                             .size(Size::Xxxs),
                         );
                 });
-            // builder.text("ToolPalette");
-            // builder
-            //     .spawn(Node::default())
-            //     .style(style_row)
-            //     .create_children(|builder| {
-            //         builder.invoke(ToolPalette::new().columns(3).children(|builder| {
-            //             builder
-            //                 .invoke(
-            //                     ToolButton::new()
-            //                         .children(|builder| {
-            //                             builder.invoke(Icon::new(
-            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
-            //                             ));
-            //                         })
-            //                         .selected(true)
-            //                         .corners(RoundedCorners::TopLeft),
-            //                 )
-            //                 .invoke(ToolButton::new().children(|builder| {
-            //                     builder.invoke(Icon::new("embedded://thorium_ui_controls/assets/icons/chevron_left.png"));
-            //                 }))
-            //                 .invoke(
-            //                     ToolButton::new()
-            //                         .children(|builder| {
-            //                             builder.invoke(Icon::new(
-            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
-            //                             ));
-            //                         })
-            //                         .corners(RoundedCorners::TopRight),
-            //                 )
-            //                 .invoke(
-            //                     ToolButton::new()
-            //                         .children(|builder| {
-            //                             builder.invoke(Icon::new(
-            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
-            //                             ));
-            //                         })
-            //                         .corners(RoundedCorners::BottomLeft),
-            //                 )
-            //                 .invoke(ToolButton::new().children(|builder| {
-            //                     builder.invoke(Icon::new("embedded://thorium_ui_controls/assets/icons/chevron_left.png"));
-            //                 }))
-            //                 .invoke(
-            //                     ToolButton::new()
-            //                         .children(|builder| {
-            //                             builder.invoke(Icon::new(
-            //                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
-            //                             ));
-            //                         })
-            //                         .corners(RoundedCorners::BottomRight),
-            //                 );
-            //         }));
-            // });
+
+            builder.spawn((Text::new("ToolPalette"), UseInheritedTextStyles));
+            builder
+                .spawn(Node::default())
+                .style(style_row)
+                .with_children(|builder| {
+                    builder.invoke(ToolPalette::new().columns(3).children(|builder| {
+                        builder
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .selected(true)
+                                    .corners(RoundedCorners::TopLeft),
+                            )
+                            .invoke(ToolButton::new().children(|builder| {
+                                builder.invoke(Icon::new("embedded://thorium_ui_controls/assets/icons/chevron_left.png"));
+                            }))
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .corners(RoundedCorners::TopRight),
+                            )
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .corners(RoundedCorners::BottomLeft),
+                            )
+                            .invoke(ToolButton::new().children(|builder| {
+                                builder.invoke(Icon::new("embedded://thorium_ui_controls/assets/icons/chevron_left.png"));
+                            }))
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .corners(RoundedCorners::BottomRight),
+                            );
+                    }));
+            });
         });
 }
 

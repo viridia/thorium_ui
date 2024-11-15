@@ -1,4 +1,5 @@
 use bevy::app::{App, Plugin, Update};
+mod core_barrier;
 mod core_button;
 mod core_slider;
 mod core_toggle;
@@ -15,6 +16,7 @@ pub use core_slider::CoreSlider;
 pub use core_toggle::CoreToggle;
 pub use disabled::{InteractionDisabled, IsInteractionDisabled};
 use focus::InputDispatchPlugin;
+pub use focus::{SetFocusCommand, SetKeyboardFocus};
 use tab_navigation::KeyboardFocusVisible;
 pub use value_change::ValueChange;
 
@@ -32,8 +34,8 @@ impl Plugin for ThoriumUiHeadlessPlugin {
             .add_observer(core_button::button_on_pointer_cancel)
             .add_observer(core_toggle::toggle_on_key_input)
             .add_observer(core_toggle::toggle_on_pointer_click)
-            // .add_observer(barrier::barrier_on_key_input)
-            // .add_observer(barrier::barrier_on_pointer_down)
+            .add_observer(core_barrier::barrier_on_key_input)
+            .add_observer(core_barrier::barrier_on_pointer_down)
             .add_observer(core_slider::slider_on_drag_start)
             .add_observer(core_slider::slider_on_drag_end)
             .add_observer(core_slider::slider_on_drag)

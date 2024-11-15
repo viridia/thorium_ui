@@ -22,6 +22,7 @@ mod spinbox;
 mod swatch;
 mod swatch_grid;
 mod text_styles;
+mod tool_palette;
 pub mod typography;
 
 use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
@@ -43,6 +44,7 @@ pub use text_styles::{
     InheritableFont, InheritableFontColor, InheritableFontSize, UseInheritedTextStyles,
 };
 pub use thorium_ui_headless::{CoreButtonPressed, ValueChange};
+pub use tool_palette::{ToolButton, ToolPalette};
 
 pub struct ThoriumUiControlsPlugin;
 
