@@ -6,9 +6,9 @@ use bevy::{
     ui::{self, BackgroundColor, BorderColor, Node},
 };
 
-// mod bistable_transition;
+mod bistable_transition;
 
-// pub use bistable_transition::*;
+pub use bistable_transition::*;
 
 /// Trait that represents a property that can be animated, such as background color,
 /// transform, and so on.
@@ -193,7 +193,6 @@ where
             }
         } else if let Some(mut cmp) = entity.get_mut::<T::ComponentType>() {
             let origin = initial.unwrap_or_else(|| T::current(&cmp));
-            // let origin = T::current(&cmp);
             let mut transition = Self::new(origin, target, duration, 0.0);
             transition.advance(&mut cmp, 0.0);
             entity.insert(transition);
@@ -260,6 +259,7 @@ impl Plugin for AnimatedTransitionPlugin {
                 AnimatedTransition::<AnimatedScale>::run_animations,
                 AnimatedTransition::<AnimatedRotation>::run_animations,
                 AnimatedTransition::<AnimatedTranslation>::run_animations,
+                bistable_transition::enter_exit_state_machine,
             ),
         );
     }

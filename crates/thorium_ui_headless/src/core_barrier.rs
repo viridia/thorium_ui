@@ -10,7 +10,7 @@ use crate::focus::{FocusKeyboardInput, SetKeyboardFocus};
 /// from reaching elements behind it, and can be used to close a dialog or menu.
 #[derive(Component)]
 pub struct CoreBarrier {
-    pub(crate) on_close: Option<SystemId>,
+    pub on_close: Option<SystemId>,
 }
 
 pub(crate) fn barrier_on_key_input(

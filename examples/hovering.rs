@@ -12,7 +12,7 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    EntitEffect, InvokeUiTemplate, ThoriumUiHeadlessPlugin, ThoriumUiCorePlugin, UiTemplate,
+    EntityEffect, InvokeUiTemplate, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiTemplate,
 };
 
 fn main() {

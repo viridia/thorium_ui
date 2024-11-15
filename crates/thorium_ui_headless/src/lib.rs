@@ -11,6 +11,7 @@ pub mod hover;
 pub mod tab_navigation;
 mod value_change;
 
+pub use core_barrier::CoreBarrier;
 pub use core_button::{CoreButton, CoreButtonPressed};
 pub use core_slider::CoreSlider;
 pub use core_toggle::CoreToggle;

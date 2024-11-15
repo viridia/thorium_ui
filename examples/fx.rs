@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{EntitEffect, ThoriumUiCorePlugin};
+use thorium_ui::{EntityEffect, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()

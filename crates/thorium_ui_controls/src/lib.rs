@@ -8,6 +8,7 @@ pub mod animation;
 mod button;
 mod checkbox;
 pub mod colors;
+mod dialog;
 mod disclosure_toggle;
 mod gradient_slider;
 mod icon;
@@ -32,6 +33,7 @@ use thorium_ui_headless::ThoriumUiHeadlessPlugin;
 
 pub use button::{Button, ButtonVariant};
 pub use checkbox::Checkbox;
+pub use dialog::{Dialog, DialogBody, DialogFooter, DialogHeader};
 pub use disclosure_toggle::DisclosureToggle;
 pub use gradient_slider::{ColorGradient, GradientSlider};
 pub use icon::Icon;

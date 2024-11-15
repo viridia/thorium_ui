@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateMemo, EntitEffect, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    CreateMemo, EntityEffect, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
 

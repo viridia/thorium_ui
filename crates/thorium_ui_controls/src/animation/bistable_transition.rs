@@ -1,5 +1,4 @@
-use bevy::{prelude::*, ui::experimental::GhostNode};
-use thorium_ui_core::Signal;
+use bevy::{ecs::system::SystemId, prelude::*};
 
 /// Plugin that runs the timers for bistable transitions.
 pub struct BistableTransitionPlugin;
@@ -41,10 +40,48 @@ impl BistableTransitionState {
 }
 
 #[derive(Component, Default)]
-pub struct BistableTransitionStateMachine {
+#[require(TransitionTimer)]
+pub struct BistableTransition {
     pub open: bool,
     pub delay: f32,
     pub state: BistableTransitionState,
+    pub on_exited: Option<SystemId>,
+}
+
+impl BistableTransition {
+    /// Construct a new bistable transition.
+    pub fn new(open: bool, delay: f32) -> Self {
+        Self {
+            open,
+            delay,
+            state: if open {
+                BistableTransitionState::Entering
+            } else {
+                BistableTransitionState::Exited
+            },
+            on_exited: None,
+        }
+    }
+
+    pub fn with_exit_callback(mut self, on_exited: SystemId) -> Self {
+        self.on_exited = Some(on_exited);
+        self
+    }
+
+    pub fn set_exit_callback(mut self, on_exited: Option<SystemId>) -> Self {
+        self.on_exited = on_exited;
+        self
+    }
+
+    /// Get the open state of the transition.
+    pub fn set_open(&mut self, open: bool) {
+        self.open = open;
+    }
+
+    /// Toggle the open state of the transition.
+    pub fn toggle(&mut self) {
+        self.open = !self.open;
+    }
 }
 
 #[derive(Component, Default)]
@@ -52,67 +89,76 @@ pub struct TransitionTimer {
     pub timer: f32,
 }
 
-/// Trait which adds `create_bistable_transition` to [`Cx`].
-pub trait CreateBistableTransition {
-    /// Create a bistable transition: a state machine that toggles between two states, with a delay
-    /// between each transition. This can be used for animated effects such as opening and closing
-    /// a dialog.
-    ///
-    /// # Arguments
-    /// * `open` - A signal which controls the state of the transition. When `open` is `true`, the
-    ///    transition proceed through the `EnterStart`, `Entering`, and `Entered` states. When
-    ///    `open` is `false`, the transition proceeds through the `ExitStart`, `Exiting`, and
-    ///    `Exited` states.
-    /// * `delay` - The duration of the transition, in seconds.
-    fn create_bistable_transition(
-        &mut self,
-        open: Signal<bool>,
-        delay: f32,
-    ) -> Signal<BistableTransitionState>;
-}
+// /// Trait which adds `create_bistable_transition` to [`Cx`].
+// pub trait CreateBistableTransition {
+//     /// Create a bistable transition: a state machine that toggles between two states, with a delay
+//     /// between each transition. This can be used for animated effects such as opening and closing
+//     /// a dialog.
+//     ///
+//     /// # Arguments
+//     /// * `open` - A signal which controls the state of the transition. When `open` is `true`, the
+//     ///    transition proceed through the `EnterStart`, `Entering`, and `Entered` states. When
+//     ///    `open` is `false`, the transition proceeds through the `ExitStart`, `Exiting`, and
+//     ///    `Exited` states.
+//     /// * `delay` - The duration of the transition, in seconds.
+//     fn create_bistable_transition(
+//         &mut self,
+//         open: Signal<bool>,
+//         delay: f32,
+//     ) -> Signal<BistableTransitionState>;
+// }
 
-impl<'w> CreateBistableTransition for ChildBuilder<'w> {
-    fn create_bistable_transition(
-        &mut self,
-        open: Signal<bool>,
-        delay: f32,
-    ) -> Signal<BistableTransitionState> {
-        // Create an entity to hold the state machine.
-        let entity = self.spawn(GhostNode::default()).id();
+// impl<'w> CreateBistableTransition for ChildBuilder<'w> {
+//     fn create_bistable_transition(
+//         &mut self,
+//         open: Signal<bool>,
+//         delay: f32,
+//     ) -> Signal<BistableTransitionState> {
+//         // Create an entity to hold the state machine.
+//         let mut entity = self.spawn(GhostNode::default());
+//         let entity_id = entity.id();
 
-        // Effect which updates the state machine when the `open` signal changes.
-        self.create_effect(move |ve| {
-            let open = open.get(ve);
-            let mut entt = ve.world_mut().entity_mut(entity);
-            match entt.get_mut::<BistableTransitionStateMachine>() {
-                Some(mut ee) => {
-                    ee.open = open;
-                }
-                None => {
-                    entt.insert((
-                        BistableTransitionStateMachine {
-                            open,
-                            delay,
-                            ..default()
-                        },
-                        TransitionTimer { ..default() },
-                    ));
-                }
-            };
-        });
+//         // Effect which updates the state machine when the `open` signal changes.
+//         entity.effect(
+//             move |world: DeferredWorld| open.get(&world),
+//             move |open, ent| {
+//                 match ent.get_mut::<BistableTransition>() {
+//                     Some(mut ee) => {
+//                         ee.open = open;
+//                     }
+//                     None => {
+//                         ent.insert((
+//                             BistableTransition {
+//                                 open,
+//                                 delay,
+//                                 ..default()
+//                             },
+//                             TransitionTimer { ..default() },
+//                         ));
+//                     }
+//                 };
+//             },
+//         );
 
-        // Derived signal which returns the current state.
-        self.create_derived(move |cc| {
-            cc.read_component::<BistableTransitionStateMachine>(entity)
-                .map(|ee| ee.state)
-                .unwrap_or(BistableTransitionState::Exited)
-        })
-    }
-}
+//         // Derived signal which returns the current state.
+//         self.create_memo(
+//             move |world: DeferredWorld| {
+//                 world
+//                     .entity(entity_id)
+//                     .get::<BistableTransition>()
+//                     .map(|ee| ee.state)
+//                     .unwrap_or(BistableTransitionState::Exited)
+//             },
+//             BistableTransitionState::Exited,
+//         )
+//         .into_signal()
+//     }
+// }
 
 pub fn enter_exit_state_machine(
-    mut query: Query<(&mut BistableTransitionStateMachine, &mut TransitionTimer)>,
+    mut query: Query<(&mut BistableTransition, &mut TransitionTimer)>,
     time: Res<Time>,
+    mut commands: Commands,
 ) {
     for (mut ee, mut tt) in query.iter_mut() {
         match ee.state {
@@ -141,6 +187,9 @@ pub fn enter_exit_state_machine(
                     tt.timer += time.delta_secs();
                     if tt.timer > ee.delay {
                         ee.state = BistableTransitionState::Exited;
+                        if let Some(on_exited) = ee.on_exited {
+                            commands.run_system(on_exited);
+                        }
                     }
                 }
             }

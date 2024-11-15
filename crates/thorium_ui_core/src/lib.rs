@@ -1,6 +1,7 @@
 mod callback;
 mod cond;
 mod effect_cell;
+mod effect_hook;
 mod entity_effect;
 mod foreach;
 mod insert_when;
@@ -16,7 +17,8 @@ use bevy::app::{App, Plugin, Update};
 pub use callback::CreateCallback;
 pub use cond::CreateCond;
 use effect_cell::update_effects;
-pub use entity_effect::{EntitEffect, WithEffect};
+pub use effect_hook::CreateHookEffect;
+pub use entity_effect::EntityEffect;
 pub use foreach::{CreateForEach, ListItems};
 pub use insert_when::InsertWhen;
 pub use memo::{CreateMemo, Memo, ReadMemo};

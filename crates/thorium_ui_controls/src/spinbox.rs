@@ -6,7 +6,7 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    CreateCallback, CreateCond, CreateMemo, CreateMutable, EntitEffect, IntoSignal,
+    CreateCallback, CreateCond, CreateMemo, CreateMutable, EntityEffect, IntoSignal,
     InvokeUiTemplate, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
 
