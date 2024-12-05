@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::effect_cell::{AnyEffect, EffectCell};
 
 /// General dynamic effect which can be applied to an entity.
 // pub struct CreateEntityEffect<
@@ -95,8 +95,8 @@ pub struct WithEffectAction<P, M, EffectFn: Fn(P, &mut EntityWorldMut)> {
     marker: std::marker::PhantomData<M>,
 }
 
-impl<P: 'static + PartialEq + Clone, M, EffectFn: Fn(P, &mut EntityWorldMut)> AnyEffect
-    for WithEffectAction<P, M, EffectFn>
+impl<P: 'static + PartialEq + Send + Sync + Clone, M, EffectFn: Fn(P, &mut EntityWorldMut)>
+    AnyEffect for WithEffectAction<P, M, EffectFn>
 {
     fn update(&mut self, world: &mut World, _entity: Entity) {
         // Run the dependencies and see if the result changed.
@@ -109,9 +109,7 @@ impl<P: 'static + PartialEq + Clone, M, EffectFn: Fn(P, &mut EntityWorldMut)> An
     }
 
     fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        world
-            .commands()
-            .queue(UnregisterSystemCommand(self.deps_sys));
+        world.commands().unregister_system(self.deps_sys);
     }
 }
 

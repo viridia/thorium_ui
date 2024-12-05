@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+accesskit = "0.17"
 bevy = { workspace = true }
 thorium_ui_core = { workspace = true }
 thorium_ui_headless = { workspace = true }

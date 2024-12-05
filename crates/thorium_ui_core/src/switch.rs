@@ -1,7 +1,7 @@
 #![allow(clippy::type_complexity)]
 use bevy::{ecs::system::SystemId, prelude::*};
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::effect_cell::{AnyEffect, EffectCell};
 
 pub trait CreateSwitch {
     fn switch<
@@ -102,7 +102,7 @@ impl<P: PartialEq + Send + Sync + 'static> SwitchEffect<P> {
     }
 }
 
-impl<P: PartialEq + 'static> AnyEffect for SwitchEffect<P> {
+impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
     fn update(&mut self, world: &mut World, entity: Entity) {
         // Run the condition and see if the result changed.
         let value = world.run_system(self.value_sys);
@@ -133,8 +133,6 @@ impl<P: PartialEq + 'static> AnyEffect for SwitchEffect<P> {
     }
 
     fn cleanup(&self, world: &mut bevy::ecs::world::DeferredWorld, _entity: Entity) {
-        world
-            .commands()
-            .queue(UnregisterSystemCommand(self.value_sys));
+        world.commands().unregister_system(self.value_sys);
     }
 }

@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
+use accesskit::Role;
 use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
+    a11y::AccessibilityNode,
     color::Luminance,
     ecs::{system::SystemId, world::DeferredWorld},
+    input_focus::IsFocused,
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -17,7 +16,7 @@ use thorium_ui_core::{
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
-    tab_navigation::{IsFocused, TabIndex},
+    tab_navigation::TabIndex,
     CoreToggle, InteractionDisabled,
 };
 
@@ -169,7 +168,7 @@ impl UiTemplate for Checkbox {
                     checked,
                     on_change: self.on_change,
                 },
-                AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
+                AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
             .insert_when(
                 move |world: DeferredWorld| disabled.get(&world),
@@ -216,7 +215,7 @@ impl UiTemplate for Checkbox {
                             move |world: DeferredWorld| checked.get(&world),
                             move |builder| {
                                 builder
-                                    .spawn((UiImage {
+                                    .spawn((ImageNode {
                                         color: Srgba::WHITE.into(),
                                         ..default()
                                     },

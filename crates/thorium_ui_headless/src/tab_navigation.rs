@@ -5,16 +5,14 @@ use bevy::{
         component::Component,
         entity::Entity,
         system::{Query, ResMut, SystemParam},
-        world::DeferredWorld,
     },
     hierarchy::{Children, Parent},
     input::{ButtonInput, ButtonState},
+    input_focus::{FocusKeyboardInput, InputFocus, InputFocusVisible},
     log::*,
-    prelude::{Added, KeyCode, Res, Resource, Trigger, With, Without, World},
+    prelude::{Added, KeyCode, Res, Trigger, With, Without},
     ui::Node,
 };
-
-use crate::focus::{FocusKeyboardInput, KeyboardFocus};
 
 /// A component which indicates that an entity wants to participate in tab navigation.
 ///
@@ -34,9 +32,6 @@ pub struct TabIndex(pub i32);
 /// Indicates that this widget should automatically receive focus when it's added.
 #[derive(Debug, Default, Component, Copy, Clone)]
 pub struct AutoFocus;
-
-#[derive(Clone, Debug, Resource)]
-pub struct KeyboardFocusVisible(pub bool);
 
 /// A component used to mark a tree of entities as containing tabbable elements.
 #[derive(Debug, Default, Component, Copy, Clone)]
@@ -209,7 +204,7 @@ fn compare_tab_indices(a: &(Entity, TabIndex), b: &(Entity, TabIndex)) -> std::c
 }
 
 fn handle_auto_focus(
-    mut focus: ResMut<KeyboardFocus>,
+    mut focus: ResMut<InputFocus>,
     mut a11y_focus: ResMut<Focus>,
     query: Query<Entity, (With<TabIndex>, Added<AutoFocus>)>,
 ) {
@@ -232,9 +227,9 @@ impl Plugin for TabNavigationPlugin {
 pub fn handle_tab_navigation(
     mut trigger: Trigger<FocusKeyboardInput>,
     nav: TabNavigation,
-    mut focus: ResMut<KeyboardFocus>,
+    mut focus: ResMut<InputFocus>,
     mut a11y_focus: ResMut<Focus>,
-    mut visible: ResMut<KeyboardFocusVisible>,
+    mut visible: ResMut<InputFocusVisible>,
     keys: Res<ButtonInput<KeyCode>>,
 ) {
     // Tab navigation.
@@ -257,111 +252,5 @@ pub fn handle_tab_navigation(
             a11y_focus.0 = next;
             visible.0 = true;
         }
-    }
-}
-
-/// Trait which defines a method to check if an entity is disabled.
-pub trait IsFocused {
-    /// Returns true if the given entity has keyboard focus.
-    fn is_focused(&self, entity: Entity) -> bool;
-
-    /// Returns true if the given entity or any of it's descendants has keyboard focus.
-    fn is_focus_within(&self, entity: Entity) -> bool;
-
-    /// Returns true if the given entity has keyboard focus and the focus indicator is visible.
-    fn is_focus_visible(&self, entity: Entity) -> bool;
-
-    /// Returns true if the given entity, or any descenant, has keyboard focus and the focus
-    /// indicator is visible.
-    fn is_focus_within_visible(&self, entity: Entity) -> bool;
-}
-
-impl IsFocused for DeferredWorld<'_> {
-    fn is_focused(&self, entity: Entity) -> bool {
-        self.get_resource::<KeyboardFocus>()
-            .map(|f| f.0)
-            .unwrap_or_default()
-            .map(|f| f == entity)
-            .unwrap_or_default()
-    }
-
-    fn is_focus_within(&self, entity: Entity) -> bool {
-        let Some(focus_resource) = self.get_resource::<KeyboardFocus>() else {
-            return false;
-        };
-        let Some(focus) = focus_resource.0 else {
-            return false;
-        };
-        let mut e = entity;
-        loop {
-            if e == focus {
-                return true;
-            }
-            if let Some(parent) = self.entity(e).get::<Parent>() {
-                e = parent.get();
-            } else {
-                break;
-            }
-        }
-        false
-    }
-
-    fn is_focus_visible(&self, entity: Entity) -> bool {
-        self.get_resource::<KeyboardFocusVisible>()
-            .map(|vis| vis.0)
-            .unwrap_or_default()
-            && self.is_focused(entity)
-    }
-
-    fn is_focus_within_visible(&self, entity: Entity) -> bool {
-        self.get_resource::<KeyboardFocusVisible>()
-            .map(|vis| vis.0)
-            .unwrap_or_default()
-            && self.is_focus_within(entity)
-    }
-}
-
-impl IsFocused for World {
-    fn is_focused(&self, entity: Entity) -> bool {
-        self.get_resource::<KeyboardFocus>()
-            .map(|f| f.0)
-            .unwrap_or_default()
-            .map(|f| f == entity)
-            .unwrap_or_default()
-    }
-
-    fn is_focus_within(&self, entity: Entity) -> bool {
-        let Some(focus_resource) = self.get_resource::<KeyboardFocus>() else {
-            return false;
-        };
-        let Some(focus) = focus_resource.0 else {
-            return false;
-        };
-        let mut e = entity;
-        loop {
-            if e == focus {
-                return true;
-            }
-            if let Some(parent) = self.entity(e).get::<Parent>() {
-                e = parent.get();
-            } else {
-                break;
-            }
-        }
-        false
-    }
-
-    fn is_focus_visible(&self, entity: Entity) -> bool {
-        self.get_resource::<KeyboardFocusVisible>()
-            .map(|vis| vis.0)
-            .unwrap_or_default()
-            && self.is_focused(entity)
-    }
-
-    fn is_focus_within_visible(&self, entity: Entity) -> bool {
-        self.get_resource::<KeyboardFocusVisible>()
-            .map(|vis| vis.0)
-            .unwrap_or_default()
-            && self.is_focus_within(entity)
     }
 }

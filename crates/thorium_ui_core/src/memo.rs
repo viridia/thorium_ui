@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::effect_cell::{AnyEffect, EffectCell};
 
 /// A memoized computation.
 #[derive(Copy, Clone)]
@@ -41,7 +41,7 @@ impl<P: PartialEq + Clone + Send + Sync + 'static> AnyEffect for MemoEffect<P> {
     }
 
     fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        world.commands().queue(UnregisterSystemCommand(self.system));
+        world.commands().unregister_system(self.system);
     }
 }
 

@@ -4,13 +4,12 @@ use crate::{
     colors, rounded_corners::RoundedCorners, size::Size, text_styles::UseInheritedTextStyles,
     typography, InheritableFontColor, InheritableFontSize,
 };
+use accesskit::Role;
 use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
+    a11y::AccessibilityNode,
     color::Luminance,
     ecs::{system::SystemId, world::DeferredWorld},
+    input_focus::IsFocused,
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -21,7 +20,7 @@ use thorium_ui_core::{
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
-    tab_navigation::{AutoFocus, IsFocused, TabIndex},
+    tab_navigation::{AutoFocus, TabIndex},
     CoreButton, CoreButtonPressed, InteractionDisabled, IsInteractionDisabled,
 };
 
@@ -245,7 +244,7 @@ impl UiTemplate for Button {
                 TabIndex(self.tab_index),
                 CoreButtonPressed(false),
                 CoreButton { on_click },
-                AccessibilityNode::from(NodeBuilder::new(Role::Button)),
+                AccessibilityNode::from(accesskit::Node::new(Role::Button)),
             ))
             .insert_when(
                 move |world: DeferredWorld| disabled.get(&world),

@@ -6,7 +6,7 @@ use std::{
 use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
 use crate::{
-    effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand},
+    effect_cell::{AnyEffect, EffectCell},
     lcs::lcs,
 };
 
@@ -341,8 +341,6 @@ impl<
     }
 
     fn cleanup(&self, world: &mut bevy::ecs::world::DeferredWorld, _entity: Entity) {
-        world
-            .commands()
-            .queue(UnregisterSystemCommand(self.item_sys));
+        world.commands().unregister_system(self.item_sys);
     }
 }

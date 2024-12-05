@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use bevy::{
-    ecs::{component::ComponentId, system::SystemId, world::DeferredWorld},
+    ecs::{component::ComponentId, world::DeferredWorld},
     prelude::*,
     ui::experimental::GhostNode,
 };
@@ -37,6 +37,7 @@ pub(crate) trait AnyEffect {
 fn on_add_effect(mut world: DeferredWorld, entity: Entity, _cid: ComponentId) {
     let cell = world.get_mut::<EffectCell>(entity).unwrap();
     let _comp = cell.0.clone();
+    // TODO: Run effect once
     // comp.lock().unwrap().cleanup(&mut world, entity);
 }
 
@@ -54,13 +55,5 @@ pub(crate) fn update_effects(world: &mut World) {
         .collect::<Vec<_>>();
     for (entity, eff) in effects {
         eff.lock().unwrap().update(world, entity);
-    }
-}
-
-pub(crate) struct UnregisterSystemCommand<I: SystemInput, O>(pub(crate) SystemId<I, O>);
-
-impl<I: SystemInput + 'static, O: 'static> Command for UnregisterSystemCommand<I, O> {
-    fn apply(self, world: &mut World) {
-        world.remove_system(self.0).unwrap();
     }
 }

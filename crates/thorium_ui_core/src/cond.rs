@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::effect_cell::{AnyEffect, EffectCell};
 
 pub trait CreateCond {
     fn cond<
@@ -109,8 +109,6 @@ impl<M, Pos: Fn(&mut ChildBuilder), Neg: Fn(&mut ChildBuilder)> AnyEffect
     }
 
     fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        world
-            .commands()
-            .queue(UnregisterSystemCommand(self.test_sys));
+        world.commands().unregister_system(self.test_sys);
     }
 }

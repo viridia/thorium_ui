@@ -1,10 +1,9 @@
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     input::ButtonState,
+    input_focus::{FocusKeyboardInput, SetInputFocus},
     prelude::*,
 };
-
-use crate::focus::{FocusKeyboardInput, SetKeyboardFocus};
 
 /// A "brrier" is a backdrop element, one that covers the entire screen, blocks click events
 /// from reaching elements behind it, and can be used to close a dialog or menu.
@@ -40,7 +39,7 @@ pub(crate) fn barrier_on_pointer_down(
 ) {
     if let Ok(bstate) = q_state.get(trigger.entity()) {
         let entity_id = trigger.entity();
-        world.set_keyboard_focus(entity_id);
+        world.set_input_focus(entity_id);
         trigger.propagate(false);
         if let Some(on_close) = bstate.on_close {
             commands.run_system(on_close);

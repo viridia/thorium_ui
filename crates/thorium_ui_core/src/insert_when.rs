@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::effect_cell::{AnyEffect, EffectCell};
 
 pub struct InsertWhenEffect<B: Bundle, FactoryFn: Fn() -> B> {
     target: Entity,
@@ -36,9 +36,7 @@ impl<B: Bundle, FactoryFn: Fn() -> B> AnyEffect for InsertWhenEffect<B, FactoryF
     }
 
     fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        world
-            .commands()
-            .queue(UnregisterSystemCommand(self.test_sys));
+        world.commands().unregister_system(self.test_sys);
     }
 }
 

@@ -5,7 +5,7 @@ use bevy::{
     prelude::{BuildChildren, Entity, EntityCommands, IntoSystem, World},
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::effect_cell::{AnyEffect, EffectCell};
 
 /// `StyleTuple` - a variable-length tuple of style functions.
 pub trait StyleTuple: Sync + Send {
@@ -176,8 +176,6 @@ impl<D: PartialEq + Clone + Send + Sync + 'static, M, EffectFn: Fn(D, &mut Entit
     }
 
     fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        world
-            .commands()
-            .queue(UnregisterSystemCommand(self.deps_sys));
+        world.commands().unregister_system(self.deps_sys);
     }
 }

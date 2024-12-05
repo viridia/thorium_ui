@@ -1,26 +1,24 @@
 use bevy::{
     ecs::{component::ComponentId, system::SystemId, world::DeferredWorld},
     prelude::{
-        BuildChildren, ChildBuild, ChildBuilder, Component, Entity, EntityCommands, In, IntoSystem,
-        SystemInput,
+        require, BuildChildren, ChildBuild, ChildBuilder, Component, Entity, EntityCommands, In,
+        IntoSystem, SystemInput,
     },
     ui::experimental::GhostNode,
 };
 
-use crate::effect_cell::UnregisterSystemCommand;
-
 #[derive(Component)]
 #[component(on_remove = on_remove_callback_cell::<I>, storage = "SparseSet")]
 #[require(GhostNode)]
-pub struct CallbackCell<I: SystemInput>(SystemId<I, ()>);
+pub struct CallbackCell<I: SystemInput + Send + Sync>(SystemId<I, ()>);
 
-fn on_remove_callback_cell<I: SystemInput + 'static>(
+fn on_remove_callback_cell<I: SystemInput + Send + Sync + 'static>(
     mut world: DeferredWorld,
     entity: Entity,
     _: ComponentId,
 ) {
     let system_id = world.entity(entity).get::<CallbackCell<I>>().unwrap().0;
-    world.commands().queue(UnregisterSystemCommand(system_id));
+    world.commands().unregister_system(system_id);
 }
 
 /// Methods for registering scoped one-shot systems.

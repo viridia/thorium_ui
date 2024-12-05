@@ -66,7 +66,7 @@ impl UiTemplate for Icon {
         let color = self.color;
 
         builder
-            .spawn((UiImage { ..default() }, UiImageHandle(icon)))
+            .spawn((ImageNode { ..default() }, UiImageHandle(icon)))
             .style((
                 move |ec: &mut EntityCommands| {
                     ec.entry::<Node>().and_modify(move |mut node| {
@@ -79,7 +79,7 @@ impl UiTemplate for Icon {
             .style_dyn(
                 move |world: DeferredWorld| color.get(&world),
                 |color, ent| {
-                    ent.entry::<UiImage>().and_modify(move |mut img| {
+                    ent.entry::<ImageNode>().and_modify(move |mut img| {
                         img.color = color;
                     });
                 },

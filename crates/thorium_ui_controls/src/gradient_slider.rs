@@ -343,7 +343,7 @@ impl UiTemplate for GradientSlider {
                     .with_children(|builder| {
                         builder
                             .spawn((
-                                UiImage {
+                                ImageNode {
                                     color: Srgba::WHITE.into(),
                                     ..default()
                                 },

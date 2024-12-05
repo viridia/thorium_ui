@@ -1,14 +1,12 @@
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     input::ButtonState,
+    input_focus::{FocusKeyboardInput, SetInputFocus},
     prelude::*,
 };
 use thorium_ui_core::Signal;
 
-use crate::{
-    focus::{FocusKeyboardInput, SetKeyboardFocus},
-    InteractionDisabled,
-};
+use crate::InteractionDisabled;
 
 #[derive(Component)]
 pub struct CoreToggle {
@@ -46,7 +44,7 @@ pub(crate) fn toggle_on_pointer_click(
 ) {
     if let Ok((tstate, disabled)) = q_state.get(trigger.entity()) {
         let checkbox_id = trigger.entity();
-        world.set_keyboard_focus(checkbox_id);
+        world.set_input_focus(checkbox_id);
         trigger.propagate(false);
         if let Some(on_change) = tstate.on_change {
             if !disabled {

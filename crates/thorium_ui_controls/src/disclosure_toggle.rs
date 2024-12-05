@@ -4,12 +4,11 @@ use crate::{
     size::Size,
     Icon,
 };
+use accesskit::Role;
 use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
+    a11y::AccessibilityNode,
     ecs::{system::SystemId, world::DeferredWorld},
+    input_focus::IsFocused,
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -19,11 +18,7 @@ use thorium_ui_core::{
     CreateMemo, EntityEffect, IntoSignal, InvokeUiTemplate, Signal, StyleEntity, StyleHandle,
     StyleTuple, UiTemplate,
 };
-use thorium_ui_headless::{
-    hover::IsHovering,
-    tab_navigation::{IsFocused, TabIndex},
-    CoreToggle,
-};
+use thorium_ui_headless::{hover::IsHovering, tab_navigation::TabIndex, CoreToggle};
 
 fn style_toggle(ec: &mut EntityCommands) {
     ec.entry::<Node>().and_modify(|mut node| {
@@ -126,7 +121,7 @@ impl UiTemplate for DisclosureToggle {
                     checked: self.expanded,
                 },
                 TabIndex(self.tab_index),
-                AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
+                AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
             .effect(
                 move |world: DeferredWorld| checked.get(&world),

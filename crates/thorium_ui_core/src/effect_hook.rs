@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell, UnregisterSystemCommand};
+use crate::effect_cell::{AnyEffect, EffectCell};
 
 pub struct EffectHookAction<P, M, EffectFn: Fn(P, DeferredWorld)> {
     deps: Option<P>,
@@ -14,7 +14,7 @@ pub struct EffectHookAction<P, M, EffectFn: Fn(P, DeferredWorld)> {
     marker: std::marker::PhantomData<M>,
 }
 
-impl<P: 'static + PartialEq + Clone, M, EffectFn: Fn(P, DeferredWorld)> AnyEffect
+impl<P: 'static + PartialEq + Send + Sync + Clone, M, EffectFn: Fn(P, DeferredWorld)> AnyEffect
     for EffectHookAction<P, M, EffectFn>
 {
     fn update(&mut self, world: &mut World, _entity: Entity) {
@@ -28,9 +28,7 @@ impl<P: 'static + PartialEq + Clone, M, EffectFn: Fn(P, DeferredWorld)> AnyEffec
     }
 
     fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        world
-            .commands()
-            .queue(UnregisterSystemCommand(self.deps_sys));
+        world.commands().unregister_system(self.deps_sys);
     }
 }
 

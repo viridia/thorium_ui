@@ -1,11 +1,13 @@
-use bevy::{ecs::system::SystemId, prelude::*};
-
-use crate::{
-    focus::{FocusKeyboardInput, KeyboardFocus},
-    tab_navigation::KeyboardFocusVisible,
-    InteractionDisabled,
+use bevy::{
+    ecs::system::SystemId,
+    input_focus::{FocusKeyboardInput, InputFocus, InputFocusVisible},
+    prelude::*,
 };
 
+use crate::InteractionDisabled;
+
+/// Headless button widget. The `on_click` field is a system that will be run when the button
+/// is clicked, or when the Enter or Space key is pressed while the button is focused.
 #[derive(Component)]
 pub struct CoreButton {
     pub on_click: Option<SystemId>,
@@ -57,8 +59,8 @@ pub(crate) fn button_on_pointer_click(
 pub(crate) fn button_on_pointer_down(
     mut trigger: Trigger<Pointer<Down>>,
     mut q_state: Query<(&mut CoreButtonPressed, Has<InteractionDisabled>)>,
-    mut focus: ResMut<KeyboardFocus>,
-    mut focus_visible: ResMut<KeyboardFocusVisible>,
+    mut focus: ResMut<InputFocus>,
+    mut focus_visible: ResMut<InputFocusVisible>,
 ) {
     if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
         trigger.propagate(false);

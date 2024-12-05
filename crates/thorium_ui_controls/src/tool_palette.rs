@@ -1,14 +1,7 @@
 use std::sync::Arc;
 
-use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
-    ecs::system::SystemId,
-    prelude::*,
-    ui,
-};
+use accesskit::Role;
+use bevy::{a11y::AccessibilityNode, ecs::system::SystemId, prelude::*, ui};
 use thorium_ui_core::{IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate};
 
 use crate::{rounded_corners::RoundedCorners, size::Size};
@@ -88,7 +81,7 @@ impl UiTemplate for ToolPalette {
                 self.style.clone(),
             ))
             // .insert(ToolPaletteContext { size: self.size })
-            .insert(AccessibilityNode::from(NodeBuilder::new(Role::Group)))
+            .insert(AccessibilityNode::from(accesskit::Node::new(Role::Group)))
             .with_children(|builder| {
                 (self.children.as_ref())(builder);
             });

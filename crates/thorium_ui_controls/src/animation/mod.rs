@@ -1,3 +1,4 @@
+use bevy::ecs::component::Mutable;
 use bevy::prelude::*;
 use bevy::{
     color::{Mix, Srgba},
@@ -17,7 +18,7 @@ pub trait AnimatableProperty {
     type ValueType: Copy + Send + Sync + PartialEq + 'static;
 
     /// The type of component that contains the animated property.
-    type ComponentType: Component;
+    type ComponentType: Component<Mutability = Mutable>;
 
     /// Get the current value of the animatable property.
     fn current(component: &Self::ComponentType) -> Self::ValueType;
