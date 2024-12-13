@@ -207,7 +207,7 @@ impl UiTemplate for SpinBox {
                 let max = max.get(&world);
                 let next_value = (value.get(&world) - step).clamp(min, max);
                 if let Some(on_change) = on_change {
-                    commands.run_system_with_input(on_change, next_value);
+                    commands.run_system_with(on_change, next_value);
                 }
             });
 
@@ -217,7 +217,7 @@ impl UiTemplate for SpinBox {
                 let max = max.get(&world);
                 let next_value = (value.get(&world) + step).clamp(min, max);
                 if let Some(on_change) = on_change {
-                    commands.run_system_with_input(on_change, next_value);
+                    commands.run_system_with(on_change, next_value);
                 }
             });
 
@@ -311,10 +311,8 @@ impl UiTemplate for SpinBox {
                                         );
                                     }
                                     if let Some(on_change) = on_change {
-                                        commands.run_system_with_input(
-                                            on_change,
-                                            new_value.clamp(min, max),
-                                        );
+                                        commands
+                                            .run_system_with(on_change, new_value.clamp(min, max));
                                     }
                                 }
                             }

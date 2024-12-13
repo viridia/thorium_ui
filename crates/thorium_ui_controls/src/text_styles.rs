@@ -93,9 +93,9 @@ pub(crate) fn set_initial_text_style(
     mut commands: Commands,
 ) {
     commands
-        .entity(trigger.entity())
+        .entity(trigger.target())
         .insert(compute_inherited_style(
-            trigger.entity(),
+            trigger.target(),
             &q_inherited_font,
             &q_inherited_color,
             &q_inherited_size,

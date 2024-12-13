@@ -60,7 +60,7 @@ fn setup_view_root(mut commands: Commands) {
                             border: ui::UiRect::all(ui::Val::Px(3.)),
                             ..default()
                         })
-                        .observe(move |_trigger: Trigger<Pointer<Down>>| {
+                        .observe(move |_trigger: Trigger<Pointer<Pressed>>| {
                             println!("Clicked on {}", suit);
                         })
                         .with_children(|builder| {

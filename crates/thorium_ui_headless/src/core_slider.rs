@@ -7,7 +7,7 @@ use crate::{InteractionDisabled, ValueChange};
 /// unclamped - the reason is that the receiver may want to quantize or otherwise modify the value
 /// before clamping. It is the receiver's responsibility to update the slider's value when
 /// the value change event is received.
-#[derive(Component)]
+#[derive(Component, Debug)]
 #[require(DragState)]
 pub struct CoreSlider {
     pub value: f32,
@@ -62,7 +62,7 @@ pub(crate) fn slider_on_drag_start(
     mut trigger: Trigger<Pointer<DragStart>>,
     mut q_state: Query<(&CoreSlider, &mut DragState, Has<InteractionDisabled>)>,
 ) {
-    if let Ok((slider, mut drag, disabled)) = q_state.get_mut(trigger.entity()) {
+    if let Ok((slider, mut drag, disabled)) = q_state.get_mut(trigger.target()) {
         trigger.propagate(false);
         if !disabled {
             drag.dragging = true;
@@ -76,7 +76,7 @@ pub(crate) fn slider_on_drag(
     mut q_state: Query<(&ComputedNode, &CoreSlider, &mut DragState)>,
     mut commands: Commands,
 ) {
-    if let Ok((node, slider, drag)) = q_state.get_mut(trigger.entity()) {
+    if let Ok((node, slider, drag)) = q_state.get_mut(trigger.target()) {
         trigger.propagate(false);
         if drag.dragging {
             let distance = trigger.event().distance;
@@ -88,7 +88,7 @@ pub(crate) fn slider_on_drag(
             } else {
                 slider.min + range * 0.5
             };
-            commands.trigger_targets(ValueChange(new_value), trigger.entity());
+            commands.trigger_targets(ValueChange(new_value), trigger.target());
         }
     }
 }
@@ -97,7 +97,7 @@ pub(crate) fn slider_on_drag_end(
     mut trigger: Trigger<Pointer<DragEnd>>,
     mut q_state: Query<(&CoreSlider, &mut DragState)>,
 ) {
-    if let Ok((_slider, mut drag)) = q_state.get_mut(trigger.entity()) {
+    if let Ok((_slider, mut drag)) = q_state.get_mut(trigger.target()) {
         trigger.propagate(false);
         if drag.dragging {
             drag.dragging = false;

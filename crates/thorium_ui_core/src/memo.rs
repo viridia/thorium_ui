@@ -8,7 +8,7 @@ use bevy::{
 use crate::effect_cell::{AnyEffect, EffectCell};
 
 /// A memoized computation.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Memo<P> {
     entity: Entity,
     marker: PhantomData<P>,

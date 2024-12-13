@@ -233,7 +233,7 @@ pub fn handle_tab_navigation(
     keys: Res<ButtonInput<KeyCode>>,
 ) {
     // Tab navigation.
-    let key_event = &trigger.event().0;
+    let key_event = &trigger.event().input;
     if key_event.key_code == KeyCode::Tab
         && key_event.state == ButtonState::Pressed
         && !key_event.repeat

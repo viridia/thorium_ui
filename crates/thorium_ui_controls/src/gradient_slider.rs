@@ -271,13 +271,13 @@ impl UiTemplate for GradientSlider {
                         .clamp(min.get(&world), max.get(&world));
                     if value != new_value {
                         if let Some(on_change) = on_change {
-                            commands.run_system_with_input(on_change, new_value);
+                            commands.run_system_with(on_change, new_value);
                         }
                     }
                 },
             )
             .observe(
-                move |mut trigger: Trigger<Pointer<Down>>,
+                move |mut trigger: Trigger<Pointer<Pressed>>,
                       world: DeferredWorld,
                       mut commands: Commands| {
                     trigger.propagate(false);
@@ -300,7 +300,7 @@ impl UiTemplate for GradientSlider {
                             let new_value = min + (pointer_pos * range) / slider_width;
                             if let Some(on_change) = on_change {
                                 commands
-                                    .run_system_with_input(on_change, new_value.clamp(min, max));
+                                    .run_system_with(on_change, new_value.clamp(min, max));
                             }
                         };
                     }

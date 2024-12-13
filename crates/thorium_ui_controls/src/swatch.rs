@@ -126,7 +126,7 @@ impl UiTemplate for Swatch {
                     trigger.propagate(false);
                     if let Some(on_click) = on_click {
                         let c = color.get(&world);
-                        commands.run_system_with_input(on_click, c);
+                        commands.run_system_with(on_click, c);
                     }
                 },
             )

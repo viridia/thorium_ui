@@ -120,7 +120,7 @@ impl UiTemplate for SwatchGrid {
         let on_click =
             builder.create_callback_arg(move |color: In<Srgba>, mut commands: Commands| {
                 if let Some(on_change) = on_change.as_ref() {
-                    commands.run_system_with_input(*on_change, *color)
+                    commands.run_system_with(*on_change, *color)
                 }
             });
 

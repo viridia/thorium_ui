@@ -302,9 +302,7 @@ impl<
             items: Vec::new(),
             changed: false,
         };
-        world
-            .run_system_with_input(self.item_sys, &mut items)
-            .unwrap();
+        world.run_system_with(self.item_sys, &mut items).unwrap();
         if items.changed || self.first {
             let mut next_state: Vec<ListItem<Item>> = Vec::with_capacity(items.items.len());
             let next_len = items.items.len();

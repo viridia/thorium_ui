@@ -8,7 +8,7 @@ use thorium_ui_core::Signal;
 
 use crate::InteractionDisabled;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct CoreToggle {
     pub checked: Signal<bool>,
     pub on_change: Option<SystemId<In<bool>>>,
@@ -19,8 +19,8 @@ pub(crate) fn toggle_on_key_input(
     q_state: Query<(&CoreToggle, Has<InteractionDisabled>)>,
     mut world: DeferredWorld,
 ) {
-    if let Ok((tstate, disabled)) = q_state.get(trigger.entity()) {
-        let event = &trigger.event().0;
+    if let Ok((tstate, disabled)) = q_state.get(trigger.target()) {
+        let event = &trigger.event().input;
         if !disabled
             && event.state == ButtonState::Pressed
             && !event.repeat
@@ -29,9 +29,7 @@ pub(crate) fn toggle_on_key_input(
             let is_checked = tstate.checked.get(&world);
             if let Some(on_change) = tstate.on_change {
                 trigger.propagate(false);
-                world
-                    .commands()
-                    .run_system_with_input(on_change, !is_checked);
+                world.commands().run_system_with(on_change, !is_checked);
             }
         }
     }
@@ -42,16 +40,14 @@ pub(crate) fn toggle_on_pointer_click(
     q_state: Query<(&CoreToggle, Has<InteractionDisabled>)>,
     mut world: DeferredWorld,
 ) {
-    if let Ok((tstate, disabled)) = q_state.get(trigger.entity()) {
-        let checkbox_id = trigger.entity();
+    if let Ok((tstate, disabled)) = q_state.get(trigger.target()) {
+        let checkbox_id = trigger.target();
         world.set_input_focus(checkbox_id);
         trigger.propagate(false);
         if let Some(on_change) = tstate.on_change {
             if !disabled {
                 let is_checked = tstate.checked.get(&world);
-                world
-                    .commands()
-                    .run_system_with_input(on_change, !is_checked);
+                world.commands().run_system_with(on_change, !is_checked);
             }
         }
     }

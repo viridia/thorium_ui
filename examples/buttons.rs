@@ -1,9 +1,9 @@
 //! Example of a simple UI layout
 
-use bevy::{prelude::*, ui};
+use bevy::{prelude::*, ui, window::PrimaryWindow};
 use thorium_ui::{
     tab_navigation::{handle_tab_navigation, TabGroup},
-    InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin,
+    CreateCallback, InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, Icon, IconButton,
@@ -39,9 +39,15 @@ fn style_row(ec: &mut EntityCommands) {
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, ThoriumUiCorePlugin, ThoriumUiControlsPlugin))
-        .add_systems(Startup, setup_view_root)
+        .add_systems(Startup, (setup_tab_navigation, setup_view_root))
         .add_systems(Update, close_on_esc)
         .run();
+}
+
+fn setup_tab_navigation(mut commands: Commands, window: Query<Entity, With<PrimaryWindow>>) {
+    for window in window.iter() {
+        commands.entity(window).observe(handle_tab_navigation);
+    }
 }
 
 fn setup_view_root(mut commands: Commands) {
@@ -50,18 +56,25 @@ fn setup_view_root(mut commands: Commands) {
     commands
         .spawn(Node::default())
         .insert((TargetCamera(camera), TabGroup::default()))
-        .observe(handle_tab_navigation)
+        // .observe(handle_tab_navigation)
         .style(style_test)
         .with_children(|builder| {
+            let on_click = builder.create_callback(|| {
+                println!("Button clicked!");
+            });
+
             builder.spawn((Text::new("Variants"), UseInheritedTextStyles));
             builder
                 .spawn(Node::default())
                 .style(style_row)
                 .with_children(|builder| {
                     builder
-                        .invoke(Button::new().children(|b| {
-                            b.spawn((Text::new("Default"), UseInheritedTextStyles));
-                        }))
+                        .invoke(
+                            Button::new().children(|b| {
+                                b.spawn((Text::new("Default"), UseInheritedTextStyles));
+                            })
+                            .on_click(on_click))
+
                         .invoke(
                             Button::new()
                                 .variant(ButtonVariant::Primary)

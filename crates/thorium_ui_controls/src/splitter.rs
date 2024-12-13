@@ -207,16 +207,16 @@ impl UiTemplate for Splitter {
                         if ds.dragging {
                             match direction {
                                 SplitterDirection::Horizontal => {
-                                    commands.run_system_with_input(on_change, ds.offset - ev.y);
+                                    commands.run_system_with(on_change, ds.offset - ev.y);
                                 }
                                 SplitterDirection::HorizontalReverse => {
-                                    commands.run_system_with_input(on_change, ds.offset + ev.y);
+                                    commands.run_system_with(on_change, ds.offset + ev.y);
                                 }
                                 SplitterDirection::Vertical => {
-                                    commands.run_system_with_input(on_change, ev.x + ds.offset);
+                                    commands.run_system_with(on_change, ev.x + ds.offset);
                                 }
                                 SplitterDirection::VerticalReverse => {
-                                    commands.run_system_with_input(on_change, ds.offset - ev.x);
+                                    commands.run_system_with(on_change, ds.offset - ev.x);
                                 }
                             }
                         }

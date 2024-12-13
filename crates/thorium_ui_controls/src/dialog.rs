@@ -198,7 +198,7 @@ impl UiTemplate for Dialog {
                                 order: 0,
                                 modal: true,
                             })
-                            .observe(|mut trigger: Trigger<Pointer<Down>>| {
+                            .observe(|mut trigger: Trigger<Pointer<Pressed>>| {
                                 // Prevent clicks from propagating to the barrier and closing
                                 // the dialog.
                                 trigger.propagate(false);
