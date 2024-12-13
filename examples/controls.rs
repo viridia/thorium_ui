@@ -1,8 +1,10 @@
 //! Example of a simple UI layout
 
-use bevy::{color::palettes, ecs::world::DeferredWorld, prelude::*, ui};
+use bevy::{
+    color::palettes, ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*,
+    ui,
+};
 use thorium_ui::{
-    tab_navigation::{handle_tab_navigation, TabGroup},
     CreateCallback, CreateMutable, InvokeUiTemplate, Signal, StyleEntity, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
@@ -60,7 +62,6 @@ fn setup_view_root(mut commands: Commands) {
     commands
         .spawn(Node::default())
         .insert((TargetCamera(camera), TabGroup::default()))
-        .observe(handle_tab_navigation)
         .style(style_test)
         .with_children(|builder| {
             builder.spawn((Text::new("Swatch"), UseInheritedTextStyles));

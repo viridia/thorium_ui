@@ -5,7 +5,7 @@ use bevy::{
     a11y::AccessibilityNode,
     color::Luminance,
     ecs::{system::SystemId, world::DeferredWorld},
-    input_focus::IsFocused,
+    input_focus::{tab_navigation::TabIndex, IsFocused},
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -16,7 +16,6 @@ use thorium_ui_core::{
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
-    tab_navigation::TabIndex,
     CoreToggle, InteractionDisabled,
 };
 

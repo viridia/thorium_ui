@@ -3,11 +3,12 @@ use std::sync::Arc;
 use bevy::{
     color::{Alpha, Luminance},
     ecs::{system::SystemId, world::DeferredWorld},
+    input_focus::tab_navigation::TabGroup,
     prelude::*,
     ui::{self, experimental::GhostNode},
 };
 use thorium_ui_core::{CreateCond, EntityEffect, Signal, StyleEntity, UiTemplate};
-use thorium_ui_headless::{tab_navigation::TabGroup, CoreBarrier};
+use thorium_ui_headless::CoreBarrier;
 
 use crate::{
     animation::{

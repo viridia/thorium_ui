@@ -46,21 +46,3 @@ impl IsHovering for DeferredWorld<'_> {
             .unwrap_or(false)
     }
 }
-
-// /// Method to create a signal that tracks whether the mouse is hovering over the given entity.
-// pub trait CreateHoverSignal {
-//     /// Signal that returns true when the mouse is hovering over the given entity or a descendant.
-//     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool>;
-// }
-
-// impl<'w> CreateHoverSignal for EntityCommands<'w> {
-//     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool> {
-//         self.insert(Hovering(false));
-//         let hovering = self.create_memo(move |rcx| {
-//             rcx.read_component::<Hovering>(target)
-//                 .map(|h| h.0)
-//                 .unwrap_or(false)
-//         });
-//         hovering
-//     }
-// }

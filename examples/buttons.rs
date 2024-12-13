@@ -1,10 +1,7 @@
 //! Example of a simple UI layout
 
-use bevy::{prelude::*, ui, window::PrimaryWindow};
-use thorium_ui::{
-    tab_navigation::{handle_tab_navigation, TabGroup},
-    CreateCallback, InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin,
-};
+use bevy::{input_focus::tab_navigation::TabGroup, prelude::*, ui};
+use thorium_ui::{CreateCallback, InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin};
 use thorium_ui_controls::{
     colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, Icon, IconButton,
     InheritableFontColor, ThoriumUiControlsPlugin, ToolButton, ToolPalette, UseInheritedTextStyles,
@@ -39,15 +36,9 @@ fn style_row(ec: &mut EntityCommands) {
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, ThoriumUiCorePlugin, ThoriumUiControlsPlugin))
-        .add_systems(Startup, (setup_tab_navigation, setup_view_root))
+        .add_systems(Startup, setup_view_root)
         .add_systems(Update, close_on_esc)
         .run();
-}
-
-fn setup_tab_navigation(mut commands: Commands, window: Query<Entity, With<PrimaryWindow>>) {
-    for window in window.iter() {
-        commands.entity(window).observe(handle_tab_navigation);
-    }
 }
 
 fn setup_view_root(mut commands: Commands) {

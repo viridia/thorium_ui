@@ -1,10 +1,7 @@
 //! Example of a simple UI layout
 
-use bevy::{ecs::world::DeferredWorld, prelude::*, ui};
-use thorium_ui::{
-    tab_navigation::{handle_tab_navigation, TabGroup},
-    CreateCallback, CreateMemo, InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin,
-};
+use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
+use thorium_ui::{CreateCallback, CreateMemo, InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin};
 use thorium_ui_controls::{
     colors, InheritableFontColor, Splitter, SplitterDirection, ThoriumUiControlsPlugin,
     UseInheritedTextStyles,
@@ -57,7 +54,6 @@ fn setup_view_root(mut commands: Commands) {
     commands
         .spawn(Node::default())
         .insert((TargetCamera(camera), TabGroup::default()))
-        .observe(handle_tab_navigation)
         .style(style_test)
         .with_children(|builder| {
             let left_width = builder.create_memo(|res: Res<LeftPanelWidth>| res.0, 0.);

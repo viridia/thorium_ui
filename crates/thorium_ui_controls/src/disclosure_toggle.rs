@@ -8,7 +8,7 @@ use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
     ecs::{system::SystemId, world::DeferredWorld},
-    input_focus::IsFocused,
+    input_focus::{tab_navigation::TabIndex, IsFocused},
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -18,7 +18,7 @@ use thorium_ui_core::{
     CreateMemo, EntityEffect, IntoSignal, InvokeUiTemplate, Signal, StyleEntity, StyleHandle,
     StyleTuple, UiTemplate,
 };
-use thorium_ui_headless::{hover::IsHovering, tab_navigation::TabIndex, CoreToggle};
+use thorium_ui_headless::{hover::IsHovering, CoreToggle};
 
 fn style_toggle(ec: &mut EntityCommands) {
     ec.entry::<Node>().and_modify(|mut node| {

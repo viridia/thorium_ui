@@ -1,7 +1,9 @@
-use bevy::{color::palettes, ecs::world::DeferredWorld, prelude::*, ui};
+use bevy::{
+    color::palettes, ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*,
+    ui,
+};
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    tab_navigation::{handle_tab_navigation, TabGroup},
     CreateCallback, CreateMemo, CreateMutable, EntityEffect, InvokeUiTemplate, StyleEntity,
     ThoriumUiCorePlugin,
 };
@@ -51,7 +53,6 @@ fn setup_view_root(mut commands: Commands) {
     commands
         .spawn(Node::default())
         .insert((TargetCamera(camera), TabGroup::default()))
-        .observe(handle_tab_navigation)
         .style(style_test)
         .with_children(|builder| {
             builder.spawn((Text::new("bistable_transition"), UseInheritedTextStyles));
