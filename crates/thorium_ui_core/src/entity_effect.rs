@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
@@ -140,13 +138,13 @@ impl EntityEffect for EntityCommands<'_> {
         let deps_sys = self.commands().register_system(deps_fn);
         let target = self.id();
         self.commands()
-            .spawn(EffectCell(Arc::new(Mutex::new(WithEffectAction {
+            .spawn(EffectCell::new(WithEffectAction {
                 target,
                 deps: None,
                 deps_sys,
                 effect_fn,
                 marker: std::marker::PhantomData::<M>,
-            }))))
+            }))
             .set_parent(target);
         self
     }

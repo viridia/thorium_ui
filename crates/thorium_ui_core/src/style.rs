@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
@@ -143,13 +143,13 @@ impl StyleEntity for EntityCommands<'_> {
     ) -> &mut Self {
         let deps_sys = self.commands().register_system(deps_fn);
         let target = self.id();
-        self.with_child(EffectCell(Arc::new(Mutex::new(StyleDynAction {
+        self.with_child(EffectCell::new(StyleDynAction {
             target,
             deps: None,
             deps_sys,
             style_fn,
             marker: std::marker::PhantomData::<M>,
-        }))));
+        }));
         self
     }
 }

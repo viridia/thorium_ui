@@ -1,7 +1,4 @@
-use std::{
-    ops::Range,
-    sync::{Arc, Mutex},
-};
+use std::ops::Range;
 
 use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
@@ -85,14 +82,17 @@ impl CreateForEach for ChildBuilder<'_> {
     ) -> &mut Self {
         let mut ent = self.spawn_empty();
         let item_sys = ent.commands().register_system(items_fn);
-        ent.insert(EffectCell(Arc::new(Mutex::new(ForEachEffect {
-            item_sys,
-            cmp: PartialEq::eq,
-            each,
-            fallback,
-            state: Vec::new(),
-            first: true,
-        }))));
+        ent.insert((
+            EffectCell::new(ForEachEffect {
+                item_sys,
+                cmp: PartialEq::eq,
+                each,
+                fallback,
+                state: Vec::new(),
+                first: true,
+            }),
+            GhostNode::default(),
+        ));
         self
     }
 
@@ -113,14 +113,17 @@ impl CreateForEach for ChildBuilder<'_> {
     ) -> &mut Self {
         let mut ent = self.spawn_empty();
         let item_sys = ent.commands().register_system(items_fn);
-        ent.insert(EffectCell(Arc::new(Mutex::new(ForEachEffect {
-            item_sys,
-            cmp,
-            each,
-            fallback,
-            state: Vec::new(),
-            first: true,
-        }))));
+        ent.insert((
+            EffectCell::new(ForEachEffect {
+                item_sys,
+                cmp,
+                each,
+                fallback,
+                state: Vec::new(),
+                first: true,
+            }),
+            GhostNode::default(),
+        ));
         self
     }
 }

@@ -1,6 +1,7 @@
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
+    ui::experimental::GhostNode,
 };
 
 use crate::effect_cell::{AnyEffect, EffectCell};
@@ -34,14 +35,17 @@ impl CreateCond for ChildBuilder<'_> {
         // let test_sys = self.commands().register_system(test);
         let mut ent = self.spawn_empty();
         let test_sys = ent.commands().register_system(test_fn);
-        ent.insert(EffectCell::new(CondEffect {
-            state: false,
-            first: true,
-            test_sys,
-            pos,
-            neg,
-            marker: std::marker::PhantomData::<M>,
-        }));
+        ent.insert((
+            EffectCell::new(CondEffect {
+                state: false,
+                first: true,
+                test_sys,
+                pos,
+                neg,
+                marker: std::marker::PhantomData::<M>,
+            }),
+            GhostNode::default(),
+        ));
         self
     }
 }
@@ -61,14 +65,17 @@ impl CreateCond for WorldChildBuilder<'_> {
         let mut ent = self.spawn_empty();
         // SAFETFY: Should be safe to register a system here...I think?
         let test_sys = unsafe { ent.world_mut().register_system(test_fn) };
-        ent.insert(EffectCell::new(CondEffect {
-            state: false,
-            first: true,
-            test_sys,
-            pos,
-            neg,
-            marker: std::marker::PhantomData::<M>,
-        }));
+        ent.insert((
+            EffectCell::new(CondEffect {
+                state: false,
+                first: true,
+                test_sys,
+                pos,
+                neg,
+                marker: std::marker::PhantomData::<M>,
+            }),
+            GhostNode::default(),
+        ));
         self
     }
 }

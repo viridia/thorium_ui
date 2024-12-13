@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
@@ -67,12 +65,12 @@ impl InsertWhen for EntityCommands<'_> {
         let test_sys = self.commands().register_system(test_fn);
         let target = self.id();
         self.commands()
-            .spawn(EffectCell(Arc::new(Mutex::new(InsertWhenEffect {
+            .spawn(EffectCell::new(InsertWhenEffect {
                 target,
                 state: false,
                 test_sys,
                 factory,
-            }))))
+            }))
             .set_parent(target);
         self
     }

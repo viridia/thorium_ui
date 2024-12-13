@@ -1,59 +1,69 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc, Mutex,
+};
 
 use bevy::{
     ecs::{component::ComponentId, world::DeferredWorld},
     prelude::*,
-    ui::experimental::GhostNode,
 };
 
 /// Component which holds a type-erased entity effect. An effect represents some dynamic mutation
 /// of the entity's state.
 /// Note: If Bevy had trait queries, we wouldn't the Arc/Mutex.
-#[derive(Component)]
-#[require(GhostNode)]
+#[derive(Component, Clone)]
+// #[require(GhostNode)]
 #[component(on_add = on_add_effect, on_remove = on_remove_effect)]
-pub struct EffectCell(pub(crate) Arc<Mutex<dyn AnyEffect + 'static + Sync + Send>>);
+pub struct EffectCell {
+    pub(crate) effect: Arc<Mutex<dyn AnyEffect + 'static + Sync + Send>>,
+    order: usize,
+}
+
+static EFFECT_ORDER: AtomicUsize = AtomicUsize::new(0);
 
 impl EffectCell {
     pub fn new<E: AnyEffect + 'static + Sync + Send>(effect: E) -> Self {
-        Self(Arc::new(Mutex::new(effect)))
+        Self {
+            effect: Arc::new(Mutex::new(effect)),
+            order: EFFECT_ORDER.fetch_add(1, Ordering::Relaxed),
+        }
     }
 }
 
 pub(crate) trait AnyEffect {
     fn update(&mut self, world: &mut World, entity: Entity);
     fn cleanup(&self, world: &mut DeferredWorld, entity: Entity);
-    // fn is_changed(
-    //     &self,
-    //     _world: &mut DeferredWorld,
-    //     _entity: Entity,
-    //     _last_run: Tick,
-    //     _this_run: Tick,
-    // ) -> bool {
-    //     false
-    // }
 }
 
 fn on_add_effect(mut world: DeferredWorld, entity: Entity, _cid: ComponentId) {
-    let cell = world.get_mut::<EffectCell>(entity).unwrap();
-    let _comp = cell.0.clone();
-    // TODO: Run effect once
-    // comp.lock().unwrap().cleanup(&mut world, entity);
+    world.commands().queue(RunEffectNow(entity));
 }
 
 fn on_remove_effect(mut world: DeferredWorld, entity: Entity, _cid: ComponentId) {
     let cell = world.get_mut::<EffectCell>(entity).unwrap();
-    let comp = cell.0.clone();
+    let comp = cell.effect.clone();
     comp.lock().unwrap().cleanup(&mut world, entity);
 }
 
 pub(crate) fn update_effects(world: &mut World) {
     let mut query = world.query::<(Entity, &EffectCell)>();
-    let effects = query
+    let mut effects = query
         .iter(world)
-        .map(|(entity, eff)| (entity, eff.0.clone()))
+        .map(|(entity, eff)| (entity, eff.clone()))
         .collect::<Vec<_>>();
+    // Sort effects by creation order
+    effects.sort_by(|a, b| a.1.order.cmp(&b.1.order));
     for (entity, eff) in effects {
-        eff.lock().unwrap().update(world, entity);
+        eff.effect.lock().unwrap().update(world, entity);
+    }
+}
+
+struct RunEffectNow(pub Entity);
+
+impl Command for RunEffectNow {
+    fn apply(self, world: &mut World) {
+        let cell = world.get_mut::<EffectCell>(self.0).unwrap();
+        let effect = cell.effect.clone();
+        effect.lock().unwrap().update(world, self.0);
     }
 }

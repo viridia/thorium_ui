@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
@@ -58,12 +56,12 @@ impl CreateHookEffect for ChildBuilder<'_> {
     ) -> &mut Self {
         let mut ent = self.spawn_empty();
         let deps_sys = ent.commands().register_system(deps_fn);
-        ent.insert(EffectCell(Arc::new(Mutex::new(EffectHookAction {
+        ent.insert(EffectCell::new(EffectHookAction {
             deps: None,
             deps_sys,
             effect_fn,
             marker: std::marker::PhantomData::<M>,
-        }))));
+        }));
         self
     }
 }

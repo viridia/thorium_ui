@@ -1,5 +1,5 @@
 #![allow(clippy::type_complexity)]
-use bevy::{ecs::system::SystemId, prelude::*};
+use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
 use crate::effect_cell::{AnyEffect, EffectCell};
 
@@ -37,12 +37,15 @@ impl<'w> CreateSwitch for ChildBuilder<'w> {
         cases_fn(&mut case_builder);
         let mut ent = self.spawn_empty();
         let value_sys = ent.commands().register_system(value_fn);
-        ent.insert(EffectCell::new(SwitchEffect {
-            cases,
-            fallback,
-            value_sys,
-            switch_index: usize::MAX - 1, // Means no case selected yet.
-        }));
+        ent.insert((
+            EffectCell::new(SwitchEffect {
+                cases,
+                fallback,
+                value_sys,
+                switch_index: usize::MAX - 1, // Means no case selected yet.
+            }),
+            GhostNode::default(),
+        ));
         self
     }
 }
