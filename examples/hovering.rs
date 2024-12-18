@@ -12,8 +12,8 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    BuildEffects, BuildMutateDyn, InvokeUiTemplate, MutateDyn, ThoriumUiCorePlugin,
-    ThoriumUiHeadlessPlugin, UiTemplate,
+    BuildEffects, InvokeUiTemplate, MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin,
+    UiTemplate,
 };
 
 fn main() {

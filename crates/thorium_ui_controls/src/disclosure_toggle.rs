@@ -15,8 +15,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    BuildEffects, BuildMutateDyn, CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal,
-    StyleDyn, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    BuildEffects, CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal, StyleDyn,
+    StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{hover::IsHovering, CoreToggle};
 

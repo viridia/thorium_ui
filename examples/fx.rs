@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{BuildEffects, BuildMutateDyn, MutateDyn, ThoriumUiCorePlugin};
+use thorium_ui::{BuildEffects, MutateDyn, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()

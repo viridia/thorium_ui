@@ -6,9 +6,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    BuildEffects, BuildMutateDyn, CreateCallback, CreateCond, CreateMemo, CreateMutable,
-    IntoSignal, InvokeUiTemplate, MutateDyn, Signal, StyleEntity, StyleHandle, StyleTuple,
-    UiTemplate,
+    BuildEffects, CreateCallback, CreateCond, CreateMemo, CreateMutable, IntoSignal,
+    InvokeUiTemplate, MutateDyn, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
 
 use crate::{

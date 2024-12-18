@@ -5,8 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    BuildEffects, BuildMutateDyn, CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleEntity,
-    StyleHandle, StyleTuple, UiTemplate,
+    BuildEffects, CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleEntity, StyleHandle,
+    StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
 

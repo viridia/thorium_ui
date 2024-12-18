@@ -4,8 +4,8 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    BuildEffects, BuildMutateDyn, CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate,
-    MutateDyn, StyleEntity, ThoriumUiCorePlugin,
+    BuildEffects, CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn,
+    StyleEntity, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     animation::{BistableTransition, BistableTransitionState},

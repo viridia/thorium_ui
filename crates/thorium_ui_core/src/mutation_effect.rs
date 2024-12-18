@@ -31,45 +31,6 @@ impl<P: 'static + PartialEq + Send + Sync + Clone, M, EffectFn: Fn(P, &mut Entit
     }
 }
 
-pub trait BuildMutateDyn {
-    fn effect<
-        P: PartialEq + Clone + Send + Sync + 'static,
-        M: Send + Sync + 'static,
-        DepsFn: IntoSystem<(), P, M> + 'static,
-        EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    >(
-        &mut self,
-        deps_fn: DepsFn,
-        effect_fn: EffectFn,
-    ) -> &mut Self;
-}
-
-impl BuildMutateDyn for EntityCommands<'_> {
-    fn effect<
-        P: PartialEq + Clone + Send + Sync + 'static,
-        M: Send + Sync + 'static,
-        DepsFn: IntoSystem<(), P, M> + 'static,
-        EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    >(
-        &mut self,
-        deps_fn: DepsFn,
-        effect_fn: EffectFn,
-    ) -> &mut Self {
-        let deps_sys = self.commands().register_system(deps_fn);
-        let target = self.id();
-        self.commands()
-            .spawn(EffectCell::new(MutateDynEffect {
-                target,
-                deps: None,
-                deps_sys,
-                effect_fn,
-                marker: std::marker::PhantomData::<M>,
-            }))
-            .set_parent(target);
-        self
-    }
-}
-
 pub struct MutateDyn<
     P: PartialEq + Clone + Send + Sync + 'static,
     M: Send + Sync + 'static,

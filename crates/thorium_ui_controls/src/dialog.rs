@@ -7,9 +7,7 @@ use bevy::{
     prelude::*,
     ui::{self, experimental::GhostNode},
 };
-use thorium_ui_core::{
-    BuildEffects, BuildMutateDyn, CreateCond, MutateDyn, Signal, StyleEntity, UiTemplate,
-};
+use thorium_ui_core::{BuildEffects, CreateCond, MutateDyn, Signal, StyleEntity, UiTemplate};
 use thorium_ui_headless::CoreBarrier;
 
 use crate::{
