@@ -16,7 +16,7 @@ pub trait CreateSwitch {
     ) -> &mut Self;
 }
 
-impl<'w> CreateSwitch for ChildBuilder<'w> {
+impl CreateSwitch for ChildBuilder<'_> {
     fn switch<
         M: Send + Sync + 'static,
         P: PartialEq + Send + Sync + 'static,
@@ -55,7 +55,7 @@ pub struct CaseBuilder<'a, Value: Send + Sync> {
     fallback: &'a mut Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
 }
 
-impl<'a, Value: Send + Sync> CaseBuilder<'a, Value> {
+impl<Value: Send + Sync> CaseBuilder<'_, Value> {
     pub fn case<CF: Send + Sync + 'static + Fn(&mut ChildBuilder)>(
         &mut self,
         value: Value,

@@ -5,7 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateMemo, EntityEffect, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    BuildEffects, BuildMutateDyn, CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleEntity,
+    StyleHandle, StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
 
@@ -253,11 +254,13 @@ impl UiTemplate for GradientSlider {
 
         slider
             .style((style_slider, self.style.clone()))
-            .effect(
-                move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
-                |(value, min, max), ent| {
-                    ent.insert(CoreSlider::new(value, min, max));
-                },
+            .effects(
+                MutateDyn::new(
+                    move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
+                    |(value, min, max), ent| {
+                        ent.insert(CoreSlider::new(value, min, max));
+                    },
+                )
             )
             .observe(
                 move |mut trigger: Trigger<ValueChange<f32>>,
@@ -310,32 +313,34 @@ impl UiTemplate for GradientSlider {
                 builder
                     .spawn(MaterialNode::<GradientRectMaterial>::default())
                     .style(style_gradient)
-                    .effect(
-                        move |world: DeferredWorld| color_stops.get(&world),
-                        |(num_color_stops, color_stops), ent| {
-                            let material_handle = ent
-                                .get::<MaterialNode<GradientRectMaterial>>()
-                                .unwrap()
-                                .0
-                                .clone();
-                            let mut ui_materials = unsafe {
-                                ent.world_mut()
-                                    .get_resource_mut::<Assets<GradientRectMaterial>>()
+                    .effects(
+                        MutateDyn::new(
+                            move |world: DeferredWorld| color_stops.get(&world),
+                            |(num_color_stops, color_stops), ent| {
+                                let material_handle = ent
+                                    .get::<MaterialNode<GradientRectMaterial>>()
                                     .unwrap()
-                            };
-                            if material_handle == Handle::default() {
-                                let material = ui_materials.add(GradientRectMaterial {
-                                    color_stops,
-                                    num_color_stops: IVec4::new(num_color_stops as i32, 0, 0, 0),
-                                    cap_size: THUMB_WIDTH * 0.5,
-                                });
-                                ent.insert(MaterialNode(material));
-                            } else {
-                                let material = ui_materials.get_mut(&material_handle).unwrap();
-                                material.num_color_stops.x = num_color_stops as i32;
-                                material.color_stops = color_stops;
-                            }
-                        },
+                                    .0
+                                    .clone();
+                                let mut ui_materials = unsafe {
+                                    ent.world_mut()
+                                        .get_resource_mut::<Assets<GradientRectMaterial>>()
+                                        .unwrap()
+                                };
+                                if material_handle == Handle::default() {
+                                    let material = ui_materials.add(GradientRectMaterial {
+                                        color_stops,
+                                        num_color_stops: IVec4::new(num_color_stops as i32, 0, 0, 0),
+                                        cap_size: THUMB_WIDTH * 0.5,
+                                    });
+                                    ent.insert(MaterialNode(material));
+                                } else {
+                                    let material = ui_materials.get_mut(&material_handle).unwrap();
+                                    material.num_color_stops.x = num_color_stops as i32;
+                                    material.color_stops = color_stops;
+                                }
+                            },
+                        )
                     );
                 builder
                     .spawn((Node::default(), Name::new("GradientSlider::Track")))
@@ -351,18 +356,20 @@ impl UiTemplate for GradientSlider {
                                 Name::new("GradientSlider::Thumb"),
                             ))
                             .style(style_thumb)
-                            .style_dyn(
-                                move |world: DeferredWorld| {
-                                    let min = min.get(&world);
-                                    let max = max.get(&world);
-                                    let value = value.get(&world);
-                                    CoreSlider::new(value, min, max).thumb_position()
-                                },
-                                |percent, ec| {
-                                    ec.entry::<Node>().and_modify(move |mut node| {
-                                        node.left = ui::Val::Percent(percent * 100.);
-                                    });
-                                },
+                            .effects(
+                                StyleDyn::new(
+                                    move |world: DeferredWorld| {
+                                        let min = min.get(&world);
+                                        let max = max.get(&world);
+                                        let value = value.get(&world);
+                                        CoreSlider::new(value, min, max).thumb_position()
+                                    },
+                                    |percent, ec| {
+                                        ec.entry::<Node>().and_modify(move |mut node| {
+                                            node.left = ui::Val::Percent(percent * 100.);
+                                        });
+                                    },
+                                )
                             );
                     });
             });

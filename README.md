@@ -5,7 +5,7 @@ using the Bevy game engine. The core library provides the following features:
 
 - Conditional children using `.cond()` and `.switch()`.
 - Iterative generation using `.for_each()`.
-- Dynamic effects using `.effect()`.
+- Dynamic effects using `.effects()`.
 - Nested templates using `.invoke()`.
 - Scoped registration of one-shot systems, that is, one-shot systems which are tied to an entity.
 
@@ -134,35 +134,44 @@ that implements `PartialEq`. However, if you want to use other kinds of data (or
 the items differently), you can use the variant method `.for_each_cmp()` which accepts a custom
 comparator function.
 
-### `.effect()`
+### `.effects()`
 
-The `.effect()` method is used to dynamically update the components of an entity. Unlike the
-previous methods which were methods on `ChildBuilder`, `.effect()` is a method on `EntityCommands`
+The `.effects()` method is used to add one or more _dynamic effects_ to an entity. Unlike the
+previous methods which were methods on `ChildBuilder`, `.effects()` is a method on `EntityCommands`
 and `EntityWorldMut` (all these methods are added via trait extension).
 
 Here's an effect which modifies the border color.
 
 ```rust
-entity.effect(
-    |counter: Res<Counter>| counter.count & 1 == 0,
-    |even, entity| {
-        entity.entry::<BorderColor>().and_modify(|mut border| {
-            entity.insert(BorderColor(if even {
-                css::MAROON.into()
-            } else {
-                css::LIME.into()
-            }));
-        });
-    },
+entity.effects(
+    MutateDyn::new(
+        |counter: Res<Counter>| counter.count & 1 == 0,
+        |even, entity| {
+            entity.entry::<BorderColor>().and_modify(|mut border| {
+                entity.insert(BorderColor(if even {
+                    css::MAROON.into()
+                } else {
+                    css::LIME.into()
+                }));
+            });
+        },
+    )
 )
 ```
 
-The first argument is a one-shot system that returns a value. The second argument is called
-once at the next sync point, and is called again whenever the value changes. The arguments to the
-second function are the value, and an `EntityWorldMut` instance.
+The `effects` method takes either a single effect, or a tuple of effects. Examples of effects
+are:
+
+- `InsertWhen` - insert or remove a component based on a boolean condition.
+- `StyleDyn` - apply style changes to an entity
+- `MutateDyn` - perform general mutations on an entity
+
+`MutateDyn::new()` takes two arguments: the first argument is a one-shot system that returns a
+value. The second argument is called once at the next sync point, and is called again whenever the
+value changes. The arguments to the second function are the value, and an `EntityWorldMut` instance.
 
 **Maintaining Correctness**: Having an `EntityWorldMut` means that you can do pretty much anything
-you want to the entity. However, unlike the other Thorium methods, `.effect()` does not do any
+you want to the entity. However, unlike the other Thorium methods, `MutateDyn` does not do any
 kind of automatic cleanup - it doesn't know how to undo the previous changes. So you will need to
 ensure that whatever changes you make to the entity completely overwrite whatever you did the
 last time.

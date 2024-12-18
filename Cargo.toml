@@ -8,10 +8,10 @@ members = ["crates/*"]
 
 [workspace.dependencies]
 # bevy = { version = "0.15.0-dev", features = ["ghost_nodes"] }
-# bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
-#   "ghost_nodes",
-# ] }
-bevy = { path = "../bevy", features = ["ghost_nodes"] }
+bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
+  "ghost_nodes",
+] }
+# bevy = { path = "../bevy", features = ["ghost_nodes"] }
 thorium_ui_core = { path = "crates/thorium_ui_core" }
 thorium_ui_headless = { path = "crates/thorium_ui_headless" }
 thorium_ui_controls = { path = "crates/thorium_ui_controls" }

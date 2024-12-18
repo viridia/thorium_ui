@@ -153,12 +153,11 @@ struct ForEachEffect<
 }
 
 impl<
-        'a,
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-    > ForEachEffect<'a, Item, CmpFn, EachFn, FallbackFn>
+    > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
     /// array items. Matching items are patched, other items are inserted or deleted.
@@ -292,12 +291,11 @@ impl<
 }
 
 impl<
-        'a,
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
         FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-    > AnyEffect for ForEachEffect<'a, Item, CmpFn, EachFn, FallbackFn>
+    > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {
         // Create a reactive context and call the test condition.

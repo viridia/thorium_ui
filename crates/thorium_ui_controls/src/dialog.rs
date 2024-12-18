@@ -7,7 +7,9 @@ use bevy::{
     prelude::*,
     ui::{self, experimental::GhostNode},
 };
-use thorium_ui_core::{CreateCond, EntityEffect, Signal, StyleEntity, UiTemplate};
+use thorium_ui_core::{
+    BuildEffects, BuildMutateDyn, CreateCond, MutateDyn, Signal, StyleEntity, UiTemplate,
+};
 use thorium_ui_headless::CoreBarrier;
 
 use crate::{
@@ -145,12 +147,12 @@ impl UiTemplate for Dialog {
             GhostNode::default(),
             BistableTransition::new(false, TRANSITION_DURATION).set_exit_callback(on_exited),
         ));
-        transition_entity.effect(
+        transition_entity.effects(MutateDyn::new(
             move |world: DeferredWorld| open.get(&world),
             |open, ent| {
                 ent.get_mut::<BistableTransition>().unwrap().set_open(open);
             },
-        );
+        ));
         let transition_id = transition_entity.id();
 
         let children = self.children.clone();
@@ -170,7 +172,7 @@ impl UiTemplate for Dialog {
                     .spawn((Node::default(), Name::new("Dialog::Overlay")))
                     .style(style_dialog_barrier)
                     .insert(CoreBarrier { on_close })
-                    .effect(
+                    .effects(MutateDyn::new(
                         move |world: DeferredWorld| match world
                             .entity(transition_id)
                             .get::<BistableTransition>()
@@ -191,7 +193,7 @@ impl UiTemplate for Dialog {
                                 TRANSITION_DURATION,
                             );
                         },
-                    )
+                    ))
                     .with_children(|builder| {
                         builder
                             .spawn((Node::default(), Name::new("Dialog")))
@@ -213,7 +215,7 @@ impl UiTemplate for Dialog {
                                     });
                                 },
                             ))
-                            .effect(
+                            .effects(MutateDyn::new(
                                 move |world: DeferredWorld| match world
                                     .entity(transition_id)
                                     .get::<BistableTransition>()
@@ -233,7 +235,7 @@ impl UiTemplate for Dialog {
                                         TRANSITION_DURATION,
                                     );
                                 },
-                            )
+                            ))
                             .with_children(|builder| {
                                 (children.as_ref())(builder);
                             });

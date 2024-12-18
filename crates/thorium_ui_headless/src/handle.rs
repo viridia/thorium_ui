@@ -66,7 +66,7 @@ pub enum MaybeHandleOrPath<'a, T: Asset> {
 }
 
 // Necessary because we don't want to require T: PartialEq
-impl<'a, T: Asset> PartialEq for MaybeHandleOrPath<'a, T> {
+impl<T: Asset> PartialEq for MaybeHandleOrPath<'_, T> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (MaybeHandleOrPath::None, MaybeHandleOrPath::None) => true,

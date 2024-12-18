@@ -12,7 +12,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    CreateCond, InsertWhen, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    BuildEffects, CreateCond, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle,
+    StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -169,46 +170,48 @@ impl UiTemplate for Checkbox {
                 },
                 AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
-            .insert_when(
+            .effects(InsertWhen::new(
                 move |world: DeferredWorld| disabled.get(&world),
                 || InteractionDisabled,
-            )
+            ))
             // .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
                 builder
                     .spawn((Node::default(), Name::new("Checkbox::Border")))
                     .style(style_checkbox_border)
-                    .style_dyn(
-                        move |world: DeferredWorld| match (
-                            checked.get(&world),
-                            disabled.get(&world),
-                            world.is_hovering(checkbox_id),
-                        ) {
-                            (true, true, _) => colors::ACCENT.with_alpha(0.2),
-                            (true, false, true) => colors::ACCENT.darker(0.15),
-                            (true, _, _) => colors::ACCENT.darker(0.2),
-                            (false, true, _) => colors::U1.with_alpha(0.7),
-                            (false, false, true) => colors::U1.lighter(0.002),
-                            (false, false, false) => colors::U1,
-                        },
-                        |color, ec| {
-                            ec.insert(BackgroundColor(color.into()));
-                        },
-                    )
-                    .style_dyn(
-                        move |world: DeferredWorld| world.is_focus_visible(checkbox_id),
-                        |is_focused, ec| {
-                            if is_focused {
-                                ec.insert(Outline {
-                                    color: colors::FOCUS.into(),
-                                    width: ui::Val::Px(2.0),
-                                    offset: ui::Val::Px(2.0),
-                                });
-                            } else {
-                                ec.remove::<Outline>();
-                            };
-                        },
-                    )
+                    .effects((
+                        StyleDyn::new(
+                            move |world: DeferredWorld| match (
+                                checked.get(&world),
+                                disabled.get(&world),
+                                world.is_hovering(checkbox_id),
+                            ) {
+                                (true, true, _) => colors::ACCENT.with_alpha(0.2),
+                                (true, false, true) => colors::ACCENT.darker(0.15),
+                                (true, _, _) => colors::ACCENT.darker(0.2),
+                                (false, true, _) => colors::U1.with_alpha(0.7),
+                                (false, false, true) => colors::U1.lighter(0.002),
+                                (false, false, false) => colors::U1,
+                            },
+                            |color, ec| {
+                                ec.insert(BackgroundColor(color.into()));
+                            },
+                        ),
+                        StyleDyn::new(
+                            move |world: DeferredWorld| world.is_focus_visible(checkbox_id),
+                            |is_focused, ec| {
+                                if is_focused {
+                                    ec.insert(Outline {
+                                        color: colors::FOCUS.into(),
+                                        width: ui::Val::Px(2.0),
+                                        offset: ui::Val::Px(2.0),
+                                    });
+                                } else {
+                                    ec.remove::<Outline>();
+                                };
+                            },
+                        )
+                    ))
                     .with_children(|builder| {
                         builder.cond(
                             move |world: DeferredWorld| checked.get(&world),
@@ -228,18 +231,21 @@ impl UiTemplate for Checkbox {
                 builder
                     .spawn(Node::default())
                     .style((typography::text_default, style_checkbox_label))
-                    .style_dyn(
-                        move |world: DeferredWorld| disabled.get(&world),
-                        |disabled, ec| {
-                            ec.entry::<InheritableFontColor>()
-                                .and_modify(move |mut color| {
-                                    if disabled {
-                                        color.0 = colors::FOREGROUND.with_alpha(0.2).into();
-                                    } else {
-                                        color.0 = colors::FOREGROUND.into();
-                                    }
-                                });
-                        },
+                    .effects(
+                        StyleDyn::new(
+                            move |world: DeferredWorld| disabled.get(&world),
+                            |disabled, ec| {
+                                ec.entry::<InheritableFontColor>()
+                                    .and_modify(move |mut color| {
+                                        if disabled {
+                                            color.0 = colors::FOREGROUND.with_alpha(0.2).into();
+                                        } else {
+                                            color.0 = colors::FOREGROUND.into();
+                                        }
+                                    });
+                            },
+
+                        )
                     )
                     .with_children(|builder| {
                         (self.label.as_ref())(builder);

@@ -5,7 +5,7 @@ use bevy::{
     prelude::{BuildChildren, Entity, EntityCommands, IntoSystem, World},
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell};
+use crate::effect_cell::{AnyEffect, ConstructEffect, EffectCell};
 
 /// `StyleTuple` - a variable-length tuple of style functions.
 pub trait StyleTuple: Sync + Send {
@@ -113,16 +113,6 @@ impl StyleHandle {
 
 pub trait StyleEntity {
     fn style(&mut self, style: impl StyleTuple + 'static) -> &mut Self;
-    fn style_dyn<
-        M: Send + Sync + 'static,
-        D: PartialEq + Clone + Send + Sync + 'static,
-        DepsFn: IntoSystem<(), D, M> + 'static,
-        SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
-    >(
-        &mut self,
-        deps_fn: DepsFn,
-        style: SF,
-    ) -> &mut Self;
 }
 
 impl StyleEntity for EntityCommands<'_> {
@@ -130,31 +120,56 @@ impl StyleEntity for EntityCommands<'_> {
         style.apply(self);
         self
     }
+}
 
-    fn style_dyn<
+pub struct StyleDyn<
+    M: Send + Sync + 'static,
+    D: PartialEq + Clone + Send + Sync + 'static,
+    DepsFn: IntoSystem<(), D, M> + 'static,
+    SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
+> {
+    deps_fn: DepsFn,
+    style_fn: SF,
+    marker: std::marker::PhantomData<(M, D)>,
+}
+
+impl<
         M: Send + Sync + 'static,
         D: PartialEq + Clone + Send + Sync + 'static,
         DepsFn: IntoSystem<(), D, M> + 'static,
         SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
-    >(
-        &mut self,
-        deps_fn: DepsFn,
-        style_fn: SF,
-    ) -> &mut Self {
-        let deps_sys = self.commands().register_system(deps_fn);
-        let target = self.id();
-        self.with_child(EffectCell::new(StyleDynAction {
-            target,
-            deps: None,
-            deps_sys,
+    > StyleDyn<M, D, DepsFn, SF>
+{
+    pub fn new(deps_fn: DepsFn, style_fn: SF) -> Self {
+        Self {
+            deps_fn,
             style_fn,
-            marker: std::marker::PhantomData::<M>,
-        }));
-        self
+            marker: std::marker::PhantomData,
+        }
     }
 }
 
-pub struct StyleDynAction<P: Send + Sync, M, EffectFn: Fn(P, &mut EntityCommands)> {
+impl<
+        M: Send + Sync + 'static,
+        D: PartialEq + Clone + Send + Sync + 'static,
+        DepsFn: IntoSystem<(), D, M> + 'static,
+        SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
+    > ConstructEffect for StyleDyn<M, D, DepsFn, SF>
+{
+    fn construct(self, parent: &mut EntityCommands<'_>) {
+        let deps_sys = parent.commands().register_system(self.deps_fn);
+        let target = parent.id();
+        parent.with_child(EffectCell::new(StyleDynEffect {
+            target,
+            deps: None,
+            deps_sys,
+            style_fn: self.style_fn,
+            marker: std::marker::PhantomData::<M>,
+        }));
+    }
+}
+
+pub struct StyleDynEffect<P: Send + Sync, M, EffectFn: Fn(P, &mut EntityCommands)> {
     target: Entity,
     deps: Option<P>,
     deps_sys: SystemId<(), P>,
@@ -163,7 +178,7 @@ pub struct StyleDynAction<P: Send + Sync, M, EffectFn: Fn(P, &mut EntityCommands
 }
 
 impl<D: PartialEq + Clone + Send + Sync + 'static, M, EffectFn: Fn(D, &mut EntityCommands)>
-    AnyEffect for StyleDynAction<D, M, EffectFn>
+    AnyEffect for StyleDynEffect<D, M, EffectFn>
 {
     fn update(&mut self, world: &mut World, _entity: Entity) {
         // Run the dependencies and see if the result changed.

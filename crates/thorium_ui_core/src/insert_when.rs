@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell};
+use crate::effect_cell::{AnyEffect, ConstructEffect, EffectCell};
 
 pub struct InsertWhenEffect<B: Bundle, FactoryFn: Fn() -> B> {
     target: Entity,
@@ -38,40 +38,51 @@ impl<B: Bundle, FactoryFn: Fn() -> B> AnyEffect for InsertWhenEffect<B, FactoryF
     }
 }
 
-pub trait InsertWhen {
-    fn insert_when<
-        M: Send + Sync + 'static,
-        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        B: Bundle,
-        FactoryFn: Fn() -> B + Send + Sync + 'static,
-    >(
-        &mut self,
-        test_fn: TestFn,
-        factory: FactoryFn,
-    ) -> &mut Self;
+pub struct InsertWhen<
+    M: Send + Sync + 'static,
+    TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
+    B: Bundle,
+    FactoryFn: Fn() -> B + Send + Sync + 'static,
+> {
+    test_fn: TestFn,
+    factory: FactoryFn,
+    marker: std::marker::PhantomData<M>,
 }
 
-impl InsertWhen for EntityCommands<'_> {
-    fn insert_when<
+impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
         B: Bundle,
         FactoryFn: Fn() -> B + Send + Sync + 'static,
-    >(
-        &mut self,
-        test_fn: TestFn,
-        factory: FactoryFn,
-    ) -> &mut Self {
-        let test_sys = self.commands().register_system(test_fn);
-        let target = self.id();
-        self.commands()
+    > InsertWhen<M, TestFn, B, FactoryFn>
+{
+    pub fn new(test_fn: TestFn, factory: FactoryFn) -> Self {
+        Self {
+            test_fn,
+            factory,
+            marker: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<
+        M: Send + Sync + 'static,
+        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
+        B: Bundle,
+        FactoryFn: Fn() -> B + Send + Sync + 'static,
+    > ConstructEffect for InsertWhen<M, TestFn, B, FactoryFn>
+{
+    fn construct(self, parent: &mut EntityCommands<'_>) {
+        let test_sys = parent.commands().register_system(self.test_fn);
+        let target = parent.id();
+        parent
+            .commands()
             .spawn(EffectCell::new(InsertWhenEffect {
                 target,
                 state: false,
                 test_sys,
-                factory,
+                factory: self.factory,
             }))
             .set_parent(target);
-        self
     }
 }

@@ -214,7 +214,7 @@ impl UiTemplate for Slider {
 
         slider
             .style((typography::text_default, style_slider, self.style.clone()))
-            .effect(
+            .effects(MutateDyn::new(
                 move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
                 |(value, min, max), ent| {
                     let core_slider = CoreSlider { value, min, max };
@@ -242,7 +242,7 @@ impl UiTemplate for Slider {
                         ent.insert(core_slider);
                     }
                 },
-            )
+            ))
             .observe(
                 move |mut trigger: Trigger<ValueChange<f32>>,
                       world: DeferredWorld,
@@ -298,14 +298,14 @@ impl UiTemplate for Slider {
                                 }
                                 builder
                                     .spawn((Text::new(""), UseInheritedTextStyles))
-                                    .effect(
+                                    .effects(MutateDyn::new(
                                         move |world: DeferredWorld| value.get(&world),
                                         move |value, ent| {
                                             ent.entry::<Text>().and_modify(|mut text| {
                                                 text.0 = format!("{:.*}", precision, value);
                                             });
                                         },
-                                    );
+                                    ));
                             });
                         builder.cond(
                             move || true,

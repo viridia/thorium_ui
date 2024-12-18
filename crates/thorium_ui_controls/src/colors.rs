@@ -1,8 +1,7 @@
 use bevy::color::Srgba;
 
 /// Standard colors for the Obsidian UI.
-
-// From https://github.com/coreh/bevy-rfcs/blob/editor-design-system/rfcs/69-editor-design-system.md
+/// From https://github.com/coreh/bevy-rfcs/blob/editor-design-system/rfcs/69-editor-design-system.md
 pub const U1: Srgba = Srgba::new(0.094, 0.094, 0.102, 1.0);
 pub const U2: Srgba = Srgba::new(0.137, 0.137, 0.149, 1.0);
 pub const U3: Srgba = Srgba::new(0.224, 0.224, 0.243, 1.0);

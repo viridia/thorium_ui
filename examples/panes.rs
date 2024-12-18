@@ -1,7 +1,10 @@
 //! Example of a simple UI layout
 
 use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
-use thorium_ui::{CreateCallback, CreateMemo, InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin};
+use thorium_ui::{
+    BuildEffects, CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, StyleEntity,
+    ThoriumUiCorePlugin,
+};
 use thorium_ui_controls::{
     colors, InheritableFontColor, Splitter, SplitterDirection, ThoriumUiControlsPlugin,
     UseInheritedTextStyles,
@@ -72,14 +75,14 @@ fn setup_view_root(mut commands: Commands) {
             builder
                 .spawn(Node::default())
                 .style(style_panel)
-                .style_dyn(
+                .effects(StyleDyn::new(
                     |res: Res<LeftPanelWidth>| res.0,
                     |width, ec| {
                         ec.entry::<Node>().and_modify(move |mut node| {
                             node.width = ui::Val::Px(width);
                         });
                     },
-                )
+                ))
                 .with_children(|builder| {
                     builder.spawn((Text::new("Left"), UseInheritedTextStyles));
                     // builder.invoke(
@@ -119,14 +122,14 @@ fn setup_view_root(mut commands: Commands) {
             builder
                 .spawn(Node::default())
                 .style(style_panel)
-                .style_dyn(
+                .effects(StyleDyn::new(
                     |res: Res<RightPanelWidth>| res.0,
                     |width, ec| {
                         ec.entry::<Node>().and_modify(move |mut node| {
                             node.width = ui::Val::Px(width);
                         });
                     },
-                )
+                ))
                 .with_children(|builder| {
                     builder.spawn((Text::new("Right"), UseInheritedTextStyles));
                 });

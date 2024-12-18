@@ -19,7 +19,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    InsertWhen, IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    BuildEffects, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle, StyleTuple,
+    UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -248,52 +249,54 @@ impl UiTemplate for Button {
                 CoreButton { on_click },
                 AccessibilityNode::from(accesskit::Node::new(Role::Button)),
             ))
-            .insert_when(
+            .effects(InsertWhen::new(
                 move |world: DeferredWorld| disabled.get(&world),
                 || InteractionDisabled,
-            )
+            ))
             .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
                 builder
                     .spawn((Node::default(), Name::new("Button::Background")))
                     .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
-                    .style_dyn(
-                        move |world: DeferredWorld| {
-                            if minimal {
-                                colors::TRANSPARENT
-                            } else {
-                                let entity = world.entity(button_id);
-                                let pressed = entity
-                                    .get::<CoreButtonPressed>()
-                                    .map(|pressed| pressed.0)
-                                    .unwrap_or_default();
-                                button_bg_color(
-                                    variant.get(&world),
-                                    world.is_interaction_disabled(button_id),
-                                    pressed,
-                                    world.is_hovering(button_id),
-                                )
-                            }
-                        },
-                        |color, ent| {
-                            ent.insert(BackgroundColor(color.into()));
-                        },
-                    )
-                    .style_dyn(
-                        move |world: DeferredWorld| world.is_focus_visible(button_id),
-                        |is_focused, ent| {
-                            if is_focused {
-                                ent.insert(Outline {
-                                    color: colors::FOCUS.into(),
-                                    width: ui::Val::Px(2.0),
-                                    offset: ui::Val::Px(2.0),
-                                });
-                            } else {
-                                ent.remove::<Outline>();
-                            };
-                        },
-                    );
+                    .effects((
+                        StyleDyn::new(
+                            move |world: DeferredWorld| {
+                                if minimal {
+                                    colors::TRANSPARENT
+                                } else {
+                                    let entity = world.entity(button_id);
+                                    let pressed = entity
+                                        .get::<CoreButtonPressed>()
+                                        .map(|pressed| pressed.0)
+                                        .unwrap_or_default();
+                                    button_bg_color(
+                                        variant.get(&world),
+                                        world.is_interaction_disabled(button_id),
+                                        pressed,
+                                        world.is_hovering(button_id),
+                                    )
+                                }
+                            },
+                            |color, ent| {
+                                ent.insert(BackgroundColor(color.into()));
+                            },
+                        ),
+                        StyleDyn::new(
+                            move |world: DeferredWorld| world.is_focus_visible(button_id),
+                            |is_focused, ent| {
+                                if is_focused {
+                                    ent.insert(Outline {
+                                        color: colors::FOCUS.into(),
+                                        width: ui::Val::Px(2.0),
+                                        offset: ui::Val::Px(2.0),
+                                    });
+                                } else {
+                                    ent.remove::<Outline>();
+                                };
+                            },
+                        ),
+                    ));
                 let children = self.children.as_ref();
                 (children)(builder);
             });

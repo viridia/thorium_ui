@@ -296,7 +296,7 @@ impl CreateMutable for ChildBuilder<'_> {
     }
 }
 
-impl<'w> ReadMutable for DeferredWorld<'w> {
+impl ReadMutable for DeferredWorld<'_> {
     fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Copy + 'static,
@@ -330,7 +330,7 @@ impl<'w> ReadMutable for DeferredWorld<'w> {
     }
 }
 
-impl<'w> WriteMutable for DeferredWorld<'w> {
+impl WriteMutable for DeferredWorld<'_> {
     /// Write the value of a mutable variable. Does nothing if the value being set matches the
     /// existing value.
     fn write_mutable<T>(&mut self, mutable: Entity, value: T)

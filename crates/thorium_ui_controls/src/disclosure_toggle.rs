@@ -15,8 +15,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    CreateMemo, EntityEffect, IntoSignal, InvokeUiTemplate, Signal, StyleEntity, StyleHandle,
-    StyleTuple, UiTemplate,
+    BuildEffects, BuildMutateDyn, CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal,
+    StyleDyn, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{hover::IsHovering, CoreToggle};
 
@@ -123,7 +123,7 @@ impl UiTemplate for DisclosureToggle {
                 TabIndex(self.tab_index),
                 AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
-            .effect(
+            .effects(MutateDyn::new(
                 move |world: DeferredWorld| checked.get(&world),
                 |checked, ent| {
                     let angle = if checked {
@@ -134,8 +134,8 @@ impl UiTemplate for DisclosureToggle {
                     let target = Quat::from_rotation_z(angle);
                     AnimatedTransition::<AnimatedRotation>::start(ent, target, None, 0.3);
                 },
-            )
-            .style_dyn(
+            ))
+            .effects(StyleDyn::new(
                 move |world: DeferredWorld| world.is_focus_visible(toggle_id),
                 |is_focused, ec| {
                     if is_focused {
@@ -148,7 +148,7 @@ impl UiTemplate for DisclosureToggle {
                         ec.remove::<Outline>();
                     };
                 },
-            )
+            ))
             .with_children(|builder| {
                 let icon_color = builder.create_memo(
                     move |world: DeferredWorld| {

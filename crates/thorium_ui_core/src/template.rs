@@ -8,7 +8,7 @@ pub trait InvokeUiTemplate {
     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self;
 }
 
-impl<'w> InvokeUiTemplate for ChildBuilder<'w> {
+impl InvokeUiTemplate for ChildBuilder<'_> {
     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
         template.build(self);
         self
