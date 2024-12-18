@@ -119,3 +119,32 @@ impl<M, Pos: Fn(&mut ChildBuilder), Neg: Fn(&mut ChildBuilder)> AnyEffect
         world.commands().unregister_system(self.test_sys);
     }
 }
+
+// pub struct Cond<
+//     M: Send + Sync + 'static,
+//     TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
+//     Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+//     Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+// > {
+//     test: TestFn,
+//     pos: Pos,
+//     neg: Neg,
+//     marker: std::marker::PhantomData<M>,
+// }
+
+// impl<
+//         M: Send + Sync + 'static,
+//         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
+//         Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+//         Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+//     > Cond<M, TestFn, Pos, Neg>
+// {
+//     pub fn new(test: TestFn, pos: Pos, neg: Neg) -> Self {
+//         Self {
+//             test,
+//             pos,
+//             neg,
+//             marker: std::marker::PhantomData,
+//         }
+//     }
+// }

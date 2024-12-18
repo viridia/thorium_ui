@@ -1,7 +1,7 @@
 use bevy::{
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::system::SystemId,
     input::ButtonState,
-    input_focus::{FocusKeyboardInput, SetInputFocus},
+    input_focus::{FocusKeyboardInput, InputFocus, InputFocusVisible},
     prelude::*,
 };
 
@@ -34,12 +34,14 @@ pub(crate) fn barrier_on_key_input(
 pub(crate) fn barrier_on_pointer_down(
     mut trigger: Trigger<Pointer<Pressed>>,
     q_state: Query<&CoreBarrier>,
-    mut world: DeferredWorld,
+    mut focus: ResMut<InputFocus>,
+    mut focus_visible: ResMut<InputFocusVisible>,
     mut commands: Commands,
 ) {
     let entity_id = trigger.target();
     if let Ok(bstate) = q_state.get(entity_id) {
-        world.set_input_focus(entity_id);
+        focus.0 = Some(entity_id);
+        focus_visible.0 = false;
         trigger.propagate(false);
         if let Some(on_close) = bstate.on_close {
             commands.run_system(on_close);

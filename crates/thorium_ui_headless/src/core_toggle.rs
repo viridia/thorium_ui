@@ -1,7 +1,7 @@
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     input::ButtonState,
-    input_focus::{FocusKeyboardInput, SetInputFocus},
+    input_focus::{FocusKeyboardInput, InputFocus, InputFocusVisible},
     prelude::*,
 };
 use thorium_ui_core::Signal;
@@ -38,11 +38,14 @@ pub(crate) fn toggle_on_key_input(
 pub(crate) fn toggle_on_pointer_click(
     mut trigger: Trigger<Pointer<Click>>,
     q_state: Query<(&CoreToggle, Has<InteractionDisabled>)>,
+    mut focus: ResMut<InputFocus>,
+    mut focus_visible: ResMut<InputFocusVisible>,
     mut world: DeferredWorld,
 ) {
     if let Ok((tstate, disabled)) = q_state.get(trigger.target()) {
         let checkbox_id = trigger.target();
-        world.set_input_focus(checkbox_id);
+        focus.0 = Some(checkbox_id);
+        focus_visible.0 = false;
         trigger.propagate(false);
         if let Some(on_change) = tstate.on_change {
             if !disabled {
