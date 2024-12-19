@@ -1,3 +1,4 @@
+mod attach;
 mod callback;
 mod cond;
 mod effect_cell;
@@ -13,11 +14,11 @@ mod style;
 mod switch;
 mod template;
 
+pub use attach::{Attach, Attachment};
 use bevy::app::{App, Plugin, Update};
 pub use callback::CreateCallback;
 pub use cond::CreateCond;
 use effect_cell::update_effects;
-pub use effect_cell::BuildEffects;
 pub use effect_hook::CreateHookEffect;
 pub use foreach::{CreateForEach, ListItems};
 pub use insert_when::InsertWhen;

@@ -12,7 +12,6 @@ use bevy::{
 /// of the entity's state.
 /// Note: If Bevy had trait queries, we wouldn't the Arc/Mutex.
 #[derive(Component, Clone)]
-// #[require(GhostNode)]
 #[component(on_add = on_add_effect, on_remove = on_remove_effect)]
 pub struct EffectCell {
     pub(crate) effect: Arc<Mutex<dyn AnyEffect + 'static + Sync + Send>>,
@@ -65,66 +64,5 @@ impl Command for RunEffectNow {
         let cell = world.get_mut::<EffectCell>(self.0).unwrap();
         let effect = cell.effect.clone();
         effect.lock().unwrap().update(world, self.0);
-    }
-}
-
-pub trait ConstructEffect {
-    fn construct(self, parent: &mut EntityCommands<'_>);
-}
-
-/// `EffectTuple` - a variable-length tuple of effects.
-pub trait EffectTuple: Sync + Send {
-    /// Method to construct the effect on the target entity.
-    fn apply(self, commands: &mut EntityCommands);
-}
-
-/// Empty effect tuple.
-impl EffectTuple for () {
-    fn apply(self, _ctx: &mut EntityCommands) {}
-}
-
-impl<E: ConstructEffect + Send + Sync + 'static> EffectTuple for E {
-    fn apply(self, ctx: &mut EntityCommands) {
-        self.construct(ctx);
-    }
-}
-
-macro_rules! impl_effect_tuple {
-    ( $($style: ident, $idx: tt);+ ) => {
-        impl<$(
-            $style: EffectTuple + 'static,
-        )+> EffectTuple for ( $( $style, )* ) {
-            fn apply(self, builder: &mut EntityCommands) {
-                $( self.$idx.apply(builder); )*
-            }
-        }
-    };
-}
-
-impl_effect_tuple!(E0, 0);
-impl_effect_tuple!(E0, 0; E1, 1);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14);
-impl_effect_tuple!(E0, 0; E1, 1; E2, 2; E3, 3; E4, 4; E5, 5; E6, 6; E7, 7; E8, 8; E9, 9; E10, 10; E11, 11; E12, 12; E13, 13; E14, 14; E15, 15);
-
-pub trait BuildEffects {
-    fn effects(&mut self, effect_tuple: impl EffectTuple) -> &mut Self;
-}
-
-impl BuildEffects for EntityCommands<'_> {
-    fn effects(&mut self, effect_tuple: impl EffectTuple) -> &mut Self {
-        effect_tuple.apply(self);
-        self
     }
 }

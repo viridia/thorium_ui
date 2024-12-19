@@ -15,6 +15,7 @@ bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
 thorium_ui_core = { path = "crates/thorium_ui_core" }
 thorium_ui_headless = { path = "crates/thorium_ui_headless" }
 thorium_ui_controls = { path = "crates/thorium_ui_controls" }
+variadics_please = "1.1.0"
 
 [dependencies]
 bevy = { workspace = true }

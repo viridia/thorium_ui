@@ -2,7 +2,7 @@
 
 use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
 use thorium_ui::{
-    BuildEffects, CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, StyleEntity,
+    Attach, CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, StyleEntity,
     ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
@@ -75,7 +75,7 @@ fn setup_view_root(mut commands: Commands) {
             builder
                 .spawn(Node::default())
                 .style(style_panel)
-                .effects(StyleDyn::new(
+                .attach(StyleDyn::new(
                     |res: Res<LeftPanelWidth>| res.0,
                     |width, ec| {
                         ec.entry::<Node>().and_modify(move |mut node| {
@@ -122,7 +122,7 @@ fn setup_view_root(mut commands: Commands) {
             builder
                 .spawn(Node::default())
                 .style(style_panel)
-                .effects(StyleDyn::new(
+                .attach(StyleDyn::new(
                     |res: Res<RightPanelWidth>| res.0,
                     |width, ec| {
                         ec.entry::<Node>().and_modify(move |mut node| {

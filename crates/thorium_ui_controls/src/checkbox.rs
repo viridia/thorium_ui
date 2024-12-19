@@ -12,7 +12,7 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    BuildEffects, CreateCond, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle,
+    Attach, CreateCond, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle,
     StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{
@@ -170,7 +170,7 @@ impl UiTemplate for Checkbox {
                 },
                 AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
-            .effects(InsertWhen::new(
+            .attach(InsertWhen::new(
                 move |world: DeferredWorld| disabled.get(&world),
                 || InteractionDisabled,
             ))
@@ -179,7 +179,7 @@ impl UiTemplate for Checkbox {
                 builder
                     .spawn((Node::default(), Name::new("Checkbox::Border")))
                     .style(style_checkbox_border)
-                    .effects((
+                    .attach((
                         StyleDyn::new(
                             move |world: DeferredWorld| match (
                                 checked.get(&world),
@@ -231,7 +231,7 @@ impl UiTemplate for Checkbox {
                 builder
                     .spawn(Node::default())
                     .style((typography::text_default, style_checkbox_label))
-                    .effects(
+                    .attach(
                         StyleDyn::new(
                             move |world: DeferredWorld| disabled.get(&world),
                             |disabled, ec| {

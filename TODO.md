@@ -20,7 +20,7 @@ commands.spawn(Node::default())
         Button::with_label("Close"),
         Node::default().insert(InteractionDisabled),
         Node::default().style(style_button),
-        (Node::default(), InteractionDisabled).effects(
+        (Node::default(), InteractionDisabled).attach(
             MarkWhen<InteractionDisabled>::(|| disabled)
         ),
     ));

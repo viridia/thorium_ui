@@ -19,7 +19,7 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    BuildEffects, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle, StyleTuple,
+    Attach, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle, StyleTuple,
     UiTemplate,
 };
 use thorium_ui_headless::{
@@ -249,7 +249,7 @@ impl UiTemplate for Button {
                 CoreButton { on_click },
                 AccessibilityNode::from(accesskit::Node::new(Role::Button)),
             ))
-            .effects(InsertWhen::new(
+            .attach(InsertWhen::new(
                 move |world: DeferredWorld| disabled.get(&world),
                 || InteractionDisabled,
             ))
@@ -259,7 +259,7 @@ impl UiTemplate for Button {
                     .spawn((Node::default(), Name::new("Button::Background")))
                     .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
-                    .effects((
+                    .attach((
                         StyleDyn::new(
                             move |world: DeferredWorld| {
                                 if minimal {

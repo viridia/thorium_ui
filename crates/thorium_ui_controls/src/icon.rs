@@ -1,6 +1,6 @@
 use bevy::{ecs::world::DeferredWorld, prelude::*, ui};
 use thorium_ui_core::{
-    BuildEffects, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    Attach, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::handle::HandleOrOwnedPath;
 
@@ -78,7 +78,7 @@ impl UiTemplate for Icon {
                 },
                 self.style.clone(),
             ))
-            .effects(StyleDyn::new(
+            .attach(StyleDyn::new(
                 move |world: DeferredWorld| color.get(&world),
                 |color, ent| {
                     ent.entry::<ImageNode>().and_modify(move |mut img| {

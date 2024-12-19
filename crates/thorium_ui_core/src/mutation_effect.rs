@@ -3,7 +3,10 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, ConstructEffect, EffectCell};
+use crate::{
+    effect_cell::{AnyEffect, EffectCell},
+    Attachment,
+};
 
 pub struct MutateDynEffect<P, M, EffectFn: Fn(P, &mut EntityWorldMut)> {
     target: Entity,
@@ -45,7 +48,7 @@ pub struct MutateDyn<
 impl<
         P: PartialEq + Clone + Send + Sync + 'static,
         M: Send + Sync + 'static,
-        DepsFn: IntoSystem<(), P, M> + 'static,
+        DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
         EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
     > MutateDyn<P, M, DepsFn, EffectFn>
 {
@@ -60,11 +63,11 @@ impl<
 impl<
         P: PartialEq + Clone + Send + Sync + 'static,
         M: Send + Sync + 'static,
-        DepsFn: IntoSystem<(), P, M> + 'static,
+        DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
         EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    > ConstructEffect for MutateDyn<P, M, DepsFn, EffectFn>
+    > Attachment for MutateDyn<P, M, DepsFn, EffectFn>
 {
-    fn construct(self, parent: &mut EntityCommands<'_>) {
+    fn apply(self, parent: &mut EntityCommands<'_>) {
         let deps_sys = parent.commands().register_system(self.deps_fn);
         let target = parent.id();
         parent.commands().spawn(EffectCell::new(MutateDynEffect {

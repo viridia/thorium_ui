@@ -4,8 +4,8 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    BuildEffects, CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn,
-    StyleEntity, ThoriumUiCorePlugin,
+    Attach, CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn, StyleEntity,
+    ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     animation::{BistableTransition, BistableTransitionState},
@@ -62,7 +62,7 @@ fn setup_view_root(mut commands: Commands) {
                 BistableTransition::new(false, 0.3),
             ));
             let row_id = row.id();
-            row.effects(MutateDyn::new(
+            row.attach(MutateDyn::new(
                 move |world: DeferredWorld| world.is_hovering(row_id),
                 |hovering, ent| {
                     ent.entry::<BistableTransition>()

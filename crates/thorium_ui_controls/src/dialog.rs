@@ -7,7 +7,7 @@ use bevy::{
     prelude::*,
     ui::{self, experimental::GhostNode},
 };
-use thorium_ui_core::{BuildEffects, CreateCond, MutateDyn, Signal, StyleEntity, UiTemplate};
+use thorium_ui_core::{Attach, CreateCond, MutateDyn, Signal, StyleEntity, UiTemplate};
 use thorium_ui_headless::CoreBarrier;
 
 use crate::{
@@ -145,7 +145,7 @@ impl UiTemplate for Dialog {
             GhostNode::default(),
             BistableTransition::new(false, TRANSITION_DURATION).set_exit_callback(on_exited),
         ));
-        transition_entity.effects(MutateDyn::new(
+        transition_entity.attach(MutateDyn::new(
             move |world: DeferredWorld| open.get(&world),
             |open, ent| {
                 ent.get_mut::<BistableTransition>().unwrap().set_open(open);
@@ -170,7 +170,7 @@ impl UiTemplate for Dialog {
                     .spawn((Node::default(), Name::new("Dialog::Overlay")))
                     .style(style_dialog_barrier)
                     .insert(CoreBarrier { on_close })
-                    .effects(MutateDyn::new(
+                    .attach(MutateDyn::new(
                         move |world: DeferredWorld| match world
                             .entity(transition_id)
                             .get::<BistableTransition>()
@@ -213,7 +213,7 @@ impl UiTemplate for Dialog {
                                     });
                                 },
                             ))
-                            .effects(MutateDyn::new(
+                            .attach(MutateDyn::new(
                                 move |world: DeferredWorld| match world
                                     .entity(transition_id)
                                     .get::<BistableTransition>()

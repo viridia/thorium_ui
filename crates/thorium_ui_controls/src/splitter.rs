@@ -7,7 +7,7 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    BuildEffects, CreateMutable, IntoSignal, Signal, StyleDyn, StyleEntity, UiTemplate,
+    Attach, CreateMutable, IntoSignal, Signal, StyleDyn, StyleEntity, UiTemplate,
 };
 use thorium_ui_headless::hover::{Hovering, IsHovering};
 
@@ -229,7 +229,7 @@ impl UiTemplate for Splitter {
                 builder
                     .spawn(Node::default())
                     .style(style_splitter_inner)
-                    .effects(StyleDyn::new(
+                    .attach(StyleDyn::new(
                         move |world: DeferredWorld| {
                             // Color change on hover / drag
                             let ds = drag_state.get(&world);

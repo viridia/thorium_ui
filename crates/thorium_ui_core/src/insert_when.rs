@@ -3,7 +3,10 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, ConstructEffect, EffectCell};
+use crate::{
+    effect_cell::{AnyEffect, EffectCell},
+    Attachment,
+};
 
 pub struct InsertWhenEffect<B: Bundle, FactoryFn: Fn() -> B> {
     target: Entity,
@@ -70,9 +73,9 @@ impl<
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
         B: Bundle,
         FactoryFn: Fn() -> B + Send + Sync + 'static,
-    > ConstructEffect for InsertWhen<M, TestFn, B, FactoryFn>
+    > Attachment for InsertWhen<M, TestFn, B, FactoryFn>
 {
-    fn construct(self, parent: &mut EntityCommands<'_>) {
+    fn apply(self, parent: &mut EntityCommands<'_>) {
         let test_sys = parent.commands().register_system(self.test_fn);
         let target = parent.id();
         parent

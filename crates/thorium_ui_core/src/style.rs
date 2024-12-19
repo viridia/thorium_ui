@@ -5,7 +5,10 @@ use bevy::{
     prelude::{BuildChildren, Entity, EntityCommands, IntoSystem, World},
 };
 
-use crate::effect_cell::{AnyEffect, ConstructEffect, EffectCell};
+use crate::{
+    effect_cell::{AnyEffect, EffectCell},
+    Attachment,
+};
 
 /// `StyleTuple` - a variable-length tuple of style functions.
 pub trait StyleTuple: Sync + Send {
@@ -152,11 +155,11 @@ impl<
 impl<
         M: Send + Sync + 'static,
         D: PartialEq + Clone + Send + Sync + 'static,
-        DepsFn: IntoSystem<(), D, M> + 'static,
+        DepsFn: IntoSystem<(), D, M> + Send + Sync + 'static,
         SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
-    > ConstructEffect for StyleDyn<M, D, DepsFn, SF>
+    > Attachment for StyleDyn<M, D, DepsFn, SF>
 {
-    fn construct(self, parent: &mut EntityCommands<'_>) {
+    fn apply(self, parent: &mut EntityCommands<'_>) {
         let deps_sys = parent.commands().register_system(self.deps_fn);
         let target = parent.id();
         parent.with_child(EffectCell::new(StyleDynEffect {

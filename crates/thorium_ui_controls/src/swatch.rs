@@ -2,7 +2,7 @@ use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use thorium_ui_core::{
-    BuildEffects, CreateCond, IntoSignal, MutateDyn, Signal, StyleEntity, StyleHandle, StyleTuple,
+    Attach, CreateCond, IntoSignal, MutateDyn, Signal, StyleEntity, StyleHandle, StyleTuple,
     UiTemplate,
 };
 // use bevy_tabindex::TabIndex;
@@ -96,7 +96,7 @@ impl UiTemplate for Swatch {
                 Name::new("Swatch"),
             ))
             .style((style_swatch, self.style.clone()))
-            .effects(MutateDyn::new(
+            .attach(MutateDyn::new(
                 move |world: DeferredWorld| LinearRgba::from(color.get(&world)),
                 |color, ent| {
                     let material_handle = ent

@@ -12,8 +12,7 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    BuildEffects, InvokeUiTemplate, MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin,
-    UiTemplate,
+    Attach, InvokeUiTemplate, MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiTemplate,
 };
 
 fn main() {
@@ -69,7 +68,7 @@ impl UiTemplate for Hoverable {
         ));
         let id = item.id();
         item.with_child(Text::new("Hover me!"))
-            .effects(MutateDyn::new(
+            .attach(MutateDyn::new(
                 move |world: DeferredWorld| world.is_hovering(id),
                 |hovering, entity| {
                     entity.insert(BorderColor(if hovering {
