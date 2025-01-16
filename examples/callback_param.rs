@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::{
     color::palettes::{self, css},
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId},
+    ecs::system::SystemId,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -61,7 +61,7 @@ struct Clickable {
 }
 
 impl UiTemplate for Clickable {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let on_click = self.on_click;
         builder
             .spawn((

@@ -44,8 +44,8 @@ pub trait CreateForEach {
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
-        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
+        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -59,8 +59,8 @@ pub trait CreateForEach {
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
-        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
+        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -76,8 +76,8 @@ impl CreateForEach for RelatedSpawnerCommands<'_, Parent> {
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
-        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
+        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -106,8 +106,8 @@ impl CreateForEach for RelatedSpawnerCommands<'_, Parent> {
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
-        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
+        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -143,8 +143,8 @@ struct ForEachEffect<
     'a,
     Item: Clone + 'static,
     CmpFn: Fn(&Item, &Item) -> bool,
-    EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
-    FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+    EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
+    FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
 > where
     Self: Send + Sync,
 {
@@ -159,8 +159,8 @@ struct ForEachEffect<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
-        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
+        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
@@ -297,8 +297,8 @@ impl<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
-        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
+        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {

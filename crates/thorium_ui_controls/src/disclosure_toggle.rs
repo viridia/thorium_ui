@@ -7,7 +7,7 @@ use crate::{
 use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     input_focus::{tab_navigation::TabIndex, IsFocused},
     prelude::*,
     ui,
@@ -107,7 +107,7 @@ impl DisclosureToggle {
 }
 
 impl UiTemplate for DisclosureToggle {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let disabled = self.disabled;
         let checked = self.expanded;
         let mut toggle = builder.spawn((Node::default(), Name::new("DisclosureToggle")));

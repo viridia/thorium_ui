@@ -1,6 +1,6 @@
 use bevy::{
     color::Luminance,
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -132,7 +132,7 @@ impl Default for Splitter {
 }
 
 impl UiTemplate for Splitter {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let mut splitter =
             builder.spawn((Node::default(), Name::new("Splitter"), Hovering::default()));

@@ -1,4 +1,4 @@
-use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
+use bevy::prelude::*;
 use thorium_ui_core::{StyleEntity, UiTemplate};
 
 fn style_spacer(ec: &mut EntityCommands) {
@@ -12,7 +12,7 @@ fn style_spacer(ec: &mut EntityCommands) {
 pub struct Spacer;
 
 impl UiTemplate for Spacer {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder.spawn(Node::default()).style(style_spacer);
     }
 }

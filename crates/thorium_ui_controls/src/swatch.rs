@@ -1,4 +1,3 @@
-use bevy::ecs::relationship::RelatedSpawnerCommands;
 use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
@@ -86,7 +85,7 @@ impl Swatch {
 }
 
 impl UiTemplate for Swatch {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let color = self.color;
         let selected = self.selected;
         let on_click = self.on_click;

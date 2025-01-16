@@ -4,7 +4,7 @@ use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
     color::Luminance,
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     input_focus::{tab_navigation::TabIndex, IsFocused},
     prelude::*,
     ui,
@@ -78,7 +78,7 @@ pub struct Checkbox {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub label: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>)>,
+    pub label: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -152,7 +152,7 @@ impl Checkbox {
 
 impl UiTemplate for Checkbox {
     /// Construct a checkbox widget.
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let mut checkbox =
             builder.spawn((Node::default(), Hovering::default(), Name::new("Checkbox")));
         let checkbox_id = checkbox.id();

@@ -10,8 +10,8 @@ pub trait CreateCond {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
-        Neg: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        Pos: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
+        Neg: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     >(
         &mut self,
         test: TestFn,
@@ -24,8 +24,8 @@ impl CreateCond for RelatedSpawnerCommands<'_, Parent> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
-        Neg: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        Pos: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
+        Neg: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
     >(
         &mut self,
         test_fn: TestFn,
@@ -81,11 +81,7 @@ impl CreateCond for RelatedSpawnerCommands<'_, Parent> {
 // }
 
 /// Conditional control-flow node.
-struct CondEffect<
-    M,
-    Pos: Fn(&mut RelatedSpawnerCommands<Parent>),
-    Neg: Fn(&mut RelatedSpawnerCommands<Parent>),
-> {
+struct CondEffect<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> {
     state: bool,
     first: bool,
     test_sys: SystemId<(), bool>,
@@ -94,11 +90,8 @@ struct CondEffect<
     marker: std::marker::PhantomData<M>,
 }
 
-impl<
-        M,
-        Pos: Fn(&mut RelatedSpawnerCommands<Parent>),
-        Neg: Fn(&mut RelatedSpawnerCommands<Parent>),
-    > AnyEffect for CondEffect<M, Pos, Neg>
+impl<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> AnyEffect
+    for CondEffect<M, Pos, Neg>
 {
     fn update(&mut self, world: &mut World, entity: Entity) {
         // Run the condition and see if the result changed.

@@ -2,7 +2,6 @@ use std::f32::consts::PI;
 
 use bevy::{
     color::palettes::{self, css},
-    ecs::relationship::RelatedSpawnerCommands,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -61,7 +60,7 @@ fn setup_view_root(mut commands: Commands) {
 struct Hello;
 
 impl UiTemplate for Hello {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let mut item = builder.spawn_empty();
         item.insert(Text::new("Hello, "));
     }
@@ -70,7 +69,7 @@ impl UiTemplate for Hello {
 struct Conditional;
 
 impl UiTemplate for Conditional {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder.cond(
             |counter: Res<Counter>| counter.count & 1 == 0,
             |builder| {
@@ -97,7 +96,7 @@ impl UiTemplate for Conditional {
 struct Subject;
 
 impl UiTemplate for Subject {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder.spawn(Text::new("World!"));
     }
 }

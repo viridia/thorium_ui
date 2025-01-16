@@ -8,7 +8,7 @@ use accesskit::Role;
 use bevy::{
     a11y::AccessibilityNode,
     color::Luminance,
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     input_focus::{tab_navigation::TabIndex, AutoFocus, IsFocused},
     prelude::*,
     ui,
@@ -78,7 +78,7 @@ pub struct Button {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>)>,
+    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -142,10 +142,7 @@ impl Button {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
-        mut self,
-        children: V,
-    ) -> Self {
+    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
         self.children = Arc::new(children);
         self
     }
@@ -209,7 +206,7 @@ impl Default for Button {
 }
 
 impl UiTemplate for Button {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let variant = self.variant;
 
         let corners = self.corners;

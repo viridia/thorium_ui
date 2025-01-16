@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::{
     color::palettes::{self, css},
-    ecs::{relationship::RelatedSpawnerCommands, world::DeferredWorld},
+    ecs::world::DeferredWorld,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -58,7 +58,7 @@ fn setup_view_root(mut commands: Commands) {
 struct Hoverable;
 
 impl UiTemplate for Hoverable {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let mut item = builder.spawn((
             Node {
                 border: ui::UiRect::all(ui::Val::Px(5.)),

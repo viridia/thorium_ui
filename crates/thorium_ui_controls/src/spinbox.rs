@@ -1,5 +1,5 @@
 use bevy::{
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -185,7 +185,7 @@ impl Default for SpinBox {
 }
 
 impl UiTemplate for SpinBox {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let mut spinbox = builder.spawn((Node::default(), Name::new("Spinbox")));
         // let show_buttons = builder.create_derived(move |rcx| {

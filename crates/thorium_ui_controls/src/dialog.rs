@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::{
     color::{Alpha, Luminance},
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     input_focus::tab_navigation::TabGroup,
     prelude::*,
     ui::{self, experimental::GhostNode},
@@ -73,7 +73,7 @@ pub struct Dialog {
     pub open: Signal<bool>,
 
     /// The content of the dialog.
-    pub children: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static>,
+    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static>,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<SystemId>,
@@ -113,7 +113,7 @@ impl Dialog {
     }
 
     /// Sets the content of the dialog.
-    pub fn children<V: 'static + Send + Sync + Fn(&mut RelatedSpawnerCommands<Parent>)>(
+    pub fn children<V: 'static + Send + Sync + Fn(&mut ChildSpawnerCommands)>(
         mut self,
         children: V,
     ) -> Self {
@@ -135,7 +135,7 @@ impl Dialog {
 }
 
 impl UiTemplate for Dialog {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let on_close = self.on_close;
         let on_exited = self.on_exited;
         let open = self.open;
@@ -262,7 +262,7 @@ fn style_dialog_header(ec: &mut EntityCommands) {
 #[derive(Clone)]
 pub struct DialogHeader {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>)>,
+    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
 }
 
 impl Default for DialogHeader {
@@ -280,17 +280,14 @@ impl DialogHeader {
     }
 
     /// Set the content of the dialog header.
-    pub fn children<V: 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
-        mut self,
-        children: V,
-    ) -> Self {
+    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
         self.children = Arc::new(children);
         self
     }
 }
 
 impl UiTemplate for DialogHeader {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder
             .spawn(Node::default())
             .style(style_dialog_header)
@@ -315,7 +312,7 @@ fn style_dialog_body(ec: &mut EntityCommands) {
 #[derive(Clone)]
 pub struct DialogBody {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>)>,
+    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
 }
 
 impl Default for DialogBody {
@@ -333,17 +330,14 @@ impl DialogBody {
     }
 
     /// Set the content of the dialog body.
-    pub fn children<V: 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
-        mut self,
-        children: V,
-    ) -> Self {
+    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
         self.children = Arc::new(children);
         self
     }
 }
 
 impl UiTemplate for DialogBody {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder
             .spawn(Node::default())
             .style(style_dialog_body)
@@ -369,7 +363,7 @@ fn style_dialog_footer(ec: &mut EntityCommands) {
 #[derive(Clone)]
 pub struct DialogFooter {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>)>,
+    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
 }
 
 impl Default for DialogFooter {
@@ -387,17 +381,14 @@ impl DialogFooter {
     }
 
     /// Set the content of the dialog footer.
-    pub fn children<V: 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
-        mut self,
-        children: V,
-    ) -> Self {
+    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
         self.children = Arc::new(children);
         self
     }
 }
 
 impl UiTemplate for DialogFooter {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder
             .spawn(Node::default())
             .style(style_dialog_footer)

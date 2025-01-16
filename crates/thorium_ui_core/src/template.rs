@@ -1,7 +1,7 @@
-use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
+use bevy::ecs::{prelude::*, relationship::RelatedSpawnerCommands};
 
 pub trait UiTemplate {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>);
+    fn build(&self, builder: &mut ChildSpawnerCommands);
 }
 
 pub trait InvokeUiTemplate {

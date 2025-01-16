@@ -1,5 +1,5 @@
 use bevy::{
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -177,7 +177,7 @@ impl Default for Slider {
 }
 
 impl UiTemplate for Slider {
-    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
+    fn build(&self, builder: &mut ChildSpawnerCommands) {
         let mut slider = builder.spawn((
             MaterialNode::<SliderRectMaterial>::default(),
             Name::new("Slider"),
