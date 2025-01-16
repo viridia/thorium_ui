@@ -1,7 +1,7 @@
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
-    input::ButtonState,
-    input_focus::{FocusKeyboardInput, InputFocus, InputFocusVisible},
+    input::{keyboard::KeyboardInput, ButtonState},
+    input_focus::{FocusedInput, InputFocus, InputFocusVisible},
     prelude::*,
 };
 use thorium_ui_core::Signal;
@@ -15,7 +15,7 @@ pub struct CoreToggle {
 }
 
 pub(crate) fn toggle_on_key_input(
-    mut trigger: Trigger<FocusKeyboardInput>,
+    mut trigger: Trigger<FocusedInput<KeyboardInput>>,
     q_state: Query<(&CoreToggle, Has<InteractionDisabled>)>,
     mut world: DeferredWorld,
 ) {

@@ -1,6 +1,6 @@
 use bevy::{
     color::Luminance,
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -58,7 +58,7 @@ fn style_vsplitter_inner(ec: &mut EntityCommands) {
         node.width = ui::Val::Px(3.);
         node.height = ui::Val::Percent(20.);
     });
-    ec.insert(PickingBehavior::IGNORE);
+    ec.insert(Pickable::IGNORE);
 }
 
 fn style_hsplitter(ec: &mut EntityCommands) {
@@ -81,7 +81,7 @@ fn style_hsplitter_inner(ec: &mut EntityCommands) {
         node.width = ui::Val::Percent(20.);
         node.height = ui::Val::Px(3.);
     });
-    ec.insert(PickingBehavior::IGNORE);
+    ec.insert(Pickable::IGNORE);
 }
 
 /// Splitter bar which can be dragged
@@ -132,7 +132,7 @@ impl Default for Splitter {
 }
 
 impl UiTemplate for Splitter {
-    fn build(&self, builder: &mut ChildBuilder) {
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let mut splitter =
             builder.spawn((Node::default(), Name::new("Splitter"), Hovering::default()));

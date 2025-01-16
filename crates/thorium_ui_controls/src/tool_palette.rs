@@ -1,7 +1,12 @@
 use std::sync::Arc;
 
 use accesskit::Role;
-use bevy::{a11y::AccessibilityNode, ecs::system::SystemId, prelude::*, ui};
+use bevy::{
+    a11y::AccessibilityNode,
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId},
+    prelude::*,
+    ui,
+};
 use thorium_ui_core::{IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate};
 
 use crate::{rounded_corners::RoundedCorners, size::Size};
@@ -20,7 +25,7 @@ fn style_tool_palette(ec: &mut EntityCommands) {
 /// ToolPalette - a grid of tool buttons
 pub struct ToolPalette {
     /// The buttons to display.
-    pub children: Arc<dyn Fn(&mut ChildBuilder)>,
+    pub children: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>)>,
 
     /// Additional styles to be applied to the palette.
     pub style: StyleHandle,
@@ -46,7 +51,10 @@ impl ToolPalette {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: 'static + Fn(&mut ChildBuilder)>(mut self, children: V) -> Self {
+    pub fn children<V: 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
+        mut self,
+        children: V,
+    ) -> Self {
         self.children = Arc::new(children);
         self
     }
@@ -65,7 +73,7 @@ impl ToolPalette {
 }
 
 impl UiTemplate for ToolPalette {
-    fn build(&self, builder: &mut ChildBuilder) {
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
         let columns = self.columns;
         // let size = self.size;
 
@@ -100,7 +108,7 @@ pub struct ToolButton {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: Arc<dyn Fn(&mut ChildBuilder)>,
+    pub children: Arc<dyn Fn(&mut RelatedSpawnerCommands<Parent>)>,
 
     /// Callback called when clicked
     pub(crate) on_click: Option<SystemId>,
@@ -152,7 +160,10 @@ impl ToolButton {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: 'static + Fn(&mut ChildBuilder)>(mut self, children: V) -> Self {
+    pub fn children<V: 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
+        mut self,
+        children: V,
+    ) -> Self {
         self.children = Arc::new(children);
         self
     }
@@ -198,7 +209,7 @@ impl Default for ToolButton {
 }
 
 impl UiTemplate for ToolButton {
-    fn build(&self, builder: &mut ChildBuilder) {
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
         let mut btn = Button::new()
             .size(self.size)
             .variant(self.variant)

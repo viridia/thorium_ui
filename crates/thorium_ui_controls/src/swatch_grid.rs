@@ -1,6 +1,6 @@
 use bevy::{
     color::Srgba,
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
 };
@@ -110,7 +110,7 @@ impl Default for SwatchGrid {
 }
 
 impl UiTemplate for SwatchGrid {
-    fn build(&self, builder: &mut ChildBuilder) {
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
         let colors = self.colors.clone();
         let num_cells = (self.grid_size.x * self.grid_size.y) as usize;
         let grid_size = self.grid_size;

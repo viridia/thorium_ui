@@ -58,7 +58,7 @@ Conditions can be nested: you can have a condition within a condition.
 probably avoid doing any really expensive calculations within it.
 
 **Maintaining Correctness**: When the condition changes, the entities in the old branch are despawned
-using `despawn_recursive`. This will remove any child nodes that were created from the previous
+using `despawn`. This will remove any child nodes that were created from the previous
 branch, in effect undoing the effects of that branch. However, the framework cannot undo other
 kinds of actions like issuing `Commands` which are possible from the `ChildBuilder` interface.
 So it is important to only call methods that spawn child entities, or are otherwise safe.

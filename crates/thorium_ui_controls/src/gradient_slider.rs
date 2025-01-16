@@ -1,6 +1,6 @@
 use bevy::{
     color::Srgba,
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
 };
@@ -215,7 +215,7 @@ impl Default for GradientSlider {
 }
 
 impl UiTemplate for GradientSlider {
-    fn build(&self, builder: &mut ChildBuilder) {
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
         // This should really be an effect.
         let color_stops: Signal<(usize, [Vec4; 8])> = {
             let gradient = self.gradient;

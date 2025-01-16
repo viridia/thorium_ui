@@ -147,6 +147,7 @@ fn compute_inherited_style(
         font: styles.font.unwrap_or_default(),
         font_size: styles.font_size.unwrap_or(12.),
         font_smoothing: default(),
+        line_height: default(),
     };
     (style, color)
 }

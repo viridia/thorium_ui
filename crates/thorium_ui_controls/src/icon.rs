@@ -1,4 +1,8 @@
-use bevy::{ecs::world::DeferredWorld, prelude::*, ui};
+use bevy::{
+    ecs::{relationship::RelatedSpawnerCommands, world::DeferredWorld},
+    prelude::*,
+    ui,
+};
 use thorium_ui_core::{
     Attach, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
 };
@@ -62,7 +66,7 @@ impl Default for Icon {
 }
 
 impl UiTemplate for Icon {
-    fn build(&self, builder: &mut ChildBuilder) {
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
         let icon = self.icon.clone();
         let size = self.size;
         let color = self.color;

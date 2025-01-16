@@ -1,14 +1,14 @@
-use bevy::prelude::*;
+use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
 pub trait UiTemplate {
-    fn build(&self, builder: &mut ChildBuilder);
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>);
 }
 
 pub trait InvokeUiTemplate {
     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self;
 }
 
-impl InvokeUiTemplate for ChildBuilder<'_> {
+impl InvokeUiTemplate for RelatedSpawnerCommands<'_, Parent> {
     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
         template.build(self);
         self
@@ -250,7 +250,7 @@ impl InvokeUiTemplate for ChildBuilder<'_> {
 //         // Create a reactive context and call the test condition.
 //         let re = Rcx::new(world, owner, tracking);
 //         let deps: D = (self.compute)(&re);
-//         world.entity_mut(owner).despawn_descendants();
+//         world.entity_mut(owner).despawn_related::<Children>()
 //         let mut builder = UiBuilder::new(world, owner);
 //         (self.build)(deps, &mut builder);
 //     }

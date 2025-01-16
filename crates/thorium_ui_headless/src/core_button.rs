@@ -1,6 +1,7 @@
 use bevy::{
     ecs::system::SystemId,
-    input_focus::{FocusKeyboardInput, InputFocus, InputFocusVisible},
+    input::keyboard::KeyboardInput,
+    input_focus::{FocusedInput, InputFocus, InputFocusVisible},
     prelude::*,
 };
 
@@ -18,7 +19,7 @@ pub struct CoreButton {
 pub struct CoreButtonPressed(pub bool);
 
 pub(crate) fn button_on_key_event(
-    mut trigger: Trigger<FocusKeyboardInput>,
+    mut trigger: Trigger<FocusedInput<KeyboardInput>>,
     q_state: Query<(&CoreButton, Has<InteractionDisabled>)>,
     mut commands: Commands,
 ) {

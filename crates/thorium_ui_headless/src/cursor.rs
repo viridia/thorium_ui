@@ -1,5 +1,5 @@
 use bevy::{
-    picking::{focus::HoverMap, pointer::PointerId},
+    picking::{hover::HoverMap, pointer::PointerId},
     prelude::*,
     winit::cursor::CursorIcon,
 };

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
-    prelude::{BuildChildren, Entity, EntityCommands, IntoSystem, World},
+    prelude::{Entity, EntityCommands, IntoSystem, World},
 };
 
 use crate::{

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::{
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
     prelude::*,
 };
 
@@ -60,7 +60,7 @@ pub trait CreateMemo {
     ) -> Memo<P>;
 }
 
-impl CreateMemo for ChildBuilder<'_> {
+impl CreateMemo for RelatedSpawnerCommands<'_, Parent> {
     fn create_memo<
         M: Send + Sync + 'static,
         P: PartialEq + Clone + Send + Sync + 'static,

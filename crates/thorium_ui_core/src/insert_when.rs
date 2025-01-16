@@ -22,7 +22,7 @@ impl<B: Bundle, FactoryFn: Fn() -> B> AnyEffect for InsertWhenEffect<B, FactoryF
         if let Ok(test) = test {
             if self.state != test {
                 let mut entt = world.entity_mut(entity);
-                entt.despawn_descendants();
+                entt.despawn_related::<Children>();
                 if test {
                     world
                         .commands()
@@ -78,14 +78,14 @@ impl<
     fn apply(self, parent: &mut EntityCommands<'_>) {
         let test_sys = parent.commands().register_system(self.test_fn);
         let target = parent.id();
-        parent
-            .commands()
-            .spawn(EffectCell::new(InsertWhenEffect {
+        parent.commands().spawn((
+            EffectCell::new(InsertWhenEffect {
                 target,
                 state: false,
                 test_sys,
                 factory: self.factory,
-            }))
-            .set_parent(target);
+            }),
+            Parent(target),
+        ));
     }
 }

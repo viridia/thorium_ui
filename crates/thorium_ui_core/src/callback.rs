@@ -1,9 +1,9 @@
 use bevy::{
-    ecs::{component::ComponentId, system::SystemId, world::DeferredWorld},
-    prelude::{
-        require, BuildChildren, ChildBuild, ChildBuilder, Component, Entity, EntityCommands, In,
-        IntoSystem, SystemInput,
+    ecs::{
+        component::ComponentId, relationship::RelatedSpawnerCommands, system::SystemId,
+        world::DeferredWorld,
     },
+    prelude::{require, Component, Entity, EntityCommands, In, IntoSystem, Parent, SystemInput},
     ui::experimental::GhostNode,
 };
 
@@ -58,7 +58,7 @@ impl CreateCallback for EntityCommands<'_> {
     }
 }
 
-impl CreateCallback for ChildBuilder<'_> {
+impl CreateCallback for RelatedSpawnerCommands<'_, Parent> {
     fn create_callback<M, I: IntoSystem<(), (), M> + 'static>(
         &mut self,
         callback: I,

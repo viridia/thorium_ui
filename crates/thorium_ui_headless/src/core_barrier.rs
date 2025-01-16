@@ -1,7 +1,7 @@
 use bevy::{
     ecs::system::SystemId,
-    input::ButtonState,
-    input_focus::{FocusKeyboardInput, InputFocus, InputFocusVisible},
+    input::{keyboard::KeyboardInput, ButtonState},
+    input_focus::{FocusedInput, InputFocus, InputFocusVisible},
     prelude::*,
 };
 
@@ -13,7 +13,7 @@ pub struct CoreBarrier {
 }
 
 pub(crate) fn barrier_on_key_input(
-    mut trigger: Trigger<FocusKeyboardInput>,
+    mut trigger: Trigger<FocusedInput<KeyboardInput>>,
     q_state: Query<&CoreBarrier>,
     mut commands: Commands,
 ) {

@@ -38,17 +38,31 @@ impl Attach for EntityCommands<'_> {
     }
 }
 
-// /// Attach a child entity
-// pub struct Child<A: IntoAttachment>(pub A);
+// pub trait BundleBuilder<A: Attachment = ()> {
+//     fn spawn(self, builder: &mut EntityCommands);
+// }
 
-// impl<B: Bundle> Child<B> {
-//     pub fn new(bundle: B) -> Self {
-//         Self(bundle)
+// impl<B: Bundle, A: Attachment> BundleBuilder<A> for B {
+//     fn spawn(self, builder: &mut EntityCommands) {
+//         todo!();
 //     }
 // }
 
-// impl<B: Bundle> Attachment for Child<B> {
-//     fn apply(self, builder: &mut EntityCommands) {
-//         builder.with_child(self.0);
+// /// Attach a child entity
+// pub struct WithChild<BB: BundleBuilder>(pub BB);
+
+// impl<BB: BundleBuilder> WithChild<BB> {
+//     pub fn attach<A: Attachment>(self, attachment: A) -> (Self, A) {
+//         todo!();
+//     }
+// }
+
+// impl<A: Attachment, BB: BundleBuilder<A> + Send + Sync> Attachment for WithChild<BB> {
+//     fn apply(self, commands: &mut EntityCommands) {
+//         self.0.spawn(commands);
+//         // builder.with_children(|b| {
+//         //     b.spawn(self.0).attach(self.1);
+//         // });
+//         // builder.with_child(self.0);
 //     }
 // }

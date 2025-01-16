@@ -1,7 +1,7 @@
 use super::{Button, Icon};
 use crate::{colors, rounded_corners::RoundedCorners, size::Size};
 use bevy::{
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
     prelude::*,
     ui,
 };
@@ -100,7 +100,7 @@ impl IconButton {
 }
 
 impl UiTemplate for IconButton {
-    fn build(&self, builder: &mut ChildBuilder) {
+    fn build(&self, builder: &mut RelatedSpawnerCommands<Parent>) {
         let disabled = self.disabled;
         let size = self.size;
         let icon = self.icon.clone();

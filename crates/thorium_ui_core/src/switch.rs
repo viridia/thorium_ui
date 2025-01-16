@@ -1,5 +1,9 @@
 #![allow(clippy::type_complexity)]
-use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
+use bevy::{
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId},
+    prelude::*,
+    ui::experimental::GhostNode,
+};
 
 use crate::effect_cell::{AnyEffect, EffectCell};
 
@@ -16,7 +20,7 @@ pub trait CreateSwitch {
     ) -> &mut Self;
 }
 
-impl CreateSwitch for ChildBuilder<'_> {
+impl CreateSwitch for RelatedSpawnerCommands<'_, Parent> {
     fn switch<
         M: Send + Sync + 'static,
         P: PartialEq + Send + Sync + 'static,
@@ -27,8 +31,12 @@ impl CreateSwitch for ChildBuilder<'_> {
         value_fn: ValueFn,
         cases_fn: CF,
     ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>> = None;
+        let mut cases: Vec<(
+            P,
+            Box<dyn Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync>,
+        )> = Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync>> =
+            None;
 
         let mut case_builder = CaseBuilder {
             cases: &mut cases,
@@ -51,12 +59,15 @@ impl CreateSwitch for ChildBuilder<'_> {
 }
 
 pub struct CaseBuilder<'a, Value: Send + Sync> {
-    cases: &'a mut Vec<(Value, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)>,
-    fallback: &'a mut Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
+    cases: &'a mut Vec<(
+        Value,
+        Box<dyn Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync>,
+    )>,
+    fallback: &'a mut Option<Box<dyn Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync>>,
 }
 
 impl<Value: Send + Sync> CaseBuilder<'_, Value> {
-    pub fn case<CF: Send + Sync + 'static + Fn(&mut ChildBuilder)>(
+    pub fn case<CF: Send + Sync + 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
         &mut self,
         value: Value,
         case_fn: CF,
@@ -65,7 +76,7 @@ impl<Value: Send + Sync> CaseBuilder<'_, Value> {
         self
     }
 
-    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut ChildBuilder)>(
+    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut RelatedSpawnerCommands<Parent>)>(
         &mut self,
         fallback_fn: FF,
     ) -> &mut Self {
@@ -78,14 +89,17 @@ impl<Value: Send + Sync> CaseBuilder<'_, Value> {
 struct SwitchEffect<P> {
     switch_index: usize,
     value_sys: SystemId<(), P>,
-    cases: Vec<(P, Box<dyn Fn(&mut ChildBuilder) + Send + Sync>)>,
-    fallback: Option<Box<dyn Fn(&mut ChildBuilder) + Send + Sync>>,
+    cases: Vec<(
+        P,
+        Box<dyn Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync>,
+    )>,
+    fallback: Option<Box<dyn Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync>>,
 }
 
 impl<P: PartialEq + Send + Sync + 'static> SwitchEffect<P> {
     /// Adds a new switch case.
     #[allow(dead_code)]
-    pub fn case<F: Fn(&mut ChildBuilder) + Send + Sync + 'static>(
+    pub fn case<F: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static>(
         mut self,
         value: P,
         case: F,
@@ -96,7 +110,7 @@ impl<P: PartialEq + Send + Sync + 'static> SwitchEffect<P> {
 
     /// Sets the fallback case.
     #[allow(dead_code)]
-    pub fn fallback<F: Fn(&mut ChildBuilder) + Send + Sync + 'static>(
+    pub fn fallback<F: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static>(
         mut self,
         fallback: F,
     ) -> Self {
@@ -121,7 +135,7 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 self.switch_index = index;
                 let mut commands = world.commands();
                 let mut entt = commands.entity(entity);
-                entt.despawn_descendants();
+                entt.despawn_related::<Children>();
                 if index < self.cases.len() {
                     entt.with_children(|builder| {
                         (self.cases[index].1)(builder);

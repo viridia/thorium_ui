@@ -1,6 +1,10 @@
 use std::marker::PhantomData;
 
-use bevy::{ecs::world::DeferredWorld, prelude::*, ui::experimental::GhostNode};
+use bevy::{
+    ecs::{relationship::RelatedSpawnerCommands, world::DeferredWorld},
+    prelude::*,
+    ui::experimental::GhostNode,
+};
 
 use crate::Signal;
 
@@ -267,8 +271,7 @@ impl CreateMutable for EntityCommands<'_> {
         let parent = self.id();
         let cell = self
             .commands()
-            .spawn((MutableCell::<T>(init), GhostNode::default()))
-            .set_parent(parent)
+            .spawn((MutableCell::<T>(init), GhostNode::default(), Parent(parent)))
             .id();
         // let component = self.register_component::<MutableCell<T>>();
         Mutable {
@@ -279,7 +282,7 @@ impl CreateMutable for EntityCommands<'_> {
     }
 }
 
-impl CreateMutable for ChildBuilder<'_> {
+impl CreateMutable for RelatedSpawnerCommands<'_, Parent> {
     fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
     where
         T: Send + Sync + 'static,

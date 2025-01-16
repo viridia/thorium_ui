@@ -1,6 +1,6 @@
 use bevy::{
     ecs::world::DeferredWorld,
-    picking::{focus::HoverMap, pointer::PointerId},
+    picking::{hover::HoverMap, pointer::PointerId},
     prelude::*,
 };
 // use thorium_ui_core::Signal;

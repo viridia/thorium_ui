@@ -1,6 +1,10 @@
 use std::ops::Range;
 
-use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
+use bevy::{
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId},
+    prelude::*,
+    ui::experimental::GhostNode,
+};
 
 use crate::{
     effect_cell::{AnyEffect, EffectCell},
@@ -40,8 +44,8 @@ pub trait CreateForEach {
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
-        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
+        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -55,8 +59,8 @@ pub trait CreateForEach {
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
-        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
+        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -66,14 +70,14 @@ pub trait CreateForEach {
     ) -> &mut Self;
 }
 
-impl CreateForEach for ChildBuilder<'_> {
+impl CreateForEach for RelatedSpawnerCommands<'_, Parent> {
     fn for_each<
         'a: 'static,
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
-        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
+        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -102,8 +106,8 @@ impl CreateForEach for ChildBuilder<'_> {
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
-        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
+        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -139,8 +143,8 @@ struct ForEachEffect<
     'a,
     Item: Clone + 'static,
     CmpFn: Fn(&Item, &Item) -> bool,
-    EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
-    FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+    EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
+    FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
 > where
     Self: Send + Sync,
 {
@@ -155,8 +159,8 @@ struct ForEachEffect<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
-        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
+        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
@@ -192,7 +196,7 @@ impl<
             // Raze old elements
             for i in prev_range {
                 let prev = &prev_state[i];
-                world.entity_mut(prev.child).despawn_recursive();
+                world.entity_mut(prev.child).despawn();
             }
             // Build new elements
             for i in next_range {
@@ -229,7 +233,7 @@ impl<
                 // Deletions
                 for i in prev_range.start..prev_start {
                     let prev = &prev_state[i];
-                    world.entity_mut(prev.child).despawn_recursive();
+                    world.entity_mut(prev.child).despawn();
                 }
             }
         } else if next_start > next_range.start {
@@ -271,7 +275,7 @@ impl<
                 // Deletions
                 for i in prev_end..prev_range.end {
                     let prev = &prev_state[i];
-                    world.entity_mut(prev.child).despawn_recursive();
+                    world.entity_mut(prev.child).despawn();
                 }
             }
         } else if next_end < next_range.end {
@@ -293,8 +297,8 @@ impl<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildBuilder),
-        FallbackFn: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        EachFn: Send + Sync + 'static + Fn(&Item, &mut RelatedSpawnerCommands<Parent>),
+        FallbackFn: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {
@@ -324,7 +328,7 @@ impl<
                 if prev_len > 0 || self.first {
                     self.first = false;
                     // Transitioning from non-empty to empty, generate fallback.
-                    world.entity_mut(parent).despawn_descendants();
+                    world.entity_mut(parent).despawn_related::<Children>();
                     world.commands().entity(parent).with_children(|builder| {
                         (self.fallback)(builder);
                     });
@@ -332,9 +336,10 @@ impl<
             } else {
                 if prev_len == 0 {
                     // Transitioning from non-empty to empty, delete fallback.
-                    world.entity_mut(parent).despawn_descendants();
+                    world.entity_mut(parent).despawn_related::<Children>();
                 }
-                world.entity_mut(parent).replace_children(&children);
+                world.entity_mut(parent).remove::<Children>();
+                world.entity_mut(parent).add_children(&children);
             }
         }
     }

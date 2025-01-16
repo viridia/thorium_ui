@@ -1,5 +1,5 @@
 use bevy::{
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
     prelude::*,
     ui::experimental::GhostNode,
 };
@@ -10,8 +10,8 @@ pub trait CreateCond {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        Neg: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     >(
         &mut self,
         test: TestFn,
@@ -20,12 +20,12 @@ pub trait CreateCond {
     ) -> &mut Self;
 }
 
-impl CreateCond for ChildBuilder<'_> {
+impl CreateCond for RelatedSpawnerCommands<'_, Parent> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+        Pos: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
+        Neg: Fn(&mut RelatedSpawnerCommands<Parent>) + Send + Sync + 'static,
     >(
         &mut self,
         test_fn: TestFn,
@@ -50,38 +50,42 @@ impl CreateCond for ChildBuilder<'_> {
     }
 }
 
-impl CreateCond for WorldChildBuilder<'_> {
-    fn cond<
-        M: Send + Sync + 'static,
-        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-    >(
-        &mut self,
-        test_fn: TestFn,
-        pos: Pos,
-        neg: Neg,
-    ) -> &mut Self {
-        let mut ent = self.spawn_empty();
-        // SAFETFY: Should be safe to register a system here...I think?
-        let test_sys = unsafe { ent.world_mut().register_system(test_fn) };
-        ent.insert((
-            EffectCell::new(CondEffect {
-                state: false,
-                first: true,
-                test_sys,
-                pos,
-                neg,
-                marker: std::marker::PhantomData::<M>,
-            }),
-            GhostNode::default(),
-        ));
-        self
-    }
-}
+// impl CreateCond for WorldChildBuilder<'_> {
+//     fn cond<
+//         M: Send + Sync + 'static,
+//         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
+//         Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+//         Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
+//     >(
+//         &mut self,
+//         test_fn: TestFn,
+//         pos: Pos,
+//         neg: Neg,
+//     ) -> &mut Self {
+//         let mut ent = self.spawn_empty();
+//         // SAFETFY: Should be safe to register a system here...I think?
+//         let test_sys = unsafe { ent.world_mut().register_system(test_fn) };
+//         ent.insert((
+//             EffectCell::new(CondEffect {
+//                 state: false,
+//                 first: true,
+//                 test_sys,
+//                 pos,
+//                 neg,
+//                 marker: std::marker::PhantomData::<M>,
+//             }),
+//             GhostNode::default(),
+//         ));
+//         self
+//     }
+// }
 
 /// Conditional control-flow node.
-struct CondEffect<M, Pos: Fn(&mut ChildBuilder), Neg: Fn(&mut ChildBuilder)> {
+struct CondEffect<
+    M,
+    Pos: Fn(&mut RelatedSpawnerCommands<Parent>),
+    Neg: Fn(&mut RelatedSpawnerCommands<Parent>),
+> {
     state: bool,
     first: bool,
     test_sys: SystemId<(), bool>,
@@ -90,8 +94,11 @@ struct CondEffect<M, Pos: Fn(&mut ChildBuilder), Neg: Fn(&mut ChildBuilder)> {
     marker: std::marker::PhantomData<M>,
 }
 
-impl<M, Pos: Fn(&mut ChildBuilder), Neg: Fn(&mut ChildBuilder)> AnyEffect
-    for CondEffect<M, Pos, Neg>
+impl<
+        M,
+        Pos: Fn(&mut RelatedSpawnerCommands<Parent>),
+        Neg: Fn(&mut RelatedSpawnerCommands<Parent>),
+    > AnyEffect for CondEffect<M, Pos, Neg>
 {
     fn update(&mut self, world: &mut World, entity: Entity) {
         // Run the condition and see if the result changed.
@@ -100,7 +107,7 @@ impl<M, Pos: Fn(&mut ChildBuilder), Neg: Fn(&mut ChildBuilder)> AnyEffect
             if self.state != test || self.first {
                 self.first = false;
                 let mut entt = world.entity_mut(entity);
-                entt.despawn_descendants();
+                entt.despawn_related::<Children>();
                 if test {
                     world.commands().entity(entity).with_children(|builder| {
                         (self.pos)(builder);
