@@ -1,15 +1,14 @@
 use bevy::{
     ecs::{component::ComponentId, system::SystemId, world::DeferredWorld},
     prelude::{
-        require, ChildSpawnerCommands, Component, Entity, EntityCommands, In, IntoSystem,
-        SystemInput,
+        ChildSpawnerCommands, Component, Entity, EntityCommands, In, IntoSystem, SystemInput,
     },
-    ui::experimental::GhostNode,
 };
+
+use crate::owner::Owner;
 
 #[derive(Component)]
 #[component(on_remove = on_remove_callback_cell::<I>, storage = "SparseSet")]
-#[require(GhostNode)]
 pub struct CallbackCell<I: SystemInput + Send + Sync>(SystemId<I, ()>);
 
 fn on_remove_callback_cell<I: SystemInput + Send + Sync + 'static>(
@@ -44,7 +43,9 @@ impl CreateCallback for EntityCommands<'_> {
         callback: I,
     ) -> SystemId<(), ()> {
         let system_id = self.commands().register_system(callback);
-        self.with_child(CallbackCell(system_id));
+        let owner = self.id();
+        self.commands()
+            .spawn((CallbackCell(system_id), Owner(owner)));
         system_id
     }
 
@@ -52,8 +53,10 @@ impl CreateCallback for EntityCommands<'_> {
         &mut self,
         callback: I,
     ) -> SystemId<In<A>, ()> {
+        let owner = self.id();
         let system_id = self.commands().register_system(callback);
-        self.with_child(CallbackCell(system_id));
+        self.commands()
+            .spawn((CallbackCell(system_id), Owner(owner)));
         system_id
     }
 }
@@ -63,9 +66,10 @@ impl CreateCallback for ChildSpawnerCommands<'_> {
         &mut self,
         callback: I,
     ) -> SystemId<(), ()> {
-        let mut entity = self.spawn_empty();
-        let system_id = entity.commands().register_system(callback);
-        entity.insert(CallbackCell(system_id));
+        let owner = self.target_entity();
+        let system_id = self.commands().register_system(callback);
+        self.commands()
+            .spawn((CallbackCell(system_id), Owner(owner)));
         system_id
     }
 
@@ -73,9 +77,10 @@ impl CreateCallback for ChildSpawnerCommands<'_> {
         &mut self,
         callback: I,
     ) -> SystemId<In<A>, ()> {
-        let mut entity = self.spawn_empty();
-        let system_id = entity.commands().register_system(callback);
-        entity.insert(CallbackCell(system_id));
+        let owner = self.target_entity();
+        let system_id = self.commands().register_system(callback);
+        self.commands()
+            .spawn((CallbackCell(system_id), Owner(owner)));
         system_id
     }
 }

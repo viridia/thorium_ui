@@ -5,6 +5,7 @@ use bevy::{
 
 use crate::{
     effect_cell::{AnyEffect, EffectCell},
+    owner::Owner,
     Attachment,
 };
 
@@ -85,7 +86,7 @@ impl<
                 test_sys,
                 factory: self.factory,
             }),
-            Parent(target),
+            Owner(target),
         ));
     }
 }

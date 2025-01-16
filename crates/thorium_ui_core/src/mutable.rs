@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
-use bevy::{ecs::world::DeferredWorld, prelude::*, ui::experimental::GhostNode};
+use bevy::{ecs::world::DeferredWorld, prelude::*};
 
-use crate::Signal;
+use crate::{owner::Owner, Signal};
 
 /// Contains a mutable reactive value.
 #[derive(Component)]
@@ -267,7 +267,7 @@ impl CreateMutable for EntityCommands<'_> {
         let parent = self.id();
         let cell = self
             .commands()
-            .spawn((MutableCell::<T>(init), GhostNode::default(), Parent(parent)))
+            .spawn((MutableCell::<T>(init), Owner(parent)))
             .id();
         // let component = self.register_component::<MutableCell<T>>();
         Mutable {
@@ -283,8 +283,10 @@ impl CreateMutable for ChildSpawnerCommands<'_> {
     where
         T: Send + Sync + 'static,
     {
+        let owner = self.target_entity();
         let cell = self
-            .spawn((MutableCell::<T>(init), GhostNode::default()))
+            .commands_mut()
+            .spawn((MutableCell::<T>(init), Owner(owner)))
             .id();
         // let component = self.register_component::<MutableCell<T>>();
         Mutable {
