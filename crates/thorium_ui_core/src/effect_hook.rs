@@ -1,5 +1,5 @@
 use bevy::{
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
 };
 
@@ -43,7 +43,7 @@ pub trait CreateHookEffect {
     ) -> &mut Self;
 }
 
-impl CreateHookEffect for RelatedSpawnerCommands<'_, Parent> {
+impl CreateHookEffect for ChildSpawnerCommands<'_> {
     fn create_effect<
         P: PartialEq + Clone + Send + Sync + 'static,
         M: Send + Sync + 'static,

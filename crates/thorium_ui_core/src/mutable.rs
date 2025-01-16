@@ -1,10 +1,6 @@
 use std::marker::PhantomData;
 
-use bevy::{
-    ecs::{relationship::RelatedSpawnerCommands, world::DeferredWorld},
-    prelude::*,
-    ui::experimental::GhostNode,
-};
+use bevy::{ecs::world::DeferredWorld, prelude::*, ui::experimental::GhostNode};
 
 use crate::Signal;
 
@@ -282,7 +278,7 @@ impl CreateMutable for EntityCommands<'_> {
     }
 }
 
-impl CreateMutable for RelatedSpawnerCommands<'_, Parent> {
+impl CreateMutable for ChildSpawnerCommands<'_> {
     fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
     where
         T: Send + Sync + 'static,

@@ -1,9 +1,5 @@
 #![allow(clippy::type_complexity)]
-use bevy::{
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId},
-    prelude::*,
-    ui::experimental::GhostNode,
-};
+use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
 use crate::effect_cell::{AnyEffect, EffectCell};
 
@@ -20,7 +16,7 @@ pub trait CreateSwitch {
     ) -> &mut Self;
 }
 
-impl CreateSwitch for RelatedSpawnerCommands<'_, Parent> {
+impl CreateSwitch for ChildSpawnerCommands<'_> {
     fn switch<
         M: Send + Sync + 'static,
         P: PartialEq + Send + Sync + 'static,

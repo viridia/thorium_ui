@@ -1,5 +1,5 @@
 use bevy::{
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId, world::DeferredWorld},
+    ecs::{system::SystemId, world::DeferredWorld},
     prelude::*,
     ui::experimental::GhostNode,
 };
@@ -20,7 +20,7 @@ pub trait CreateCond {
     ) -> &mut Self;
 }
 
-impl CreateCond for RelatedSpawnerCommands<'_, Parent> {
+impl CreateCond for ChildSpawnerCommands<'_> {
     fn cond<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,

@@ -1,10 +1,6 @@
 use std::ops::Range;
 
-use bevy::{
-    ecs::{relationship::RelatedSpawnerCommands, system::SystemId},
-    prelude::*,
-    ui::experimental::GhostNode,
-};
+use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
 use crate::{
     effect_cell::{AnyEffect, EffectCell},
@@ -70,7 +66,7 @@ pub trait CreateForEach {
     ) -> &mut Self;
 }
 
-impl CreateForEach for RelatedSpawnerCommands<'_, Parent> {
+impl CreateForEach for ChildSpawnerCommands<'_> {
     fn for_each<
         'a: 'static,
         M: Send + Sync + 'static,
