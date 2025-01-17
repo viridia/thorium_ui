@@ -10,27 +10,27 @@ use bevy::{
 /// any other kind of semantic connection between the two entities.
 #[derive(Relationship, Clone, Reflect, PartialEq, Eq, Debug)]
 #[reflect(Component, PartialEq, Debug, FromWorld)]
-#[relationship(relationship_sources = OwnedBy)]
-pub struct Owner(pub Entity);
+#[relationship(relationship_sources = Owned)]
+pub struct OwnerOf(pub Entity);
 
-impl Owner {
+impl OwnerOf {
     pub fn get(&self) -> Entity {
         self.0
     }
 }
 
-impl Default for Owner {
+impl Default for OwnerOf {
     fn default() -> Self {
-        Owner(Entity::PLACEHOLDER)
+        OwnerOf(Entity::PLACEHOLDER)
     }
 }
 
 #[derive(RelationshipSources, Default, Reflect)]
-#[relationship_sources(relationship = Owner, despawn_descendants)]
+#[relationship_sources(relationship = OwnerOf, despawn_descendants)]
 #[reflect(Component)]
-pub struct OwnedBy(Vec<Entity>);
+pub struct Owned(Vec<Entity>);
 
-impl<'a> IntoIterator for &'a OwnedBy {
+impl<'a> IntoIterator for &'a Owned {
     type Item = <Self::IntoIter as Iterator>::Item;
 
     type IntoIter = slice::Iter<'a, Entity>;
@@ -41,7 +41,7 @@ impl<'a> IntoIterator for &'a OwnedBy {
     }
 }
 
-impl core::ops::Deref for OwnedBy {
+impl core::ops::Deref for Owned {
     type Target = [Entity];
 
     fn deref(&self) -> &Self::Target {
