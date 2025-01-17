@@ -11,22 +11,22 @@ use bevy::{
 #[derive(Relationship, Clone, Reflect, PartialEq, Eq, Debug)]
 #[reflect(Component, PartialEq, Debug, FromWorld)]
 #[relationship(relationship_sources = Owned)]
-pub struct OwnerOf(pub Entity);
+pub struct OwnedBy(pub Entity);
 
-impl OwnerOf {
+impl OwnedBy {
     pub fn get(&self) -> Entity {
         self.0
     }
 }
 
-impl Default for OwnerOf {
+impl Default for OwnedBy {
     fn default() -> Self {
-        OwnerOf(Entity::PLACEHOLDER)
+        OwnedBy(Entity::PLACEHOLDER)
     }
 }
 
 #[derive(RelationshipSources, Default, Reflect)]
-#[relationship_sources(relationship = OwnerOf, despawn_descendants)]
+#[relationship_sources(relationship = OwnedBy, despawn_descendants)]
 #[reflect(Component)]
 pub struct Owned(Vec<Entity>);
 

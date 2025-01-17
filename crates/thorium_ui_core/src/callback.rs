@@ -5,7 +5,7 @@ use bevy::{
     },
 };
 
-use crate::owner::OwnerOf;
+use crate::owner::OwnedBy;
 
 #[derive(Component)]
 #[component(on_remove = on_remove_callback_cell::<I>, storage = "SparseSet")]
@@ -45,7 +45,7 @@ impl CreateCallback for EntityCommands<'_> {
         let system_id = self.commands().register_system(callback);
         let owner = self.id();
         self.commands()
-            .spawn((CallbackCell(system_id), OwnerOf(owner)));
+            .spawn((CallbackCell(system_id), OwnedBy(owner)));
         system_id
     }
 
@@ -56,7 +56,7 @@ impl CreateCallback for EntityCommands<'_> {
         let owner = self.id();
         let system_id = self.commands().register_system(callback);
         self.commands()
-            .spawn((CallbackCell(system_id), OwnerOf(owner)));
+            .spawn((CallbackCell(system_id), OwnedBy(owner)));
         system_id
     }
 }
@@ -69,7 +69,7 @@ impl CreateCallback for ChildSpawnerCommands<'_> {
         let owner = self.target_entity();
         let system_id = self.commands().register_system(callback);
         self.commands()
-            .spawn((CallbackCell(system_id), OwnerOf(owner)));
+            .spawn((CallbackCell(system_id), OwnedBy(owner)));
         system_id
     }
 
@@ -80,7 +80,7 @@ impl CreateCallback for ChildSpawnerCommands<'_> {
         let owner = self.target_entity();
         let system_id = self.commands().register_system(callback);
         self.commands()
-            .spawn((CallbackCell(system_id), OwnerOf(owner)));
+            .spawn((CallbackCell(system_id), OwnedBy(owner)));
         system_id
     }
 }
