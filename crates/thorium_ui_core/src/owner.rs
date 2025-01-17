@@ -1,14 +1,11 @@
 use core::slice;
 
-use bevy::{
-    ecs::relationship::{Relationship, RelationshipSources},
-    prelude::*,
-};
+use bevy::prelude::*;
 
 /// A component that represents the owner of an entity. Ownership only determines lifetime,
 /// such that the owned entity will be despawned when its owner is despawned. It does not imply
 /// any other kind of semantic connection between the two entities.
-#[derive(Relationship, Clone, Reflect, PartialEq, Eq, Debug)]
+#[derive(Component, Clone, Reflect, PartialEq, Eq, Debug)]
 #[reflect(Component, PartialEq, Debug, FromWorld)]
 #[relationship(relationship_sources = Owned)]
 pub struct OwnedBy(pub Entity);
@@ -25,7 +22,7 @@ impl Default for OwnedBy {
     }
 }
 
-#[derive(RelationshipSources, Default, Reflect)]
+#[derive(Component, Default, Reflect)]
 #[relationship_sources(relationship = OwnedBy, despawn_descendants)]
 #[reflect(Component)]
 pub struct Owned(Vec<Entity>);
