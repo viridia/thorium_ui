@@ -7,7 +7,7 @@ use bevy::prelude::*;
 /// any other kind of semantic connection between the two entities.
 #[derive(Component, Clone, Reflect, PartialEq, Eq, Debug)]
 #[reflect(Component, PartialEq, Debug, FromWorld)]
-#[relationship(relationship_sources = Owned)]
+#[relationship(relationship_target = Owned)]
 pub struct OwnedBy(pub Entity);
 
 impl OwnedBy {
@@ -23,7 +23,7 @@ impl Default for OwnedBy {
 }
 
 #[derive(Component, Default, Reflect)]
-#[relationship_sources(relationship = OwnedBy, despawn_descendants)]
+#[relationship_target(relationship = OwnedBy, despawn_descendants)]
 #[reflect(Component)]
 pub struct Owned(Vec<Entity>);
 

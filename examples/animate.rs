@@ -52,7 +52,7 @@ fn setup_view_root(mut commands: Commands) {
 
     commands
         .spawn(Node::default())
-        .insert((TargetCamera(camera), TabGroup::default()))
+        .insert((UiTargetCamera(camera), TabGroup::default()))
         .style(style_test)
         .with_children(|builder| {
             builder.spawn((Text::new("bistable_transition"), UseInheritedTextStyles));

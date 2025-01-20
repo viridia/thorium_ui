@@ -39,7 +39,7 @@ fn setup_view_root(mut commands: Commands) {
                 ..default()
             },
             BorderColor(css::ALICE_BLUE.into()),
-            TargetCamera(camera),
+            UiTargetCamera(camera),
         ))
         .with_children(|builder| {
             builder.spawn(Text::new("Game State: "));
