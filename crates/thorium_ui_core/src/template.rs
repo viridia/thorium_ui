@@ -170,7 +170,7 @@ impl InvokeUiTemplate for ChildSpawnerCommands<'_> {
 //     //         if ec.is_some() {
 //     //             return ec;
 //     //         }
-//     //         match self.world.entity(entity).get::<Parent>() {
+//     //         match self.world.entity(entity).get::<ChildOf>() {
 //     //             Some(parent) => entity = **parent,
 //     //             _ => return None,
 //     //         }

@@ -4,7 +4,10 @@ use bevy::{
     ui::experimental::GhostNode,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell};
+use crate::{
+    effect_cell::{AnyEffect, EffectCell},
+    owner::Owned,
+};
 
 pub trait CreateCond {
     fn cond<
@@ -101,6 +104,7 @@ impl<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> 
                 self.first = false;
                 let mut entt = world.entity_mut(entity);
                 entt.despawn_related::<Children>();
+                entt.despawn_related::<Owned>();
                 if test {
                     world.commands().entity(entity).with_children(|builder| {
                         (self.pos)(builder);
@@ -119,32 +123,3 @@ impl<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> 
         world.commands().unregister_system(self.test_sys);
     }
 }
-
-// pub struct Cond<
-//     M: Send + Sync + 'static,
-//     TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-//     Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-//     Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-// > {
-//     test: TestFn,
-//     pos: Pos,
-//     neg: Neg,
-//     marker: std::marker::PhantomData<M>,
-// }
-
-// impl<
-//         M: Send + Sync + 'static,
-//         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-//         Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-//         Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-//     > Cond<M, TestFn, Pos, Neg>
-// {
-//     pub fn new(test: TestFn, pos: Pos, neg: Neg) -> Self {
-//         Self {
-//             test,
-//             pos,
-//             neg,
-//             marker: std::marker::PhantomData,
-//         }
-//     }
-// }

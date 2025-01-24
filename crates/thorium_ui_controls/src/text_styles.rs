@@ -62,7 +62,7 @@ pub(crate) fn update_text_styles(
     q_inherited_font: Query<Ref<InheritableFont>, ()>,
     q_inherited_color: Query<Ref<InheritableFontColor>, ()>,
     q_inherited_size: Query<Ref<InheritableFontSize>, ()>,
-    parents: Query<&Parent>,
+    parents: Query<&ChildOf>,
     assets: Res<AssetServer>,
     mut commands: Commands,
 ) {
@@ -88,7 +88,7 @@ pub(crate) fn set_initial_text_style(
     q_inherited_font: Query<Ref<InheritableFont>, ()>,
     q_inherited_color: Query<Ref<InheritableFontColor>, ()>,
     q_inherited_size: Query<Ref<InheritableFontSize>, ()>,
-    q_parents: Query<&Parent, ()>,
+    q_parents: Query<&ChildOf, ()>,
     assets: Res<AssetServer>,
     mut commands: Commands,
 ) {
@@ -109,7 +109,7 @@ fn compute_inherited_style(
     inherited_font: &Query<Ref<InheritableFont>, ()>,
     inherited_color: &Query<Ref<InheritableFontColor>, ()>,
     inherited_size: &Query<Ref<InheritableFontSize>, ()>,
-    parents: &Query<&Parent, ()>,
+    parents: &Query<&ChildOf, ()>,
     assets: &AssetServer,
 ) -> (TextFont, TextColor) {
     let mut styles = ComputedFontStyles::default();

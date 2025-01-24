@@ -1,7 +1,10 @@
 #![allow(clippy::type_complexity)]
 use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
-use crate::effect_cell::{AnyEffect, EffectCell};
+use crate::{
+    effect_cell::{AnyEffect, EffectCell},
+    owner::Owned,
+};
 
 pub trait CreateSwitch {
     fn switch<
@@ -122,6 +125,7 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 let mut commands = world.commands();
                 let mut entt = commands.entity(entity);
                 entt.despawn_related::<Children>();
+                entt.despawn_related::<Owned>();
                 if index < self.cases.len() {
                     entt.with_children(|builder| {
                         (self.cases[index].1)(builder);

@@ -15,7 +15,7 @@ pub struct Hovering(pub bool);
 pub(crate) fn update_hover_states(
     hover_map: Option<Res<HoverMap>>,
     mut hovers: Query<(Entity, &mut Hovering)>,
-    parent_query: Query<&Parent>,
+    parent_query: Query<&ChildOf>,
 ) {
     let Some(hover_map) = hover_map else { return };
     let hover_set = hover_map.get(&PointerId::Mouse);

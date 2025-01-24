@@ -1,8 +1,6 @@
 use bevy::{
-    ecs::{component::ComponentId, system::SystemId, world::DeferredWorld},
-    prelude::{
-        ChildSpawnerCommands, Component, Entity, EntityCommands, In, IntoSystem, SystemInput,
-    },
+    ecs::{component::HookContext, system::SystemId, world::DeferredWorld},
+    prelude::{ChildSpawnerCommands, Component, EntityCommands, In, IntoSystem, SystemInput},
 };
 
 use crate::owner::OwnedBy;
@@ -13,10 +11,13 @@ pub struct CallbackCell<I: SystemInput + Send + Sync>(SystemId<I, ()>);
 
 fn on_remove_callback_cell<I: SystemInput + Send + Sync + 'static>(
     mut world: DeferredWorld,
-    entity: Entity,
-    _: ComponentId,
+    context: HookContext,
 ) {
-    let system_id = world.entity(entity).get::<CallbackCell<I>>().unwrap().0;
+    let system_id = world
+        .entity(context.entity)
+        .get::<CallbackCell<I>>()
+        .unwrap()
+        .0;
     world.commands().unregister_system(system_id);
 }
 

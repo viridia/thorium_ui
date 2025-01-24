@@ -4,9 +4,7 @@ use crate::{
     size::Size,
     Icon,
 };
-use accesskit::Role;
 use bevy::{
-    a11y::AccessibilityNode,
     ecs::{system::SystemId, world::DeferredWorld},
     input_focus::{tab_navigation::TabIndex, IsFocused},
     prelude::*,
@@ -18,7 +16,7 @@ use thorium_ui_core::{
     Attach, CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal, StyleDyn, StyleEntity,
     StyleHandle, StyleTuple, UiTemplate,
 };
-use thorium_ui_headless::{hover::IsHovering, CoreToggle};
+use thorium_ui_headless::{hover::IsHovering, CoreCheckbox};
 
 fn style_toggle(ec: &mut EntityCommands) {
     ec.entry::<Node>().and_modify(|mut node| {
@@ -116,12 +114,11 @@ impl UiTemplate for DisclosureToggle {
         toggle
             .style((style_toggle, self.style.clone()))
             .insert((
-                CoreToggle {
+                CoreCheckbox {
                     on_change: self.on_change,
-                    checked: self.expanded,
+                    checked: false,
                 },
                 TabIndex(self.tab_index),
-                AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
             .attach(MutateDyn::new(
                 move |world: DeferredWorld| checked.get(&world),
@@ -133,6 +130,8 @@ impl UiTemplate for DisclosureToggle {
                     };
                     let target = Quat::from_rotation_z(angle);
                     AnimatedTransition::<AnimatedRotation>::start(ent, target, None, 0.3);
+                    let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
+                    checkbox.checked = checked;
                 },
             ))
             .attach(StyleDyn::new(

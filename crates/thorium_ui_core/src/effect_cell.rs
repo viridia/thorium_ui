@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use bevy::{
-    ecs::{component::ComponentId, world::DeferredWorld},
+    ecs::{component::HookContext, world::DeferredWorld},
     prelude::*,
 };
 
@@ -34,14 +34,14 @@ pub(crate) trait AnyEffect {
     fn cleanup(&self, world: &mut DeferredWorld, entity: Entity);
 }
 
-fn on_add_effect(mut world: DeferredWorld, entity: Entity, _cid: ComponentId) {
-    world.commands().queue(RunEffectNow(entity));
+fn on_add_effect(mut world: DeferredWorld, context: HookContext) {
+    world.commands().queue(RunEffectNow(context.entity));
 }
 
-fn on_remove_effect(mut world: DeferredWorld, entity: Entity, _cid: ComponentId) {
-    let cell = world.get_mut::<EffectCell>(entity).unwrap();
+fn on_remove_effect(mut world: DeferredWorld, context: HookContext) {
+    let cell = world.get_mut::<EffectCell>(context.entity).unwrap();
     let comp = cell.effect.clone();
-    comp.lock().unwrap().cleanup(&mut world, entity);
+    comp.lock().unwrap().cleanup(&mut world, context.entity);
 }
 
 pub(crate) fn update_effects(world: &mut World) {

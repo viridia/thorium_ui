@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use accesskit::Role;
 use bevy::{
-    a11y::AccessibilityNode,
     color::Luminance,
     ecs::{system::SystemId, world::DeferredWorld},
     input_focus::{tab_navigation::TabIndex, IsFocused},
@@ -12,12 +10,12 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, CreateCond, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle,
-    StyleTuple, UiTemplate,
+    Attach, CreateCond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleEntity,
+    StyleHandle, StyleTuple, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
-    CoreToggle, InteractionDisabled,
+    CoreCheckbox, InteractionDisabled,
 };
 
 use crate::{
@@ -164,15 +162,21 @@ impl UiTemplate for Checkbox {
             .style((style_checkbox, self.style.clone()))
             .insert((
                 TabIndex(self.tab_index),
-                CoreToggle {
-                    checked,
+                CoreCheckbox {
+                    checked: false,
                     on_change: self.on_change,
                 },
-                AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
             .attach(InsertWhen::new(
                 move |world: DeferredWorld| disabled.get(&world),
                 || InteractionDisabled,
+            ))
+            .attach(MutateDyn::new(
+                move |world: DeferredWorld| checked.get(&world),
+                |checked, ent| {
+                    let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
+                    checkbox.checked = checked;
+                },
             ))
             // .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {

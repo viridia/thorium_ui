@@ -17,13 +17,11 @@ pub struct InsertWhenEffect<B: Bundle, FactoryFn: Fn() -> B> {
 }
 
 impl<B: Bundle, FactoryFn: Fn() -> B> AnyEffect for InsertWhenEffect<B, FactoryFn> {
-    fn update(&mut self, world: &mut World, entity: Entity) {
+    fn update(&mut self, world: &mut World, _entity: Entity) {
         // Run the condition and see if the result changed.
         let test = world.run_system(self.test_sys);
         if let Ok(test) = test {
             if self.state != test {
-                let mut entt = world.entity_mut(entity);
-                entt.despawn_related::<Children>();
                 if test {
                     world
                         .commands()

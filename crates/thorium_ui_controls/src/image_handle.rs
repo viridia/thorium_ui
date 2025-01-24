@@ -16,8 +16,8 @@ impl Component for UiImageHandle {
     const STORAGE_TYPE: StorageType = StorageType::SparseSet;
 
     fn register_component_hooks(hooks: &mut bevy::ecs::component::ComponentHooks) {
-        hooks.on_add(|mut world, entity, _| {
-            let comp = world.get::<UiImageHandle>(entity).unwrap();
+        hooks.on_add(|mut world, context| {
+            let comp = world.get::<UiImageHandle>(context.entity).unwrap();
             let handle = match comp.0 {
                 HandleOrOwnedPath::Handle(ref handle) => handle.clone(),
                 HandleOrOwnedPath::Path(ref path) => {
@@ -25,7 +25,7 @@ impl Component for UiImageHandle {
                     assets.load::<Image>(path)
                 }
             };
-            if let Some(mut ui_image) = world.get_mut::<ImageNode>(entity) {
+            if let Some(mut ui_image) = world.get_mut::<ImageNode>(context.entity) {
                 ui_image.image = handle;
             }
         });

@@ -7,7 +7,7 @@ use bevy::{
 pub(crate) fn update_cursor(
     mut commands: Commands,
     hover_map: Option<Res<HoverMap>>,
-    parent_query: Query<&Parent>,
+    parent_query: Query<&ChildOf>,
     cursor_query: Query<&CursorIcon>,
     mut q_windows: Query<(Entity, &mut Window, Option<&CursorIcon>)>,
 ) {

@@ -81,7 +81,7 @@ pub(crate) fn slider_on_drag(
         if drag.dragging {
             let distance = trigger.event().distance;
             // Measure node width and slider value.
-            let slider_width = node.size().x;
+            let slider_width = node.size().x * node.inverse_scale_factor;
             let range = slider.max - slider.min;
             let new_value = if range > 0. {
                 drag.offset + (distance.x * range) / slider_width
