@@ -47,3 +47,10 @@ impl core::ops::Deref for Owned {
         &self.0
     }
 }
+
+#[macro_export]
+macro_rules! owned {
+    [$($child:expr),*$(,)?] => {
+       Owned::spawn(($(Spawn($child)),*))
+    };
+}

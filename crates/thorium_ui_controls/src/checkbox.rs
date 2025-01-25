@@ -10,8 +10,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Cond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles,
-    UiTemplate,
+    owned, Cond, InsertWhen, IntoSignal, MutateDyn2, Owned, Signal, StyleDyn, StyleHandle,
+    StyleTuple, Styles, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -151,37 +151,37 @@ impl Checkbox {
 impl UiTemplate for Checkbox {
     /// Construct a checkbox widget.
     fn build(&self, builder: &mut ChildSpawnerCommands) {
-        let mut checkbox =
-            builder.spawn((Node::default(), Hovering::default(), Name::new("Checkbox")));
-        let checkbox_id = checkbox.id();
-
         let checked = self.checked;
         let disabled = self.disabled;
+        let mut checkbox = builder.spawn((
+            Node { ..default() },
+            Hovering::default(),
+            Name::new("Checkbox"),
+            Styles((style_checkbox, self.style.clone())),
+            TabIndex(self.tab_index),
+            CoreCheckbox {
+                checked: false,
+                on_change: self.on_change,
+            },
+            owned![MutateDyn2::new(
+                move |world: DeferredWorld| checked.get(&world),
+                |checked, ent| {
+                    let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
+                    checkbox.checked = checked;
+                },
+            ),],
+            InsertWhen::new(
+                move |world: DeferredWorld| disabled.get(&world),
+                || InteractionDisabled,
+            ),
+        ));
+        let checkbox_id = checkbox.id();
 
         checkbox
-            .insert((
-                Styles((style_checkbox, self.style.clone())),
-                TabIndex(self.tab_index),
-                CoreCheckbox {
-                    checked: false,
-                    on_change: self.on_change,
-                },
-                InsertWhen::new(
-                    move |world: DeferredWorld| disabled.get(&world),
-                    || InteractionDisabled,
-                ),
-                MutateDyn::new(
-                    move |world: DeferredWorld| checked.get(&world),
-                    |checked, ent| {
-                        let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
-                        checkbox.checked = checked;
-                    },
-                ),
-            ))
             // .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
                 builder.spawn((
-                    Node::default(),
+                    Node { ..default() },
                     Name::new("Checkbox::Border"),
                     Styles(style_checkbox_border),
                     StyleDyn::new(
