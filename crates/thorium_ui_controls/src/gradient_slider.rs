@@ -338,39 +338,35 @@ impl UiTemplate for GradientSlider {
                         },
                     ),
                 ));
-                builder
-                    .spawn((
-                        Node::default(),
-                        Name::new("GradientSlider::Track"),
-                        Styles(style_track),
-                    ))
-                    .with_children(|builder| {
-                        builder.spawn((
-                            ImageNode {
-                                color: Srgba::WHITE.into(),
-                                ..default()
+                builder.spawn((
+                    Node::default(),
+                    Name::new("GradientSlider::Track"),
+                    Styles(style_track),
+                    children![(
+                        ImageNode {
+                            color: Srgba::WHITE.into(),
+                            ..default()
+                        },
+                        UiImageHandle(
+                            "embedded://thorium_ui_controls/assets/icons/gradient_thumb.png".into(),
+                        ),
+                        Name::new("GradientSlider::Thumb"),
+                        Styles(style_thumb),
+                        StyleDyn::new(
+                            move |world: DeferredWorld| {
+                                let min = min.get(&world);
+                                let max = max.get(&world);
+                                let value = value.get(&world);
+                                CoreSlider::new(value, min, max).thumb_position()
                             },
-                            UiImageHandle(
-                                "embedded://thorium_ui_controls/assets/icons/gradient_thumb.png"
-                                    .into(),
-                            ),
-                            Name::new("GradientSlider::Thumb"),
-                            Styles(style_thumb),
-                            StyleDyn::new(
-                                move |world: DeferredWorld| {
-                                    let min = min.get(&world);
-                                    let max = max.get(&world);
-                                    let value = value.get(&world);
-                                    CoreSlider::new(value, min, max).thumb_position()
-                                },
-                                |percent, ec| {
-                                    ec.entry::<Node>().and_modify(move |mut node| {
-                                        node.left = ui::Val::Percent(percent * 100.);
-                                    });
-                                },
-                            ),
-                        ));
-                    });
+                            |percent, ec| {
+                                ec.entry::<Node>().and_modify(move |mut node| {
+                                    node.left = ui::Val::Percent(percent * 100.);
+                                });
+                            },
+                        ),
+                    )],
+                ));
             });
     }
 }

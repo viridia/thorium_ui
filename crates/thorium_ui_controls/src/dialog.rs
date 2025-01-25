@@ -242,9 +242,7 @@ impl UiTemplate for Dialog {
                             .with_children(|builder| {
                                 (children.as_ref())(builder);
                             });
-                        // ;
                     });
-                // );
             },
             |_| {},
         );

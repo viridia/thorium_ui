@@ -10,8 +10,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    CreateCond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple,
-    Styles, UiTemplate,
+    Cond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles,
+    UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -180,62 +180,56 @@ impl UiTemplate for Checkbox {
             ))
             // .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
-                builder
-                    .spawn((
-                        Node::default(),
-                        Name::new("Checkbox::Border"),
-                        Styles(style_checkbox_border),
-                        StyleDyn::new(
-                            move |world: DeferredWorld| match (
-                                checked.get(&world),
-                                disabled.get(&world),
-                                world.is_hovering(checkbox_id),
-                            ) {
-                                (true, true, _) => colors::ACCENT.with_alpha(0.2),
-                                (true, false, true) => colors::ACCENT.darker(0.15),
-                                (true, _, _) => colors::ACCENT.darker(0.2),
-                                (false, true, _) => colors::U1.with_alpha(0.7),
-                                (false, false, true) => colors::U1.lighter(0.002),
-                                (false, false, false) => colors::U1,
+                builder.spawn((
+                    Node::default(),
+                    Name::new("Checkbox::Border"),
+                    Styles(style_checkbox_border),
+                    StyleDyn::new(
+                        move |world: DeferredWorld| match (
+                            checked.get(&world),
+                            disabled.get(&world),
+                            world.is_hovering(checkbox_id),
+                        ) {
+                            (true, true, _) => colors::ACCENT.with_alpha(0.2),
+                            (true, false, true) => colors::ACCENT.darker(0.15),
+                            (true, _, _) => colors::ACCENT.darker(0.2),
+                            (false, true, _) => colors::U1.with_alpha(0.7),
+                            (false, false, true) => colors::U1.lighter(0.002),
+                            (false, false, false) => colors::U1,
+                        },
+                        |color, ec| {
+                            ec.insert(BackgroundColor(color.into()));
+                        },
+                    ),
+                    StyleDyn::new(
+                        move |world: DeferredWorld| world.is_focus_visible(checkbox_id),
+                        |is_focused, ec| {
+                            if is_focused {
+                                ec.insert(Outline {
+                                    color: colors::FOCUS.into(),
+                                    width: ui::Val::Px(2.0),
+                                    offset: ui::Val::Px(2.0),
+                                });
+                            } else {
+                                ec.remove::<Outline>();
+                            };
+                        },
+                    ),
+                    children![Cond::new(
+                        move |world: DeferredWorld| checked.get(&world),
+                        move || Spawn((
+                            ImageNode {
+                                color: Srgba::WHITE.into(),
+                                ..default()
                             },
-                            |color, ec| {
-                                ec.insert(BackgroundColor(color.into()));
-                            },
-                        ),
-                        StyleDyn::new(
-                            move |world: DeferredWorld| world.is_focus_visible(checkbox_id),
-                            |is_focused, ec| {
-                                if is_focused {
-                                    ec.insert(Outline {
-                                        color: colors::FOCUS.into(),
-                                        width: ui::Val::Px(2.0),
-                                        offset: ui::Val::Px(2.0),
-                                    });
-                                } else {
-                                    ec.remove::<Outline>();
-                                };
-                            },
-                        ),
-                    ))
-                    .with_children(|builder| {
-                        builder.cond(
-                            move |world: DeferredWorld| checked.get(&world),
-                            move |builder| {
-                                builder.spawn((
-                                    ImageNode {
-                                        color: Srgba::WHITE.into(),
-                                        ..default()
-                                    },
-                                    UiImageHandle(
-                                        "embedded://thorium_ui_controls/assets/icons/checkmark.png"
-                                            .into(),
-                                    ),
-                                    Styles(style_checkbox_inner),
-                                ));
-                            },
-                            |_| {},
-                        );
-                    });
+                            UiImageHandle(
+                                "embedded://thorium_ui_controls/assets/icons/checkmark.png".into(),
+                            ),
+                            Styles(style_checkbox_inner),
+                        )),
+                        || (),
+                    )],
+                ));
 
                 builder
                     .spawn((

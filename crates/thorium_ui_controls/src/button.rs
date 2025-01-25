@@ -40,17 +40,6 @@ pub enum ButtonVariant {
     Selected,
 }
 
-pub(crate) fn style_button_bg(ec: &mut EntityCommands) {
-    ec.entry::<Node>().and_modify(|mut node| {
-        node.display = ui::Display::Grid;
-        node.position_type = ui::PositionType::Absolute;
-        node.left = ui::Val::Px(0.0);
-        node.right = ui::Val::Px(0.0);
-        node.top = ui::Val::Px(0.0);
-        node.bottom = ui::Val::Px(0.0);
-    });
-}
-
 /// Button widget
 pub struct Button {
     /// Color variant - default, primary or danger.
@@ -254,9 +243,16 @@ impl UiTemplate for Button {
             .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
                 builder.spawn((
-                    Node::default(),
+                    Node {
+                        display: ui::Display::Grid,
+                        position_type: ui::PositionType::Absolute,
+                        left: ui::Val::Px(0.0),
+                        right: ui::Val::Px(0.0),
+                        top: ui::Val::Px(0.0),
+                        bottom: ui::Val::Px(0.0),
+                        ..default()
+                    },
                     Name::new("Button::Background"),
-                    Styles(style_button_bg),
                     corners.to_border_radius(self.size.border_radius()),
                     StyleDyn::new(
                         move |world: DeferredWorld| {

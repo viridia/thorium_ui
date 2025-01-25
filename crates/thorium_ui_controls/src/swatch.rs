@@ -2,7 +2,7 @@ use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use thorium_ui_core::{
-    CreateCond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
+    Cond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
 };
 // use bevy_tabindex::TabIndex;
 
@@ -131,13 +131,11 @@ impl UiTemplate for Swatch {
                 },
             )
             .with_children(|builder| {
-                builder.cond(
+                builder.spawn(Cond::new(
                     move |world: DeferredWorld| selected.get(&world),
-                    |builder| {
-                        builder.spawn((Node::default(), Styles(style_selection)));
-                    },
-                    |_builder| {},
-                );
+                    || Spawn((Node::default(), Styles(style_selection))),
+                    || (),
+                ));
             });
     }
 }
