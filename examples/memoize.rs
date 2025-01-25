@@ -10,7 +10,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{CreateCond, CreateMemo, ReadMemo, ThoriumUiCorePlugin};
+use thorium_ui::{CreateCond2, CreateMemo, ReadMemo, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -48,14 +48,10 @@ fn setup_view_root(mut commands: Commands) {
         ))
         .with_children(|builder| {
             let even = builder.create_memo(|counter: Res<Counter>| counter.count & 1 == 0, false);
-            builder.cond(
+            builder.cond2(
                 move |world: DeferredWorld| world.read_memo(even),
-                |builder| {
-                    builder.spawn(Text::new("even"));
-                },
-                |builder| {
-                    builder.spawn(Text::new("odd"));
-                },
+                || Spawn(Text::new("even")),
+                || Spawn(Text::new("odd")),
             );
         });
 }

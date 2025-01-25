@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{CreateCond, ThoriumUiCorePlugin};
+use thorium_ui::{Cond, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -30,52 +30,48 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands
-        .spawn((
-            Node {
-                left: ui::Val::Px(0.),
-                top: ui::Val::Px(0.),
-                right: ui::Val::Px(0.),
-                // bottom: ui::Val::Px(0.),
-                position_type: ui::PositionType::Absolute,
-                display: ui::Display::Flex,
-                flex_direction: ui::FlexDirection::Row,
-                border: ui::UiRect::all(ui::Val::Px(3.)),
-                ..default()
-            },
-            BorderColor(css::ALICE_BLUE.into()),
-        ))
-        .with_children(|builder| {
-            builder.spawn(Text::new("Goodbye, "));
-            builder.cond(
+    commands.spawn((
+        Node {
+            left: ui::Val::Px(0.),
+            top: ui::Val::Px(0.),
+            right: ui::Val::Px(0.),
+            // bottom: ui::Val::Px(0.),
+            position_type: ui::PositionType::Absolute,
+            display: ui::Display::Flex,
+            flex_direction: ui::FlexDirection::Row,
+            border: ui::UiRect::all(ui::Val::Px(3.)),
+            ..default()
+        },
+        BorderColor(css::ALICE_BLUE.into()),
+        children![
+            Text::new("Goodbye, "),
+            Cond::new(
                 |counter: Res<Counter>| counter.count & 1 == 0,
-                |builder| {
-                    builder.spawn(Text::new("hungry"));
-                },
-                |builder| {
-                    builder
-                        .spawn((
+                || Spawn(Text::new("hungry")),
+                || {
+                    (
+                        Spawn((
                             Node {
-                                border: ui::UiRect::all(ui::Val::Px(7.)),
+                                border: ui::UiRect::all(ui::Val::Px(5.)),
                                 ..default()
                             },
-                            BorderColor(css::MAROON.into()),
-                        ))
-                        .with_children(|builder| {
-                            builder.spawn(Text::new("extra "));
-                        });
-                    builder.spawn(Text::new("thirsty"));
+                            BorderColor(css::RED.into()),
+                            children![Text::new("extra")],
+                        )),
+                        Spawn(Text::new("thirsty")),
+                    )
                 },
-            );
-            builder.spawn(Text::new(" world!"));
-            builder.spawn((
+            ),
+            Text::new(" world!"),
+            (
                 Node {
                     border: ui::UiRect::all(ui::Val::Px(3.)),
                     ..default()
                 },
                 BorderColor(css::LIME.into()),
-            ));
-        });
+            )
+        ],
+    ));
 }
 
 #[derive(Resource, Default)]
