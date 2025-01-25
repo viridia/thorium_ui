@@ -17,7 +17,7 @@ mod template;
 pub use attach::{Attach, Attachment};
 use bevy::app::{App, Plugin, Update};
 pub use callback::CreateCallback;
-pub use cond::{Cond, CreateCond, CreateCond2};
+pub use cond::{Cond, CreateCond};
 use effect_cell::update_effects;
 pub use foreach::{CreateForEach, ListItems};
 pub use insert_when::InsertWhen;

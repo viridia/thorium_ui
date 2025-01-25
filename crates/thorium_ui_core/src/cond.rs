@@ -121,22 +121,6 @@ impl<
     }
 }
 
-pub trait CreateCond2 {
-    fn cond2<
-        M: Send + Sync + 'static,
-        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<ChildOf> + 'static,
-        NegBundle: SpawnableList<ChildOf> + 'static,
-        Pos: Fn() -> PosBundle + Send + Sync + 'static,
-        Neg: Fn() -> NegBundle + Send + Sync + 'static,
-    >(
-        &mut self,
-        test: TestFn,
-        pos: Pos,
-        neg: Neg,
-    ) -> &mut Self;
-}
-
 pub trait CreateCond {
     fn cond<
         M: Send + Sync + 'static,
@@ -180,68 +164,6 @@ impl CreateCond for ChildSpawnerCommands<'_> {
         self
     }
 }
-
-impl CreateCond2 for ChildSpawnerCommands<'_> {
-    fn cond2<
-        M: Send + Sync + 'static,
-        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<ChildOf> + 'static,
-        NegBundle: SpawnableList<ChildOf> + 'static,
-        Pos: Fn() -> PosBundle + Send + Sync + 'static,
-        Neg: Fn() -> NegBundle + Send + Sync + 'static,
-    >(
-        &mut self,
-        test_fn: TestFn,
-        pos: Pos,
-        neg: Neg,
-    ) -> &mut Self {
-        // let test_sys = self.commands().register_system(test);
-        let mut ent = self.spawn_empty();
-        let test_sys = ent.commands().register_system(test_fn);
-        ent.insert((
-            EffectCell::new(CondEffect2 {
-                state: false,
-                first: true,
-                test_sys,
-                pos,
-                neg,
-                marker: std::marker::PhantomData::<M>,
-            }),
-            GhostNode::default(),
-        ));
-        self
-    }
-}
-
-// impl CreateCond for WorldChildBuilder<'_> {
-//     fn cond<
-//         M: Send + Sync + 'static,
-//         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-//         Pos: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-//         Neg: Fn(&mut ChildBuilder) + Send + Sync + 'static,
-//     >(
-//         &mut self,
-//         test_fn: TestFn,
-//         pos: Pos,
-//         neg: Neg,
-//     ) -> &mut Self {
-//         let mut ent = self.spawn_empty();
-//         // SAFETFY: Should be safe to register a system here...I think?
-//         let test_sys = unsafe { ent.world_mut().register_system(test_fn) };
-//         ent.insert((
-//             EffectCell::new(CondEffect {
-//                 state: false,
-//                 first: true,
-//                 test_sys,
-//                 pos,
-//                 neg,
-//                 marker: std::marker::PhantomData::<M>,
-//             }),
-//             GhostNode::default(),
-//         ));
-//         self
-//     }
-// }
 
 /// Conditional control-flow node.
 struct CondEffect<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> {

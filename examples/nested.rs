@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{CreateCond2, InvokeUiTemplate, ThoriumUiCorePlugin, UiTemplate};
+use thorium_ui::{Cond, InvokeUiTemplate, ThoriumUiCorePlugin, UiTemplate};
 
 fn main() {
     App::new()
@@ -70,7 +70,7 @@ struct Conditional;
 
 impl UiTemplate for Conditional {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
-        builder.cond2(
+        builder.spawn(Cond::new(
             |counter: Res<Counter>| counter.count & 1 == 0,
             || Spawn(Text::new("hungry ")),
             || {
@@ -86,7 +86,7 @@ impl UiTemplate for Conditional {
                     Spawn(Text::new("thirsty ")),
                 )
             },
-        );
+        ));
     }
 }
 
