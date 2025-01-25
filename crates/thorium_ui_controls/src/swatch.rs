@@ -2,8 +2,7 @@ use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use thorium_ui_core::{
-    Attach, CreateCond, IntoSignal, MutateDyn, Signal, StyleEntity, StyleHandle, StyleTuple,
-    UiTemplate,
+    Attach, CreateCond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
 };
 // use bevy_tabindex::TabIndex;
 
@@ -94,8 +93,8 @@ impl UiTemplate for Swatch {
             .spawn((
                 MaterialNode::<SwatchRectMaterial>::default(),
                 Name::new("Swatch"),
+                Styles((style_swatch, self.style.clone())),
             ))
-            .style((style_swatch, self.style.clone()))
             .attach(MutateDyn::new(
                 move |world: DeferredWorld| LinearRgba::from(color.get(&world)),
                 |color, ent| {
@@ -135,7 +134,7 @@ impl UiTemplate for Swatch {
                 builder.cond(
                     move |world: DeferredWorld| selected.get(&world),
                     |builder| {
-                        builder.spawn(Node::default()).style(style_selection);
+                        builder.spawn((Node::default(), Styles(style_selection)));
                     },
                     |_builder| {},
                 );

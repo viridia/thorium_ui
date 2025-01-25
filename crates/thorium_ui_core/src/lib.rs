@@ -25,7 +25,7 @@ pub use memo::{CreateMemo, Memo, ReadMemo};
 pub use mutable::{CreateMutable, Mutable, ReadMutable, WriteMutable};
 pub use mutation_effect::MutateDyn;
 pub use signal::{IntoSignal, Signal};
-pub use style::{StyleDyn, StyleEntity, StyleHandle, StyleTuple};
+pub use style::{StyleDyn, StyleHandle, StyleTuple, Styles};
 pub use switch::CreateSwitch;
 pub use template::{InvokeUiTemplate, UiTemplate};
 

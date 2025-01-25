@@ -7,7 +7,7 @@ use bevy::{
     prelude::*,
     ui::{self, experimental::GhostNode},
 };
-use thorium_ui_core::{Attach, CreateCond, MutateDyn, Signal, StyleEntity, UiTemplate};
+use thorium_ui_core::{Attach, CreateCond, MutateDyn, Signal, Styles, UiTemplate};
 use thorium_ui_headless::CoreBarrier;
 
 use crate::{
@@ -167,8 +167,11 @@ impl UiTemplate for Dialog {
                 let children = children.clone();
                 // Portal::new(
                 builder
-                    .spawn((Node::default(), Name::new("Dialog::Overlay")))
-                    .style(style_dialog_barrier)
+                    .spawn((
+                        Node::default(),
+                        Name::new("Dialog::Overlay"),
+                        Styles(style_dialog_barrier),
+                    ))
                     .insert(CoreBarrier { on_close })
                     .attach(MutateDyn::new(
                         move |world: DeferredWorld| match world
@@ -194,7 +197,19 @@ impl UiTemplate for Dialog {
                     ))
                     .with_children(|builder| {
                         builder
-                            .spawn((Node::default(), Name::new("Dialog")))
+                            .spawn((
+                                Node::default(),
+                                Name::new("Dialog"),
+                                Styles((
+                                    text_default,
+                                    style_dialog,
+                                    move |ec: &mut EntityCommands| {
+                                        ec.entry::<Node>().and_modify(move |mut node| {
+                                            node.width = width;
+                                        });
+                                    },
+                                )),
+                            ))
                             .insert(TabGroup {
                                 order: 0,
                                 modal: true,
@@ -204,15 +219,6 @@ impl UiTemplate for Dialog {
                                 // the dialog.
                                 trigger.propagate(false);
                             })
-                            .style((
-                                text_default,
-                                style_dialog,
-                                move |ec: &mut EntityCommands| {
-                                    ec.entry::<Node>().and_modify(move |mut node| {
-                                        node.width = width;
-                                    });
-                                },
-                            ))
                             .attach(MutateDyn::new(
                                 move |world: DeferredWorld| match world
                                     .entity(transition_id)
@@ -289,8 +295,7 @@ impl DialogHeader {
 impl UiTemplate for DialogHeader {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder
-            .spawn(Node::default())
-            .style(style_dialog_header)
+            .spawn((Node::default(), Styles(style_dialog_header)))
             .with_children(|builder| {
                 (self.children.as_ref())(builder);
             });
@@ -339,8 +344,7 @@ impl DialogBody {
 impl UiTemplate for DialogBody {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder
-            .spawn(Node::default())
-            .style(style_dialog_body)
+            .spawn((Node::default(), Styles(style_dialog_body)))
             .with_children(|builder| {
                 (self.children.as_ref())(builder);
             });
@@ -390,8 +394,7 @@ impl DialogFooter {
 impl UiTemplate for DialogFooter {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
         builder
-            .spawn(Node::default())
-            .style(style_dialog_footer)
+            .spawn((Node::default(), Styles(style_dialog_footer)))
             .with_children(|builder| {
                 (self.children.as_ref())(builder);
             });

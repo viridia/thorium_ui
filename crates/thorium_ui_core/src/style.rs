@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
 use bevy::{
-    ecs::{system::SystemId, world::DeferredWorld},
-    prelude::{Entity, EntityCommands, IntoSystem, World},
+    ecs::{
+        bundle::{BundleEffect, DynamicBundle},
+        system::SystemId,
+        world::DeferredWorld,
+    },
+    prelude::{Bundle, Entity, EntityCommands, IntoSystem, World},
 };
 
 use crate::{
@@ -114,14 +118,47 @@ impl StyleHandle {
     }
 }
 
-pub trait StyleEntity {
-    fn style(&mut self, style: impl StyleTuple + 'static) -> &mut Self;
+pub struct Styles<S: StyleTuple>(pub S);
+
+unsafe impl<S: StyleTuple + 'static> Bundle for Styles<S> {
+    fn component_ids(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
+    ) {
+    }
+
+    fn get_component_ids(
+        _components: &bevy::ecs::component::Components,
+        _ids: &mut impl FnMut(Option<bevy::ecs::component::ComponentId>),
+    ) {
+    }
+
+    fn register_required_components(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _required_components: &mut bevy::ecs::component::RequiredComponents,
+    ) {
+    }
 }
 
-impl StyleEntity for EntityCommands<'_> {
-    fn style(&mut self, style: impl StyleTuple + 'static) -> &mut Self {
-        style.apply(self);
+impl<S: StyleTuple> DynamicBundle for Styles<S> {
+    type Effect = Self;
+
+    fn get_components(
+        self,
+        _func: &mut impl FnMut(bevy::ecs::component::StorageType, bevy::ptr::OwningPtr<'_>),
+    ) -> Self::Effect {
         self
+    }
+}
+
+impl<S: StyleTuple> BundleEffect for Styles<S> {
+    fn apply(self, entity: &mut bevy::prelude::EntityWorldMut) {
+        let id = entity.id();
+        let mut commands = unsafe { entity.world_mut().commands() };
+        let mut entity_commands = commands.entity(id);
+        self.0.apply(&mut entity_commands);
     }
 }
 

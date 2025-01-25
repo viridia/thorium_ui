@@ -10,8 +10,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, CreateCond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleEntity,
-    StyleHandle, StyleTuple, UiTemplate,
+    Attach, CreateCond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle,
+    StyleTuple, Styles, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -159,8 +159,8 @@ impl UiTemplate for Checkbox {
         let disabled = self.disabled;
 
         checkbox
-            .style((style_checkbox, self.style.clone()))
             .insert((
+                Styles((style_checkbox, self.style.clone())),
                 TabIndex(self.tab_index),
                 CoreCheckbox {
                     checked: false,
@@ -181,8 +181,11 @@ impl UiTemplate for Checkbox {
             // .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
                 builder
-                    .spawn((Node::default(), Name::new("Checkbox::Border")))
-                    .style(style_checkbox_border)
+                    .spawn((
+                        Node::default(),
+                        Name::new("Checkbox::Border"),
+                        Styles(style_checkbox_border),
+                    ))
                     .attach((
                         StyleDyn::new(
                             move |world: DeferredWorld| match (
@@ -214,43 +217,46 @@ impl UiTemplate for Checkbox {
                                     ec.remove::<Outline>();
                                 };
                             },
-                        )
+                        ),
                     ))
                     .with_children(|builder| {
                         builder.cond(
                             move |world: DeferredWorld| checked.get(&world),
                             move |builder| {
-                                builder
-                                    .spawn((ImageNode {
+                                builder.spawn((
+                                    ImageNode {
                                         color: Srgba::WHITE.into(),
                                         ..default()
                                     },
-                                    UiImageHandle("embedded://thorium_ui_controls/assets/icons/checkmark.png".into())))
-                                    .style(style_checkbox_inner);
+                                    UiImageHandle(
+                                        "embedded://thorium_ui_controls/assets/icons/checkmark.png"
+                                            .into(),
+                                    ),
+                                    Styles(style_checkbox_inner),
+                                ));
                             },
                             |_| {},
                         );
                     });
 
                 builder
-                    .spawn(Node::default())
-                    .style((typography::text_default, style_checkbox_label))
-                    .attach(
-                        StyleDyn::new(
-                            move |world: DeferredWorld| disabled.get(&world),
-                            |disabled, ec| {
-                                ec.entry::<InheritableFontColor>()
-                                    .and_modify(move |mut color| {
-                                        if disabled {
-                                            color.0 = colors::FOREGROUND.with_alpha(0.2).into();
-                                        } else {
-                                            color.0 = colors::FOREGROUND.into();
-                                        }
-                                    });
-                            },
-
-                        )
-                    )
+                    .spawn((
+                        Node::default(),
+                        Styles((typography::text_default, style_checkbox_label)),
+                    ))
+                    .attach(StyleDyn::new(
+                        move |world: DeferredWorld| disabled.get(&world),
+                        |disabled, ec| {
+                            ec.entry::<InheritableFontColor>()
+                                .and_modify(move |mut color| {
+                                    if disabled {
+                                        color.0 = colors::FOREGROUND.with_alpha(0.2).into();
+                                    } else {
+                                        color.0 = colors::FOREGROUND.into();
+                                    }
+                                });
+                        },
+                    ))
                     .with_children(|builder| {
                         (self.label.as_ref())(builder);
                     });

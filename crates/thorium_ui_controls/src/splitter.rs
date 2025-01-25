@@ -6,9 +6,7 @@ use bevy::{
     window::SystemCursorIcon,
     winit::cursor::CursorIcon,
 };
-use thorium_ui_core::{
-    Attach, CreateMutable, IntoSignal, Signal, StyleDyn, StyleEntity, UiTemplate,
-};
+use thorium_ui_core::{Attach, CreateMutable, IntoSignal, Signal, StyleDyn, Styles, UiTemplate};
 use thorium_ui_headless::hover::{Hovering, IsHovering};
 
 use crate::colors;
@@ -134,14 +132,6 @@ impl Default for Splitter {
 impl UiTemplate for Splitter {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
-        let mut splitter =
-            builder.spawn((Node::default(), Name::new("Splitter"), Hovering::default()));
-        let splitter_id = splitter.id();
-        // let hovering = builder.create_hover_signal(id);
-        // let drag_state = builder.create_mutable::<DragState>(DragState::default());
-        let on_change = self.on_change;
-        let current_offset = self.value;
-        let direction = self.direction.clone();
         let style_splitter = match self.direction {
             SplitterDirection::Horizontal | SplitterDirection::HorizontalReverse => style_hsplitter,
             SplitterDirection::Vertical | SplitterDirection::VerticalReverse => style_vsplitter,
@@ -154,9 +144,18 @@ impl UiTemplate for Splitter {
                 style_vsplitter_inner
             }
         };
+        let mut splitter = builder.spawn((
+            Node::default(),
+            Name::new("Splitter"),
+            Hovering::default(),
+            Styles(style_splitter),
+        ));
+        let splitter_id = splitter.id();
+        let on_change = self.on_change;
+        let current_offset = self.value;
+        let direction = self.direction.clone();
 
         splitter
-            .style(style_splitter)
             .observe(
                 move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
                     // Save initial value to use as drag offset.
@@ -227,8 +226,7 @@ impl UiTemplate for Splitter {
             )
             .with_children(|builder| {
                 builder
-                    .spawn(Node::default())
-                    .style(style_splitter_inner)
+                    .spawn((Node::default(), Styles(style_splitter_inner)))
                     .attach(StyleDyn::new(
                         move |world: DeferredWorld| {
                             // Color change on hover / drag

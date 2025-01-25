@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
-    CreateCallback, CreateMutable, InvokeUiTemplate, Signal, StyleEntity, ThoriumUiCorePlugin,
+    CreateCallback, CreateMutable, InvokeUiTemplate, Signal, Styles, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     colors, Checkbox, ColorGradient, DisclosureToggle, GradientSlider, InheritableFontColor,
@@ -60,14 +60,16 @@ fn setup_view_root(mut commands: Commands) {
     let camera = commands.spawn((Camera::default(), Camera2d)).id();
 
     commands
-        .spawn(Node::default())
-        .insert((UiTargetCamera(camera), TabGroup::default()))
-        .style(style_test)
+        .spawn((
+            Node::default(),
+            Styles(style_test),
+            UiTargetCamera(camera),
+            TabGroup::default(),
+        ))
         .with_children(|builder| {
             builder.spawn((Text::new("Swatch"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder
                         .invoke(Swatch::new(palettes::css::GOLDENROD))
@@ -79,8 +81,7 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("SwatchGrid"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     let selected = builder.create_mutable::<Srgba>(palettes::css::BLUE);
                     let on_change = builder.create_callback_arg(
@@ -103,8 +104,7 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("Checkbox"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_column)
+                .spawn((Node::default(), Styles(style_column)))
                 .with_children(|builder| {
                     let checked_1 = builder.create_mutable(true);
                     let checked_2 = builder.create_mutable(false);
@@ -149,12 +149,14 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("Slider"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style((style_column, |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(|mut node| {
-                        node.align_items = ui::AlignItems::Stretch;
-                    });
-                }))
+                .spawn((
+                    Node::default(),
+                    Styles((style_column, |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(|mut node| {
+                            node.align_items = ui::AlignItems::Stretch;
+                        });
+                    })),
+                ))
                 .with_children(|builder| {
                     let value = builder.create_mutable::<f32>(50.);
                     let on_change = builder.create_callback_arg(
@@ -182,12 +184,14 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("GradientSlider"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style((style_column, |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(|mut node| {
-                        node.align_items = ui::AlignItems::Stretch;
-                    });
-                }))
+                .spawn((
+                    Node::default(),
+                    Styles((style_column, |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(|mut node| {
+                            node.align_items = ui::AlignItems::Stretch;
+                        });
+                    })),
+                ))
                 .with_children(|builder| {
                     let red = builder.create_mutable::<f32>(128.);
                     let on_change_red = builder.create_callback_arg(
@@ -212,12 +216,14 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("SpinBox"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style((style_column, |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(|mut node| {
-                        node.align_items = ui::AlignItems::Stretch;
-                    });
-                }))
+                .spawn((
+                    Node::default(),
+                    Styles((style_column, |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(|mut node| {
+                            node.align_items = ui::AlignItems::Stretch;
+                        });
+                    })),
+                ))
                 .with_children(|builder| {
                     let value = builder.create_mutable::<f32>(50.);
                     let on_change = builder.create_callback_arg(

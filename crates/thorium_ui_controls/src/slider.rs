@@ -182,6 +182,7 @@ impl UiTemplate for Slider {
             MaterialNode::<SliderRectMaterial>::default(),
             Name::new("Slider"),
             Hovering::default(),
+            Styles((typography::text_default, style_slider, self.style.clone())),
         ));
 
         let min = self.min;
@@ -213,7 +214,6 @@ impl UiTemplate for Slider {
             });
 
         slider
-            .style((typography::text_default, style_slider, self.style.clone()))
             .attach(MutateDyn::new(
                 move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
                 |(value, min, max), ent| {
@@ -270,8 +270,11 @@ impl UiTemplate for Slider {
                     false,
                 );
                 builder
-                    .spawn((Node::default(), Name::new("Slider::Overlay")))
-                    .style(style_overlay)
+                    .spawn((
+                        Node::default(),
+                        Name::new("Slider::Overlay"),
+                        Styles(style_overlay),
+                    ))
                     .with_children(move |builder| {
                         builder.cond(
                             move || true,
@@ -289,8 +292,7 @@ impl UiTemplate for Slider {
                             |_| {},
                         );
                         builder
-                            .spawn(Node::default())
-                            .style(style_label)
+                            .spawn((Node::default(), Styles(style_label)))
                             .with_children(|builder| {
                                 if let Some(label) = label {
                                     builder.spawn((Text::new(label), UseInheritedTextStyles));

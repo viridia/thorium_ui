@@ -5,8 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    Attach, CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleEntity, StyleHandle,
-    StyleTuple, UiTemplate,
+    Attach, CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles,
+    UiTemplate,
 };
 use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
 
@@ -243,6 +243,7 @@ impl UiTemplate for GradientSlider {
             Node::default(),
             Name::new("GradientSlider"),
             Hovering::default(),
+            Styles((style_slider, self.style.clone())),
         ));
         let slider_id = slider.id();
 
@@ -253,7 +254,6 @@ impl UiTemplate for GradientSlider {
         let on_change = self.on_change;
 
         slider
-            .style((style_slider, self.style.clone()))
             .attach(
                 MutateDyn::new(
                     move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
@@ -311,8 +311,7 @@ impl UiTemplate for GradientSlider {
             )
             .with_children(|builder| {
                 builder
-                    .spawn(MaterialNode::<GradientRectMaterial>::default())
-                    .style(style_gradient)
+                    .spawn((MaterialNode::<GradientRectMaterial>::default(), Styles(style_gradient)))
                     .attach(
                         MutateDyn::new(
                             move |world: DeferredWorld| color_stops.get(&world),
@@ -343,8 +342,7 @@ impl UiTemplate for GradientSlider {
                         )
                     );
                 builder
-                    .spawn((Node::default(), Name::new("GradientSlider::Track")))
-                    .style(style_track)
+                    .spawn((Node::default(), Name::new("GradientSlider::Track"), Styles(style_track)))
                     .with_children(|builder| {
                         builder
                             .spawn((
@@ -354,8 +352,8 @@ impl UiTemplate for GradientSlider {
                                 },
                                 UiImageHandle("embedded://thorium_ui_controls/assets/icons/gradient_thumb.png".into()),
                                 Name::new("GradientSlider::Thumb"),
+                                Styles(style_thumb)
                             ))
-                            .style(style_thumb)
                             .attach(
                                 StyleDyn::new(
                                     move |world: DeferredWorld| {

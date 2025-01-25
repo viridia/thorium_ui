@@ -13,8 +13,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal, StyleDyn, StyleEntity,
-    StyleHandle, StyleTuple, UiTemplate,
+    Attach, CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal, StyleDyn, StyleHandle,
+    StyleTuple, Styles, UiTemplate,
 };
 use thorium_ui_headless::{hover::IsHovering, CoreCheckbox};
 
@@ -108,11 +108,14 @@ impl UiTemplate for DisclosureToggle {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
         let disabled = self.disabled;
         let checked = self.expanded;
-        let mut toggle = builder.spawn((Node::default(), Name::new("DisclosureToggle")));
+        let mut toggle = builder.spawn((
+            Node::default(),
+            Name::new("DisclosureToggle"),
+            Styles((style_toggle, self.style.clone())),
+        ));
         let toggle_id = toggle.id();
 
         toggle
-            .style((style_toggle, self.style.clone()))
             .insert((
                 CoreCheckbox {
                     on_change: self.on_change,

@@ -4,7 +4,7 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    Attach, CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn, StyleEntity,
+    Attach, CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn, Styles,
     ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
@@ -51,15 +51,19 @@ fn setup_view_root(mut commands: Commands) {
     let camera = commands.spawn((Camera::default(), Camera2d)).id();
 
     commands
-        .spawn(Node::default())
-        .insert((UiTargetCamera(camera), TabGroup::default()))
-        .style(style_test)
+        .spawn((
+            Node::default(),
+            UiTargetCamera(camera),
+            TabGroup::default(),
+            Styles(style_test),
+        ))
         .with_children(|builder| {
             builder.spawn((Text::new("bistable_transition"), UseInheritedTextStyles));
             let mut row = builder.spawn((
                 Node::default(),
                 Hovering::default(),
                 BistableTransition::new(false, 0.3),
+                Styles(style_row),
             ));
             let row_id = row.id();
             row.attach(MutateDyn::new(
@@ -71,7 +75,7 @@ fn setup_view_root(mut commands: Commands) {
                         });
                 },
             ));
-            row.style(style_row).with_children(|builder| {
+            row.with_children(|builder| {
                 let color = builder.create_memo(
                     move |world: DeferredWorld| match world
                         .entity(row_id)
@@ -142,11 +146,14 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("Text"), UseInheritedTextStyles));
             builder
-                .spawn((TextLayout::default(), Text::default()))
-                .style((typography::text_default, |ec: &mut EntityCommands| {
-                    ec.insert(InheritableFontSize(32.));
-                    ec.insert(InheritableFontColor(palettes::css::GRAY.into()));
-                }))
+                .spawn((
+                    TextLayout::default(),
+                    Text::default(),
+                    Styles((typography::text_default, |ec: &mut EntityCommands| {
+                        ec.insert(InheritableFontSize(32.));
+                        ec.insert(InheritableFontColor(palettes::css::GRAY.into()));
+                    })),
+                ))
                 .with_children(|builder| {
                     builder.spawn((
                         Text("The quick brown fox jumps over the ".to_string()),

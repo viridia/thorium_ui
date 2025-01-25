@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, ecs::system::SystemId, prelude::*, ui};
-use thorium_ui_core::{IntoSignal, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate};
+use thorium_ui_core::{IntoSignal, Signal, StyleHandle, StyleTuple, Styles, UiTemplate};
 
 use crate::{rounded_corners::RoundedCorners, size::Size};
 
@@ -70,15 +70,18 @@ impl UiTemplate for ToolPalette {
         // let size = self.size;
 
         builder
-            .spawn((Node::default(), Name::new("ToolPalette")))
-            .style((
-                style_tool_palette,
-                move |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(move |mut node| {
-                        node.grid_template_columns = vec![ui::RepeatedGridTrack::auto(columns)];
-                    });
-                },
-                self.style.clone(),
+            .spawn((
+                Node::default(),
+                Name::new("ToolPalette"),
+                Styles((
+                    style_tool_palette,
+                    move |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(move |mut node| {
+                            node.grid_template_columns = vec![ui::RepeatedGridTrack::auto(columns)];
+                        });
+                    },
+                    self.style.clone(),
+                )),
             ))
             // .insert(ToolPaletteContext { size: self.size })
             .insert(AccessibilityNode::from(accesskit::Node::new(Role::Group)))

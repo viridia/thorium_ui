@@ -5,8 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateCallback, CreateForEach, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleEntity,
-    StyleHandle, StyleTuple, UiTemplate,
+    CreateCallback, CreateForEach, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleHandle,
+    StyleTuple, Styles, UiTemplate,
 };
 
 use crate::colors;
@@ -125,18 +125,21 @@ impl UiTemplate for SwatchGrid {
             });
 
         builder
-            .spawn((Node::default(), Name::new("SwatchGrid")))
-            .style((
-                style_swatch_grid,
-                move |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(move |mut node| {
-                        node.grid_template_columns =
-                            vec![ui::RepeatedGridTrack::flex(grid_size.x as u16, 1.)];
-                        node.grid_template_rows =
-                            vec![ui::RepeatedGridTrack::flex(grid_size.y as u16, 1.)];
-                    });
-                },
-                self.style.clone(),
+            .spawn((
+                Node::default(),
+                Name::new("SwatchGrid"),
+                Styles((
+                    style_swatch_grid,
+                    move |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(move |mut node| {
+                            node.grid_template_columns =
+                                vec![ui::RepeatedGridTrack::flex(grid_size.x as u16, 1.)];
+                            node.grid_template_rows =
+                                vec![ui::RepeatedGridTrack::flex(grid_size.y as u16, 1.)];
+                        });
+                    },
+                    self.style.clone(),
+                )),
             ))
             .with_children(|builder| {
                 builder.for_each(
@@ -165,7 +168,7 @@ impl UiTemplate for SwatchGrid {
                             );
                         }
                         None => {
-                            builder.spawn(Node::default()).style(style_empty_slot);
+                            builder.spawn((Node::default(), Styles(style_empty_slot)));
                         }
                     },
                     |_| {},

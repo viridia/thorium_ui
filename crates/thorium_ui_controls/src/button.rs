@@ -16,8 +16,7 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, InsertWhen, IntoSignal, Signal, StyleDyn, StyleEntity, StyleHandle, StyleTuple,
-    UiTemplate,
+    Attach, InsertWhen, IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -220,27 +219,27 @@ impl UiTemplate for Button {
         let button_id = button.id();
 
         button
-            .style((
-                typography::text_default,
-                style_button,
-                move |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(move |mut node| {
-                        node.min_height = ui::Val::Px(size.height());
-                        node.min_width = ui::Val::Px(size.height().floor());
-                        if minimal {
-                            node.padding = ui::UiRect::all(ui::Val::Px(0.0));
-                        } else {
-                            node.padding = ui::UiRect::axes(
-                                ui::Val::Px(size.font_size() * 0.75),
-                                ui::Val::Px(0.0),
-                            );
-                        }
-                    });
-                    ec.insert(InheritableFontSize(size.font_size()));
-                },
-                self.style.clone(),
-            ))
             .insert((
+                Styles((
+                    typography::text_default,
+                    style_button,
+                    move |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(move |mut node| {
+                            node.min_height = ui::Val::Px(size.height());
+                            node.min_width = ui::Val::Px(size.height().floor());
+                            if minimal {
+                                node.padding = ui::UiRect::all(ui::Val::Px(0.0));
+                            } else {
+                                node.padding = ui::UiRect::axes(
+                                    ui::Val::Px(size.font_size() * 0.75),
+                                    ui::Val::Px(0.0),
+                                );
+                            }
+                        });
+                        ec.insert(InheritableFontSize(size.font_size()));
+                    },
+                    self.style.clone(),
+                )),
                 TabIndex(self.tab_index),
                 CoreButtonPressed(false),
                 CoreButton { on_click },
@@ -253,8 +252,11 @@ impl UiTemplate for Button {
             .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
                 builder
-                    .spawn((Node::default(), Name::new("Button::Background")))
-                    .style(style_button_bg)
+                    .spawn((
+                        Node::default(),
+                        Name::new("Button::Background"),
+                        Styles(style_button_bg),
+                    ))
                     .insert(corners.to_border_radius(self.size.border_radius()))
                     .attach((
                         StyleDyn::new(

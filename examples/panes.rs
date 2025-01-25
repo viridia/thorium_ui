@@ -2,8 +2,7 @@
 
 use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
 use thorium_ui::{
-    Attach, CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, StyleEntity,
-    ThoriumUiCorePlugin,
+    Attach, CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, Styles, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     colors, InheritableFontColor, Splitter, SplitterDirection, ThoriumUiControlsPlugin,
@@ -56,8 +55,11 @@ fn setup_view_root(mut commands: Commands) {
 
     commands
         .spawn(Node::default())
-        .insert((UiTargetCamera(camera), TabGroup::default()))
-        .style(style_test)
+        .insert((
+            UiTargetCamera(camera),
+            TabGroup::default(),
+            Styles(style_test),
+        ))
         .with_children(|builder| {
             let left_width = builder.create_memo(|res: Res<LeftPanelWidth>| res.0, 0.);
             let on_resize_left =
@@ -73,8 +75,7 @@ fn setup_view_root(mut commands: Commands) {
             // let dummy_text = "The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps. Bawds jog, flick quartz, vex nymphs. Waltz, bad nymph, for quick jigs vex! Fox nymphs grab quick-jived waltz.";
 
             builder
-                .spawn(Node::default())
-                .style(style_panel)
+                .spawn((Node::default(), Styles(style_panel)))
                 .attach(StyleDyn::new(
                     |res: Res<LeftPanelWidth>| res.0,
                     |width, ec| {
@@ -101,13 +102,14 @@ fn setup_view_root(mut commands: Commands) {
             builder.invoke(Splitter::new().value(left_width).on_change(on_resize_left));
 
             builder
-                .spawn(Node::default())
-                .style(style_panel)
-                .style(|ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(|mut node| {
-                        node.flex_grow = 1.;
-                    });
-                })
+                .spawn((
+                    Node::default(),
+                    Styles((style_panel, |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(|mut node| {
+                            node.flex_grow = 1.;
+                        });
+                    })),
+                ))
                 .with_children(|builder| {
                     builder.spawn((Text::new("Middle"), UseInheritedTextStyles));
                 });
@@ -120,8 +122,7 @@ fn setup_view_root(mut commands: Commands) {
             );
 
             builder
-                .spawn(Node::default())
-                .style(style_panel)
+                .spawn((Node::default(), Styles(style_panel)))
                 .attach(StyleDyn::new(
                     |res: Res<RightPanelWidth>| res.0,
                     |width, ec| {

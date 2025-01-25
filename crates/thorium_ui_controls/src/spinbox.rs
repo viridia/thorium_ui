@@ -7,7 +7,7 @@ use bevy::{
 };
 use thorium_ui_core::{
     Attach, CreateCallback, CreateCond, CreateMemo, CreateMutable, IntoSignal, InvokeUiTemplate,
-    MutateDyn, Signal, StyleEntity, StyleHandle, StyleTuple, UiTemplate,
+    MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
 };
 
 use crate::{
@@ -187,7 +187,11 @@ impl Default for SpinBox {
 impl UiTemplate for SpinBox {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
-        let mut spinbox = builder.spawn((Node::default(), Name::new("Spinbox")));
+        let mut spinbox = builder.spawn((
+            Node::default(),
+            Name::new("Spinbox"),
+            Styles((style_spinbox, self.style.clone())),
+        ));
         // let show_buttons = builder.create_derived(move |rcx| {
         //     // Show buttons when spinbox is wide enough.
         //     let node = rcx.read_component::<ComputedNode>(spinbox_id).unwrap();
@@ -221,132 +225,131 @@ impl UiTemplate for SpinBox {
                 }
             });
 
-        spinbox
-            .style((style_spinbox, self.style.clone()))
-            .with_children(|builder| {
-                let dec_disabled = builder.create_memo(
-                    move |world: DeferredWorld| value.get(&world) <= min.get(&world),
-                    false,
-                );
-                let inc_disabled = builder.create_memo(
-                    move |world: DeferredWorld| value.get(&world) >= max.get(&world),
-                    false,
-                );
+        spinbox.with_children(|builder| {
+            let dec_disabled = builder.create_memo(
+                move |world: DeferredWorld| value.get(&world) <= min.get(&world),
+                false,
+            );
+            let inc_disabled = builder.create_memo(
+                move |world: DeferredWorld| value.get(&world) >= max.get(&world),
+                false,
+            );
 
-                builder.cond(
-                    move || true,
-                    move |builder| {
-                        builder.invoke(
-                            IconButton::new(
-                                "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
-                            )
-                            .corners(RoundedCorners::Left)
-                            .style(style_spinbox_button)
-                            .minimal(true)
-                            .disabled(dec_disabled)
-                            .on_click(dec_click),
+            builder.cond(
+                move || true,
+                move |builder| {
+                    builder.invoke(
+                        IconButton::new(
+                            "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
+                        )
+                        .corners(RoundedCorners::Left)
+                        .style(style_spinbox_button)
+                        .minimal(true)
+                        .disabled(dec_disabled)
+                        .on_click(dec_click),
+                    );
+                },
+                |_| {},
+            );
+
+            builder
+                .spawn((
+                    Node::default(),
+                    Name::new("SpinBox::Label"),
+                    Styles((typography::text_default, style_spinbox_label)),
+                ))
+                .observe(
+                    move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
+                        trigger.propagate(false);
+                        let offset = value.get(&world);
+                        drag_state.set(
+                            &mut world,
+                            DragState {
+                                dragging: DragType::Dragging,
+                                offset,
+                                was_dragged: false,
+                            },
                         );
                     },
-                    |_| {},
-                );
-
-                builder
-                    .spawn((Node::default(), Name::new("SpinBox::Label")))
-                    .style((typography::text_default, style_spinbox_label))
-                    .observe(
-                        move |mut trigger: Trigger<Pointer<DragStart>>,
-                              mut world: DeferredWorld| {
-                            trigger.propagate(false);
-                            let offset = value.get(&world);
+                )
+                .observe(
+                    move |mut trigger: Trigger<Pointer<DragEnd>>, mut world: DeferredWorld| {
+                        trigger.propagate(false);
+                        let offset = value.get(&world);
+                        let ds = drag_state.get(&world);
+                        if ds.dragging == DragType::Dragging {
                             drag_state.set(
                                 &mut world,
                                 DragState {
-                                    dragging: DragType::Dragging,
+                                    dragging: DragType::None,
                                     offset,
                                     was_dragged: false,
                                 },
                             );
-                        },
-                    )
-                    .observe(
-                        move |mut trigger: Trigger<Pointer<DragEnd>>, mut world: DeferredWorld| {
-                            trigger.propagate(false);
-                            let offset = value.get(&world);
-                            let ds = drag_state.get(&world);
-                            if ds.dragging == DragType::Dragging {
-                                drag_state.set(
-                                    &mut world,
-                                    DragState {
-                                        dragging: DragType::None,
-                                        offset,
-                                        was_dragged: false,
-                                    },
-                                );
-                            }
-                        },
-                    )
-                    .observe(
-                        move |mut trigger: Trigger<Pointer<Drag>>,
-                              mut world: DeferredWorld,
-                              mut commands: Commands| {
-                            trigger.propagate(false);
-                            let ds = drag_state.get(&world);
-                            if ds.dragging == DragType::Dragging {
-                                let min = min.get(&world);
-                                let max = max.get(&world);
-                                let event = trigger.event();
-                                let new_value = ds.offset
-                                    + ((event.distance.x - event.distance.y) * 0.1 * step);
-                                let rounding = f32::powi(10., precision as i32);
-                                let value = value.get(&world);
-                                let new_value = (new_value * rounding).round() / rounding;
-                                if value != new_value {
-                                    if !ds.was_dragged {
-                                        drag_state.set(
-                                            &mut world,
-                                            DragState {
-                                                was_dragged: true,
-                                                ..ds
-                                            },
-                                        );
-                                    }
-                                    if let Some(on_change) = on_change {
-                                        commands
-                                            .run_system_with(on_change, new_value.clamp(min, max));
-                                    }
+                        }
+                    },
+                )
+                .observe(
+                    move |mut trigger: Trigger<Pointer<Drag>>,
+                          mut world: DeferredWorld,
+                          mut commands: Commands| {
+                        trigger.propagate(false);
+                        let ds = drag_state.get(&world);
+                        if ds.dragging == DragType::Dragging {
+                            let min = min.get(&world);
+                            let max = max.get(&world);
+                            let event = trigger.event();
+                            let new_value =
+                                ds.offset + ((event.distance.x - event.distance.y) * 0.1 * step);
+                            let rounding = f32::powi(10., precision as i32);
+                            let value = value.get(&world);
+                            let new_value = (new_value * rounding).round() / rounding;
+                            if value != new_value {
+                                if !ds.was_dragged {
+                                    drag_state.set(
+                                        &mut world,
+                                        DragState {
+                                            was_dragged: true,
+                                            ..ds
+                                        },
+                                    );
+                                }
+                                if let Some(on_change) = on_change {
+                                    commands.run_system_with(on_change, new_value.clamp(min, max));
                                 }
                             }
-                        },
-                    )
-                    .with_children(|builder| {
-                        builder
-                            .spawn((Text::new(""), UseInheritedTextStyles))
-                            .attach(MutateDyn::new(
-                                move |world: DeferredWorld| value.get(&world),
-                                move |value, ent| {
-                                    ent.entry::<Text>().and_modify(|mut text| {
-                                        text.0 = format!("{:.*}", precision, value);
-                                    });
-                                },
-                            ));
-                    });
-
-                builder.cond(
-                    move || true,
-                    move |builder| {
-                        builder.invoke(
-                            IconButton::new(
-                                "embedded://thorium_ui_controls/assets/icons/chevron_right.png",
-                            )
-                            .corners(RoundedCorners::Right)
-                            .style(style_spinbox_button)
-                            .minimal(true)
-                            .disabled(inc_disabled)
-                            .on_click(inc_click),
-                        );
+                        }
                     },
-                    |_| {},
-                );
-            });
+                )
+                .with_children(|builder| {
+                    builder
+                        .spawn((Text::new(""), UseInheritedTextStyles))
+                        .attach(MutateDyn::new(
+                            move |world: DeferredWorld| value.get(&world),
+                            move |value, ent| {
+                                ent.entry::<Text>().and_modify(|mut text| {
+                                    text.0 = format!("{:.*}", precision, value);
+                                });
+                            },
+                        ));
+                });
+
+            builder.cond(
+                move || true,
+                move |builder| {
+                    builder.invoke(
+                        IconButton::new(
+                            "embedded://thorium_ui_controls/assets/icons/chevron_right.png",
+                        )
+                        .corners(RoundedCorners::Right)
+                        .style(style_spinbox_button)
+                        .minimal(true)
+                        .disabled(inc_disabled)
+                        .on_click(inc_click),
+                    );
+                },
+                |_| {},
+            );
+        });
     }
 }

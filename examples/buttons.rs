@@ -1,7 +1,7 @@
 //! Example of a simple UI layout
 
 use bevy::{input_focus::tab_navigation::TabGroup, prelude::*, ui};
-use thorium_ui::{CreateCallback, InvokeUiTemplate, StyleEntity, ThoriumUiCorePlugin};
+use thorium_ui::{CreateCallback, InvokeUiTemplate, Styles, ThoriumUiCorePlugin};
 use thorium_ui_controls::{
     colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, Icon, IconButton,
     InheritableFontColor, ThoriumUiControlsPlugin, ToolButton, ToolPalette, UseInheritedTextStyles,
@@ -45,10 +45,9 @@ fn setup_view_root(mut commands: Commands) {
     let camera = commands.spawn((Camera::default(), Camera2d)).id();
 
     commands
-        .spawn(Node::default())
+        .spawn((Node::default(), Styles(style_test)))
         .insert((UiTargetCamera(camera), TabGroup::default()))
         // .observe(handle_tab_navigation)
-        .style(style_test)
         .with_children(|builder| {
             let on_click = builder.create_callback(|| {
                 println!("Button clicked!");
@@ -56,8 +55,7 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("Variants"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder
                         .invoke(
@@ -85,8 +83,7 @@ fn setup_view_root(mut commands: Commands) {
                 });
             builder.spawn((Text::new("Variants (disabled)"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder
                         .invoke(Button::new().labeled("Default").disabled(true))
@@ -117,8 +114,7 @@ fn setup_view_root(mut commands: Commands) {
                 });
             builder.spawn((Text::new("Size"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder
                         .invoke(Button::new().labeled("Size: Xl").size(Size::Xl))
@@ -131,8 +127,7 @@ fn setup_view_root(mut commands: Commands) {
                 });
             builder.spawn((Text::new("Corners"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder
                         .invoke(
@@ -168,8 +163,7 @@ fn setup_view_root(mut commands: Commands) {
                 });
             builder.spawn((Text::new("IconButton"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder
                         .invoke(IconButton::new(
@@ -185,8 +179,7 @@ fn setup_view_root(mut commands: Commands) {
 
                 builder.spawn((Text::new("IconButton Size"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder
                         .invoke(
@@ -235,8 +228,7 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("ToolPalette"), UseInheritedTextStyles));
             builder
-                .spawn(Node::default())
-                .style(style_row)
+                .spawn((Node::default(), Styles(style_row)))
                 .with_children(|builder| {
                     builder.invoke(ToolPalette::new().columns(3).children(|builder| {
                         builder
