@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     colors, rounded_corners::RoundedCorners, size::Size, text_styles::UseInheritedTextStyles,
-    typography, InheritableFontColor, InheritableFontSize,
+    typography, InheritableFont, InheritableFontColor, InheritableFontSize,
 };
 use accesskit::Role;
 use bevy::{
@@ -16,7 +16,7 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, InsertWhen, IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, UiTemplate,
+    InsertWhen, IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -38,20 +38,6 @@ pub enum ButtonVariant {
 
     /// A button that is in a "toggled" state.
     Selected,
-}
-
-pub(crate) fn style_button(ec: &mut EntityCommands) {
-    ec.entry::<Node>().and_modify(|mut node| {
-        node.display = ui::Display::Flex;
-        node.flex_direction = ui::FlexDirection::Row;
-        node.justify_content = ui::JustifyContent::Center;
-        node.align_items = ui::AlignItems::Center;
-        node.align_content = ui::AlignContent::Center;
-        node.padding = ui::UiRect::axes(ui::Val::Px(12.0), ui::Val::Px(0.0));
-        node.border = ui::UiRect::all(ui::Val::Px(0.0));
-    });
-    ec.insert(CursorIcon::System(SystemCursorIcon::Pointer));
-    ec.insert(InheritableFontColor(colors::FOREGROUND.into()));
 }
 
 pub(crate) fn style_button_bg(ec: &mut EntityCommands) {
@@ -207,95 +193,108 @@ impl Default for Button {
 impl UiTemplate for Button {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
         let variant = self.variant;
-
         let corners = self.corners;
         let minimal = self.minimal;
         let disabled = self.disabled;
-
         let size = self.size;
         let on_click = self.on_click;
 
-        let mut button = builder.spawn((Node::default(), Name::new("Button"), Hovering::default()));
+        let mut button = builder.spawn((
+            Node {
+                display: ui::Display::Flex,
+                flex_direction: ui::FlexDirection::Row,
+                justify_content: ui::JustifyContent::Center,
+                align_items: ui::AlignItems::Center,
+                align_content: ui::AlignContent::Center,
+                padding: ui::UiRect::axes(ui::Val::Px(12.0), ui::Val::Px(0.0)),
+                border: ui::UiRect::all(ui::Val::Px(0.0)),
+                ..default()
+            },
+            Name::new("Button"),
+            // Marker to indicate we want to be notified when the button, or any child, is hovered.
+            Hovering::default(),
+            CursorIcon::System(SystemCursorIcon::Pointer),
+            // Child elements should inherit font styles from the parent, unless overridden.
+            InheritableFont::from_path(typography::DEFAULT_FONT),
+            InheritableFontColor(colors::FOREGROUND.into()),
+            InheritableFontSize(size.font_size()),
+            TabIndex(self.tab_index),
+            // Button pressed state.
+            CoreButtonPressed(false),
+            // Button behaviors and observers.
+            CoreButton { on_click },
+            AccessibilityNode::from(accesskit::Node::new(Role::Button)),
+            InsertWhen::new(
+                move |world: DeferredWorld| disabled.get(&world),
+                || InteractionDisabled,
+            ),
+            Styles((
+                // Calculate button size based on `size` enum.
+                move |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
+                        node.min_height = ui::Val::Px(size.height());
+                        node.min_width = ui::Val::Px(size.height().floor());
+                        if minimal {
+                            node.padding = ui::UiRect::all(ui::Val::Px(0.0));
+                        } else {
+                            node.padding = ui::UiRect::axes(
+                                ui::Val::Px(size.font_size() * 0.75),
+                                ui::Val::Px(0.0),
+                            );
+                        }
+                    });
+                },
+                // Style overrides passed in by the user.
+                self.style.clone(),
+            )),
+        ));
         let button_id = button.id();
 
         button
-            .insert((
-                Styles((
-                    typography::text_default,
-                    style_button,
-                    move |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(move |mut node| {
-                            node.min_height = ui::Val::Px(size.height());
-                            node.min_width = ui::Val::Px(size.height().floor());
-                            if minimal {
-                                node.padding = ui::UiRect::all(ui::Val::Px(0.0));
-                            } else {
-                                node.padding = ui::UiRect::axes(
-                                    ui::Val::Px(size.font_size() * 0.75),
-                                    ui::Val::Px(0.0),
-                                );
-                            }
-                        });
-                        ec.insert(InheritableFontSize(size.font_size()));
-                    },
-                    self.style.clone(),
-                )),
-                TabIndex(self.tab_index),
-                CoreButtonPressed(false),
-                CoreButton { on_click },
-                AccessibilityNode::from(accesskit::Node::new(Role::Button)),
-            ))
-            .attach(InsertWhen::new(
-                move |world: DeferredWorld| disabled.get(&world),
-                || InteractionDisabled,
-            ))
             .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
-                builder
-                    .spawn((
-                        Node::default(),
-                        Name::new("Button::Background"),
-                        Styles(style_button_bg),
-                    ))
-                    .insert(corners.to_border_radius(self.size.border_radius()))
-                    .attach((
-                        StyleDyn::new(
-                            move |world: DeferredWorld| {
-                                if minimal {
-                                    colors::TRANSPARENT
-                                } else {
-                                    let entity = world.entity(button_id);
-                                    let pressed = entity
-                                        .get::<CoreButtonPressed>()
-                                        .map(|pressed| pressed.0)
-                                        .unwrap_or_default();
-                                    button_bg_color(
-                                        variant.get(&world),
-                                        world.is_interaction_disabled(button_id),
-                                        pressed,
-                                        world.is_hovering(button_id),
-                                    )
-                                }
-                            },
-                            |color, ent| {
-                                ent.insert(BackgroundColor(color.into()));
-                            },
-                        ),
-                        StyleDyn::new(
-                            move |world: DeferredWorld| world.is_focus_visible(button_id),
-                            |is_focused, ent| {
-                                if is_focused {
-                                    ent.insert(Outline {
-                                        color: colors::FOCUS.into(),
-                                        width: ui::Val::Px(2.0),
-                                        offset: ui::Val::Px(2.0),
-                                    });
-                                } else {
-                                    ent.remove::<Outline>();
-                                };
-                            },
-                        ),
-                    ));
+                builder.spawn((
+                    Node::default(),
+                    Name::new("Button::Background"),
+                    Styles(style_button_bg),
+                    corners.to_border_radius(self.size.border_radius()),
+                    StyleDyn::new(
+                        move |world: DeferredWorld| {
+                            if minimal {
+                                colors::TRANSPARENT
+                            } else {
+                                let entity = world.entity(button_id);
+                                let pressed = entity
+                                    .get::<CoreButtonPressed>()
+                                    .map(|pressed| pressed.0)
+                                    .unwrap_or_default();
+                                button_bg_color(
+                                    variant.get(&world),
+                                    world.is_interaction_disabled(button_id),
+                                    pressed,
+                                    world.is_hovering(button_id),
+                                )
+                            }
+                        },
+                        |color, ent| {
+                            ent.insert(BackgroundColor(color.into()));
+                        },
+                    ),
+                    StyleDyn::new(
+                        move |world: DeferredWorld| world.is_focus_visible(button_id),
+                        |is_focused, ent| {
+                            if is_focused {
+                                ent.insert(Outline {
+                                    color: colors::FOCUS.into(),
+                                    width: ui::Val::Px(2.0),
+                                    offset: ui::Val::Px(2.0),
+                                });
+                            } else {
+                                ent.remove::<Outline>();
+                            };
+                        },
+                    ),
+                ));
                 let children = self.children.as_ref();
                 (children)(builder);
             });

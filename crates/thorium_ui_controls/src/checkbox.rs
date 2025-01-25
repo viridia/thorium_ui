@@ -10,8 +10,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, CreateCond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle,
-    StyleTuple, Styles, UiTemplate,
+    CreateCond, InsertWhen, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple,
+    Styles, UiTemplate,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -166,17 +166,17 @@ impl UiTemplate for Checkbox {
                     checked: false,
                     on_change: self.on_change,
                 },
-            ))
-            .attach(InsertWhen::new(
-                move |world: DeferredWorld| disabled.get(&world),
-                || InteractionDisabled,
-            ))
-            .attach(MutateDyn::new(
-                move |world: DeferredWorld| checked.get(&world),
-                |checked, ent| {
-                    let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
-                    checkbox.checked = checked;
-                },
+                InsertWhen::new(
+                    move |world: DeferredWorld| disabled.get(&world),
+                    || InteractionDisabled,
+                ),
+                MutateDyn::new(
+                    move |world: DeferredWorld| checked.get(&world),
+                    |checked, ent| {
+                        let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
+                        checkbox.checked = checked;
+                    },
+                ),
             ))
             // .insert_if(AutoFocus, || self.autofocus)
             .with_children(|builder| {
@@ -185,8 +185,6 @@ impl UiTemplate for Checkbox {
                         Node::default(),
                         Name::new("Checkbox::Border"),
                         Styles(style_checkbox_border),
-                    ))
-                    .attach((
                         StyleDyn::new(
                             move |world: DeferredWorld| match (
                                 checked.get(&world),
@@ -243,19 +241,19 @@ impl UiTemplate for Checkbox {
                     .spawn((
                         Node::default(),
                         Styles((typography::text_default, style_checkbox_label)),
-                    ))
-                    .attach(StyleDyn::new(
-                        move |world: DeferredWorld| disabled.get(&world),
-                        |disabled, ec| {
-                            ec.entry::<InheritableFontColor>()
-                                .and_modify(move |mut color| {
-                                    if disabled {
-                                        color.0 = colors::FOREGROUND.with_alpha(0.2).into();
-                                    } else {
-                                        color.0 = colors::FOREGROUND.into();
-                                    }
-                                });
-                        },
+                        StyleDyn::new(
+                            move |world: DeferredWorld| disabled.get(&world),
+                            |disabled, ec| {
+                                ec.entry::<InheritableFontColor>()
+                                    .and_modify(move |mut color| {
+                                        if disabled {
+                                            color.0 = colors::FOREGROUND.with_alpha(0.2).into();
+                                        } else {
+                                            color.0 = colors::FOREGROUND.into();
+                                        }
+                                    });
+                            },
+                        ),
                     ))
                     .with_children(|builder| {
                         (self.label.as_ref())(builder);

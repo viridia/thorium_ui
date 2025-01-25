@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Attach, MutateDyn, ThoriumUiCorePlugin};
+use thorium_ui::{MutateDyn, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -43,16 +43,16 @@ fn setup_view_root(mut commands: Commands) {
                 ..default()
             },
             BorderColor(css::ALICE_BLUE.into()),
-        ))
-        .attach(MutateDyn::new(
-            |counter: Res<Counter>| counter.count & 1 == 0,
-            |even, entity| {
-                entity.insert(BorderColor(if even {
-                    css::MAROON.into()
-                } else {
-                    css::LIME.into()
-                }));
-            },
+            MutateDyn::new(
+                |counter: Res<Counter>| counter.count & 1 == 0,
+                |even, entity| {
+                    entity.insert(BorderColor(if even {
+                        css::MAROON.into()
+                    } else {
+                        css::LIME.into()
+                    }));
+                },
+            ),
         ))
         .with_children(|builder| {
             builder.spawn(Text::new("Goodbye, "));

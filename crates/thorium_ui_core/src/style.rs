@@ -11,7 +11,7 @@ use bevy::{
 
 use crate::{
     effect_cell::{AnyEffect, EffectCell},
-    Attachment,
+    owner::OwnedBy,
 };
 
 /// `StyleTuple` - a variable-length tuple of style functions.
@@ -189,23 +189,72 @@ impl<
     }
 }
 
+unsafe impl<
+        M: Send + Sync + 'static,
+        D: PartialEq + Clone + Send + Sync + 'static,
+        DepsFn: IntoSystem<(), D, M> + Send + Sync + 'static,
+        SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
+    > Bundle for StyleDyn<M, D, DepsFn, SF>
+{
+    fn component_ids(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
+    ) {
+    }
+
+    fn get_component_ids(
+        _components: &bevy::ecs::component::Components,
+        _ids: &mut impl FnMut(Option<bevy::ecs::component::ComponentId>),
+    ) {
+    }
+
+    fn register_required_components(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _required_components: &mut bevy::ecs::component::RequiredComponents,
+    ) {
+    }
+}
+
 impl<
         M: Send + Sync + 'static,
         D: PartialEq + Clone + Send + Sync + 'static,
         DepsFn: IntoSystem<(), D, M> + Send + Sync + 'static,
         SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
-    > Attachment for StyleDyn<M, D, DepsFn, SF>
+    > DynamicBundle for StyleDyn<M, D, DepsFn, SF>
 {
-    fn apply(self, parent: &mut EntityCommands<'_>) {
-        let deps_sys = parent.commands().register_system(self.deps_fn);
+    type Effect = Self;
+
+    fn get_components(
+        self,
+        _func: &mut impl FnMut(bevy::ecs::component::StorageType, bevy::ptr::OwningPtr<'_>),
+    ) -> Self::Effect {
+        self
+    }
+}
+
+impl<
+        M: Send + Sync + 'static,
+        D: PartialEq + Clone + Send + Sync + 'static,
+        DepsFn: IntoSystem<(), D, M> + Send + Sync + 'static,
+        SF: Fn(D, &mut EntityCommands) + Send + Sync + 'static,
+    > BundleEffect for StyleDyn<M, D, DepsFn, SF>
+{
+    fn apply(self, parent: &mut bevy::prelude::EntityWorldMut) {
         let target = parent.id();
-        parent.with_child(EffectCell::new(StyleDynEffect {
-            target,
-            deps: None,
-            deps_sys,
-            style_fn: self.style_fn,
-            marker: std::marker::PhantomData::<M>,
-        }));
+        let world = unsafe { parent.world_mut() };
+        let deps_sys = world.register_system(self.deps_fn);
+        world.spawn((
+            EffectCell::new(StyleDynEffect {
+                target,
+                deps: None,
+                deps_sys,
+                style_fn: self.style_fn,
+                marker: std::marker::PhantomData::<M>,
+            }),
+            OwnedBy(target),
+        ));
     }
 }
 

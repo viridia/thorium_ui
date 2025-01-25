@@ -12,7 +12,7 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    Attach, InvokeUiTemplate, MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiTemplate,
+    InvokeUiTemplate, MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiTemplate,
 };
 
 fn main() {
@@ -67,8 +67,9 @@ impl UiTemplate for Hoverable {
             Hovering::default(),
         ));
         let id = item.id();
-        item.with_child(Text::new("Hover me!"))
-            .attach(MutateDyn::new(
+        item.with_child((
+            Text::new("Hover me!"),
+            MutateDyn::new(
                 move |world: DeferredWorld| world.is_hovering(id),
                 |hovering, entity| {
                     entity.insert(BorderColor(if hovering {
@@ -77,7 +78,8 @@ impl UiTemplate for Hoverable {
                         css::DARK_GREEN.into()
                     }));
                 },
-            ));
+            ),
+        ));
     }
 }
 

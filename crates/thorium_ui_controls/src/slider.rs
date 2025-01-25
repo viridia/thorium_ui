@@ -214,7 +214,7 @@ impl UiTemplate for Slider {
             });
 
         slider
-            .attach(MutateDyn::new(
+            .insert(MutateDyn::new(
                 move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
                 |(value, min, max), ent| {
                     let core_slider = CoreSlider { value, min, max };
@@ -298,16 +298,18 @@ impl UiTemplate for Slider {
                                     builder.spawn((Text::new(label), UseInheritedTextStyles));
                                     builder.invoke(Spacer);
                                 }
-                                builder
-                                    .spawn((Text::new(""), UseInheritedTextStyles))
-                                    .attach(MutateDyn::new(
+                                builder.spawn((
+                                    Text::new(""),
+                                    UseInheritedTextStyles,
+                                    MutateDyn::new(
                                         move |world: DeferredWorld| value.get(&world),
                                         move |value, ent| {
                                             ent.entry::<Text>().and_modify(|mut text| {
                                                 text.0 = format!("{:.*}", precision, value);
                                             });
                                         },
-                                    ));
+                                    ),
+                                ));
                             });
                         builder.cond(
                             move || true,

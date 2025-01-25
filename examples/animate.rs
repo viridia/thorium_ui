@@ -4,7 +4,7 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    Attach, CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn, Styles,
+    CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn, Styles,
     ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
@@ -66,7 +66,7 @@ fn setup_view_root(mut commands: Commands) {
                 Styles(style_row),
             ));
             let row_id = row.id();
-            row.attach(MutateDyn::new(
+            row.insert(MutateDyn::new(
                 move |world: DeferredWorld| world.is_hovering(row_id),
                 |hovering, ent| {
                     ent.entry::<BistableTransition>()

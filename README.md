@@ -5,8 +5,8 @@ using the Bevy game engine. The core library provides the following features:
 
 - Conditional children using `.cond()` and `.switch()`.
 - Iterative generation using `.for_each()`.
-- Dynamic effects using `.attach()`.
-- Nested templates using `.invoke()`.
+- Dynamic effects.
+- Nested templates.
 - Scoped registration of one-shot systems, that is, one-shot systems which are tied to an entity.
 
 In addition, `thorium_ui_headless` provides a selection of "headless" (in other words, unstyled)
@@ -134,16 +134,16 @@ that implements `PartialEq`. However, if you want to use other kinds of data (or
 the items differently), you can use the variant method `.for_each_cmp()` which accepts a custom
 comparator function.
 
-### `.attach()`
+### Dynamic Effects
 
-The `.attach()` method is used to add one or more _dynamic effects_ to an entity. Unlike the
-previous methods which were methods on `ChildBuilder`, `.attach()` is a method on `EntityCommands`
-and `EntityWorldMut` (all these methods are added via trait extension).
+A dynamic effect is a small satellite entity which is attached to the primary entity by an
+owner relationship. Dynamic effects continually poll for changes to their inputs, and if a change
+occurs, they modify the primary entity in some way.
 
 Here's an effect which modifies the border color.
 
 ```rust
-entity.attach(
+entity.insert(
     MutateDyn::new(
         |counter: Res<Counter>| counter.count & 1 == 0,
         |even, entity| {

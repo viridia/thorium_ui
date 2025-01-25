@@ -1,7 +1,5 @@
 use bevy::{ecs::world::DeferredWorld, prelude::*, ui};
-use thorium_ui_core::{
-    Attach, IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, UiTemplate,
-};
+use thorium_ui_core::{IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, UiTemplate};
 use thorium_ui_headless::handle::HandleOrOwnedPath;
 
 use crate::{colors, image_handle::UiImageHandle};
@@ -67,27 +65,26 @@ impl UiTemplate for Icon {
         let size = self.size;
         let color = self.color;
 
-        builder
-            .spawn((
-                ImageNode { ..default() },
-                UiImageHandle(icon),
-                Styles((
-                    move |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(move |mut node| {
-                            node.width = ui::Val::Px(size.x);
-                            node.height = ui::Val::Px(size.y);
-                        });
-                    },
-                    self.style.clone(),
-                )),
-            ))
-            .attach(StyleDyn::new(
+        builder.spawn((
+            ImageNode { ..default() },
+            UiImageHandle(icon),
+            Styles((
+                move |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
+                        node.width = ui::Val::Px(size.x);
+                        node.height = ui::Val::Px(size.y);
+                    });
+                },
+                self.style.clone(),
+            )),
+            StyleDyn::new(
                 move |world: DeferredWorld| color.get(&world),
                 |color, ent| {
                     ent.entry::<ImageNode>().and_modify(move |mut img| {
                         img.color = color;
                     });
                 },
-            ));
+            ),
+        ));
     }
 }

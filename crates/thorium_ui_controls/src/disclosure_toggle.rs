@@ -13,8 +13,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal, StyleDyn, StyleHandle,
-    StyleTuple, Styles, UiTemplate,
+    CreateMemo, IntoSignal, InvokeUiTemplate, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple,
+    Styles, UiTemplate,
 };
 use thorium_ui_headless::{hover::IsHovering, CoreCheckbox};
 
@@ -122,34 +122,34 @@ impl UiTemplate for DisclosureToggle {
                     checked: false,
                 },
                 TabIndex(self.tab_index),
-            ))
-            .attach(MutateDyn::new(
-                move |world: DeferredWorld| checked.get(&world),
-                |checked, ent| {
-                    let angle = if checked {
-                        std::f32::consts::PI * 0.5
-                    } else {
-                        0.
-                    };
-                    let target = Quat::from_rotation_z(angle);
-                    AnimatedTransition::<AnimatedRotation>::start(ent, target, None, 0.3);
-                    let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
-                    checkbox.checked = checked;
-                },
-            ))
-            .attach(StyleDyn::new(
-                move |world: DeferredWorld| world.is_focus_visible(toggle_id),
-                |is_focused, ec| {
-                    if is_focused {
-                        ec.insert(Outline {
-                            color: colors::FOCUS.into(),
-                            width: ui::Val::Px(2.0),
-                            offset: ui::Val::Px(2.0),
-                        });
-                    } else {
-                        ec.remove::<Outline>();
-                    };
-                },
+                StyleDyn::new(
+                    move |world: DeferredWorld| world.is_focus_visible(toggle_id),
+                    |is_focused, ec| {
+                        if is_focused {
+                            ec.insert(Outline {
+                                color: colors::FOCUS.into(),
+                                width: ui::Val::Px(2.0),
+                                offset: ui::Val::Px(2.0),
+                            });
+                        } else {
+                            ec.remove::<Outline>();
+                        };
+                    },
+                ),
+                MutateDyn::new(
+                    move |world: DeferredWorld| checked.get(&world),
+                    |checked, ent| {
+                        let angle = if checked {
+                            std::f32::consts::PI * 0.5
+                        } else {
+                            0.
+                        };
+                        let target = Quat::from_rotation_z(angle);
+                        AnimatedTransition::<AnimatedRotation>::start(ent, target, None, 0.3);
+                        let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
+                        checkbox.checked = checked;
+                    },
+                ),
             ))
             .with_children(|builder| {
                 let icon_color = builder.create_memo(

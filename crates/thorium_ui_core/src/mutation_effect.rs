@@ -1,11 +1,15 @@
 use bevy::{
-    ecs::{system::SystemId, world::DeferredWorld},
+    ecs::{
+        bundle::{BundleEffect, DynamicBundle},
+        system::SystemId,
+        world::DeferredWorld,
+    },
     prelude::*,
 };
 
 use crate::{
     effect_cell::{AnyEffect, EffectCell},
-    Attachment,
+    owner::OwnedBy,
 };
 
 pub struct MutateDynEffect<P, M, EffectFn: Fn(P, &mut EntityWorldMut)> {
@@ -60,22 +64,73 @@ impl<
         }
     }
 }
+
+unsafe impl<
+        P: PartialEq + Clone + Send + Sync + 'static,
+        M: Send + Sync + 'static,
+        DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+        EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
+    > Bundle for MutateDyn<P, M, DepsFn, EffectFn>
+{
+    fn component_ids(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
+    ) {
+    }
+
+    fn get_component_ids(
+        _components: &bevy::ecs::component::Components,
+        _ids: &mut impl FnMut(Option<bevy::ecs::component::ComponentId>),
+    ) {
+    }
+
+    fn register_required_components(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _required_components: &mut bevy::ecs::component::RequiredComponents,
+    ) {
+        todo!()
+    }
+}
+
 impl<
         P: PartialEq + Clone + Send + Sync + 'static,
         M: Send + Sync + 'static,
         DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
         EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    > Attachment for MutateDyn<P, M, DepsFn, EffectFn>
+    > DynamicBundle for MutateDyn<P, M, DepsFn, EffectFn>
 {
-    fn apply(self, parent: &mut EntityCommands<'_>) {
-        let deps_sys = parent.commands().register_system(self.deps_fn);
+    type Effect = Self;
+
+    fn get_components(
+        self,
+        _func: &mut impl FnMut(bevy::ecs::component::StorageType, bevy::ptr::OwningPtr<'_>),
+    ) -> Self::Effect {
+        self
+    }
+}
+
+impl<
+        P: PartialEq + Clone + Send + Sync + 'static,
+        M: Send + Sync + 'static,
+        DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+        EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
+    > BundleEffect for MutateDyn<P, M, DepsFn, EffectFn>
+{
+    fn apply(self, parent: &mut EntityWorldMut) {
         let target = parent.id();
-        parent.commands().spawn(EffectCell::new(MutateDynEffect {
-            target,
-            deps: None,
-            deps_sys,
-            effect_fn: self.effect_fn,
-            marker: std::marker::PhantomData::<M>,
-        }));
+        let world = unsafe { parent.world_mut() };
+        let deps_sys = world.register_system(self.deps_fn);
+        world.spawn((
+            EffectCell::new(MutateDynEffect {
+                target,
+                deps: None,
+                deps_sys,
+                effect_fn: self.effect_fn,
+                marker: std::marker::PhantomData::<M>,
+            }),
+            OwnedBy(target),
+        ));
     }
 }

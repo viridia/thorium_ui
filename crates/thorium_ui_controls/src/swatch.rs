@@ -2,7 +2,7 @@ use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use thorium_ui_core::{
-    Attach, CreateCond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
+    CreateCond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
 };
 // use bevy_tabindex::TabIndex;
 
@@ -94,30 +94,30 @@ impl UiTemplate for Swatch {
                 MaterialNode::<SwatchRectMaterial>::default(),
                 Name::new("Swatch"),
                 Styles((style_swatch, self.style.clone())),
-            ))
-            .attach(MutateDyn::new(
-                move |world: DeferredWorld| LinearRgba::from(color.get(&world)),
-                |color, ent| {
-                    let material_handle = ent
-                        .get::<MaterialNode<SwatchRectMaterial>>()
-                        .unwrap()
-                        .0
-                        .clone();
-                    let mut ui_materials = unsafe {
-                        ent.world_mut()
-                            .get_resource_mut::<Assets<SwatchRectMaterial>>()
+                MutateDyn::new(
+                    move |world: DeferredWorld| LinearRgba::from(color.get(&world)),
+                    |color, ent| {
+                        let material_handle = ent
+                            .get::<MaterialNode<SwatchRectMaterial>>()
                             .unwrap()
-                    };
-                    if material_handle == Handle::default() {
-                        let material = ui_materials.add(SwatchRectMaterial {
-                            color: color.to_vec4(),
-                            border_radius: Vec4::splat(0.),
-                        });
-                        ent.insert(MaterialNode(material));
-                    } else {
-                        ui_materials.get_mut(&material_handle).unwrap().color = color.to_vec4();
-                    }
-                },
+                            .0
+                            .clone();
+                        let mut ui_materials = unsafe {
+                            ent.world_mut()
+                                .get_resource_mut::<Assets<SwatchRectMaterial>>()
+                                .unwrap()
+                        };
+                        if material_handle == Handle::default() {
+                            let material = ui_materials.add(SwatchRectMaterial {
+                                color: color.to_vec4(),
+                                border_radius: Vec4::splat(0.),
+                            });
+                            ent.insert(MaterialNode(material));
+                        } else {
+                            ui_materials.get_mut(&material_handle).unwrap().color = color.to_vec4();
+                        }
+                    },
+                ),
             ))
             .observe(
                 move |mut trigger: Trigger<Pointer<Click>>,

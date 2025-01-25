@@ -2,7 +2,7 @@
 
 use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
 use thorium_ui::{
-    Attach, CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, Styles, ThoriumUiCorePlugin,
+    CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, Styles, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     colors, InheritableFontColor, Splitter, SplitterDirection, ThoriumUiControlsPlugin,
@@ -75,14 +75,17 @@ fn setup_view_root(mut commands: Commands) {
             // let dummy_text = "The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps. Bawds jog, flick quartz, vex nymphs. Waltz, bad nymph, for quick jigs vex! Fox nymphs grab quick-jived waltz.";
 
             builder
-                .spawn((Node::default(), Styles(style_panel)))
-                .attach(StyleDyn::new(
-                    |res: Res<LeftPanelWidth>| res.0,
-                    |width, ec| {
-                        ec.entry::<Node>().and_modify(move |mut node| {
-                            node.width = ui::Val::Px(width);
-                        });
-                    },
+                .spawn((
+                    Node::default(),
+                    Styles(style_panel),
+                    StyleDyn::new(
+                        |res: Res<LeftPanelWidth>| res.0,
+                        |width, ec| {
+                            ec.entry::<Node>().and_modify(move |mut node| {
+                                node.width = ui::Val::Px(width);
+                            });
+                        },
+                    ),
                 ))
                 .with_children(|builder| {
                     builder.spawn((Text::new("Left"), UseInheritedTextStyles));
@@ -122,14 +125,17 @@ fn setup_view_root(mut commands: Commands) {
             );
 
             builder
-                .spawn((Node::default(), Styles(style_panel)))
-                .attach(StyleDyn::new(
-                    |res: Res<RightPanelWidth>| res.0,
-                    |width, ec| {
-                        ec.entry::<Node>().and_modify(move |mut node| {
-                            node.width = ui::Val::Px(width);
-                        });
-                    },
+                .spawn((
+                    Node::default(),
+                    Styles(style_panel),
+                    StyleDyn::new(
+                        |res: Res<RightPanelWidth>| res.0,
+                        |width, ec| {
+                            ec.entry::<Node>().and_modify(move |mut node| {
+                                node.width = ui::Val::Px(width);
+                            });
+                        },
+                    ),
                 ))
                 .with_children(|builder| {
                     builder.spawn((Text::new("Right"), UseInheritedTextStyles));

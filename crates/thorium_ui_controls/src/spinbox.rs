@@ -6,8 +6,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    Attach, CreateCallback, CreateCond, CreateMemo, CreateMutable, IntoSignal, InvokeUiTemplate,
-    MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
+    CreateCallback, CreateCond, CreateMemo, CreateMutable, IntoSignal, InvokeUiTemplate, MutateDyn,
+    Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
 };
 
 use crate::{
@@ -322,16 +322,18 @@ impl UiTemplate for SpinBox {
                     },
                 )
                 .with_children(|builder| {
-                    builder
-                        .spawn((Text::new(""), UseInheritedTextStyles))
-                        .attach(MutateDyn::new(
+                    builder.spawn((
+                        Text::new(""),
+                        UseInheritedTextStyles,
+                        MutateDyn::new(
                             move |world: DeferredWorld| value.get(&world),
                             move |value, ent| {
                                 ent.entry::<Text>().and_modify(|mut text| {
                                     text.0 = format!("{:.*}", precision, value);
                                 });
                             },
-                        ));
+                        ),
+                    ));
                 });
 
             builder.cond(

@@ -6,7 +6,7 @@ use bevy::{
     window::SystemCursorIcon,
     winit::cursor::CursorIcon,
 };
-use thorium_ui_core::{Attach, CreateMutable, IntoSignal, Signal, StyleDyn, Styles, UiTemplate};
+use thorium_ui_core::{CreateMutable, IntoSignal, Signal, StyleDyn, Styles, UiTemplate};
 use thorium_ui_headless::hover::{Hovering, IsHovering};
 
 use crate::colors;
@@ -225,9 +225,10 @@ impl UiTemplate for Splitter {
                 },
             )
             .with_children(|builder| {
-                builder
-                    .spawn((Node::default(), Styles(style_splitter_inner)))
-                    .attach(StyleDyn::new(
+                builder.spawn((
+                    Node::default(),
+                    Styles(style_splitter_inner),
+                    StyleDyn::new(
                         move |world: DeferredWorld| {
                             // Color change on hover / drag
                             let ds = drag_state.get(&world);
@@ -241,7 +242,8 @@ impl UiTemplate for Splitter {
                         |color, ec| {
                             ec.insert(BackgroundColor(color.into()));
                         },
-                    ));
+                    ),
+                ));
             });
     }
 }

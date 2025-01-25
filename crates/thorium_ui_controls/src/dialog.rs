@@ -7,7 +7,7 @@ use bevy::{
     prelude::*,
     ui::{self, experimental::GhostNode},
 };
-use thorium_ui_core::{Attach, CreateCond, MutateDyn, Signal, Styles, UiTemplate};
+use thorium_ui_core::{CreateCond, MutateDyn, Signal, Styles, UiTemplate};
 use thorium_ui_headless::CoreBarrier;
 
 use crate::{
@@ -141,15 +141,15 @@ impl UiTemplate for Dialog {
         let open = self.open;
         let width = self.width;
 
-        let mut transition_entity = builder.spawn((
+        let transition_entity = builder.spawn((
             GhostNode::default(),
             BistableTransition::new(false, TRANSITION_DURATION).set_exit_callback(on_exited),
-        ));
-        transition_entity.attach(MutateDyn::new(
-            move |world: DeferredWorld| open.get(&world),
-            |open, ent| {
-                ent.get_mut::<BistableTransition>().unwrap().set_open(open);
-            },
+            MutateDyn::new(
+                move |world: DeferredWorld| open.get(&world),
+                |open, ent| {
+                    ent.get_mut::<BistableTransition>().unwrap().set_open(open);
+                },
+            ),
         ));
         let transition_id = transition_entity.id();
 
@@ -171,29 +171,28 @@ impl UiTemplate for Dialog {
                         Node::default(),
                         Name::new("Dialog::Overlay"),
                         Styles(style_dialog_barrier),
-                    ))
-                    .insert(CoreBarrier { on_close })
-                    .attach(MutateDyn::new(
-                        move |world: DeferredWorld| match world
-                            .entity(transition_id)
-                            .get::<BistableTransition>()
-                            .unwrap()
-                            .state
-                        {
-                            BistableTransitionState::Entering
-                            | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
-                            BistableTransitionState::Exiting | BistableTransitionState::Exited => {
-                                colors::U2.with_alpha(0.0)
-                            }
-                        },
-                        move |color, ent| {
-                            AnimatedTransition::<AnimatedBackgroundColor>::start(
-                                ent,
-                                color,
-                                None,
-                                TRANSITION_DURATION,
-                            );
-                        },
+                        CoreBarrier { on_close },
+                        MutateDyn::new(
+                            move |world: DeferredWorld| match world
+                                .entity(transition_id)
+                                .get::<BistableTransition>()
+                                .unwrap()
+                                .state
+                            {
+                                BistableTransitionState::Entering
+                                | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
+                                BistableTransitionState::Exiting
+                                | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
+                            },
+                            move |color, ent| {
+                                AnimatedTransition::<AnimatedBackgroundColor>::start(
+                                    ent,
+                                    color,
+                                    None,
+                                    TRANSITION_DURATION,
+                                );
+                            },
+                        ),
                     ))
                     .with_children(|builder| {
                         builder
@@ -209,37 +208,37 @@ impl UiTemplate for Dialog {
                                         });
                                     },
                                 )),
+                                TabGroup {
+                                    order: 0,
+                                    modal: true,
+                                },
+                                MutateDyn::new(
+                                    move |world: DeferredWorld| match world
+                                        .entity(transition_id)
+                                        .get::<BistableTransition>()
+                                        .unwrap()
+                                        .state
+                                    {
+                                        BistableTransitionState::Entering => (0.0, 1.0),
+                                        BistableTransitionState::Exiting => (1.0, 0.0),
+                                        BistableTransitionState::Entered => (1.0, 1.0),
+                                        BistableTransitionState::Exited => (0.0, 0.0),
+                                    },
+                                    move |(origin, target), ent| {
+                                        AnimatedTransition::<AnimatedScale>::start(
+                                            ent,
+                                            Vec3::splat(target),
+                                            Some(Vec3::splat(origin)),
+                                            TRANSITION_DURATION,
+                                        );
+                                    },
+                                ),
                             ))
-                            .insert(TabGroup {
-                                order: 0,
-                                modal: true,
-                            })
                             .observe(|mut trigger: Trigger<Pointer<Pressed>>| {
                                 // Prevent clicks from propagating to the barrier and closing
                                 // the dialog.
                                 trigger.propagate(false);
                             })
-                            .attach(MutateDyn::new(
-                                move |world: DeferredWorld| match world
-                                    .entity(transition_id)
-                                    .get::<BistableTransition>()
-                                    .unwrap()
-                                    .state
-                                {
-                                    BistableTransitionState::Entering => (0.0, 1.0),
-                                    BistableTransitionState::Exiting => (1.0, 0.0),
-                                    BistableTransitionState::Entered => (1.0, 1.0),
-                                    BistableTransitionState::Exited => (0.0, 0.0),
-                                },
-                                move |(origin, target), ent| {
-                                    AnimatedTransition::<AnimatedScale>::start(
-                                        ent,
-                                        Vec3::splat(target),
-                                        Some(Vec3::splat(origin)),
-                                        TRANSITION_DURATION,
-                                    );
-                                },
-                            ))
                             .with_children(|builder| {
                                 (children.as_ref())(builder);
                             });

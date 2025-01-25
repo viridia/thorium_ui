@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    Attach, CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles,
+    CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles,
     UiTemplate,
 };
 use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
@@ -254,14 +254,12 @@ impl UiTemplate for GradientSlider {
         let on_change = self.on_change;
 
         slider
-            .attach(
-                MutateDyn::new(
-                    move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
-                    |(value, min, max), ent| {
-                        ent.insert(CoreSlider::new(value, min, max));
-                    },
-                )
-            )
+            .insert(MutateDyn::new(
+                move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
+                |(value, min, max), ent| {
+                    ent.insert(CoreSlider::new(value, min, max));
+                },
+            ))
             .observe(
                 move |mut trigger: Trigger<ValueChange<f32>>,
                       world: DeferredWorld,
@@ -302,73 +300,76 @@ impl UiTemplate for GradientSlider {
                         if range > 0. && (pointer_pos - thumb_pos).abs() >= THUMB_WIDTH / 2. {
                             let new_value = min + (pointer_pos * range) / slider_width;
                             if let Some(on_change) = on_change {
-                                commands
-                                    .run_system_with(on_change, new_value.clamp(min, max));
+                                commands.run_system_with(on_change, new_value.clamp(min, max));
                             }
                         };
                     }
                 },
             )
             .with_children(|builder| {
-                builder
-                    .spawn((MaterialNode::<GradientRectMaterial>::default(), Styles(style_gradient)))
-                    .attach(
-                        MutateDyn::new(
-                            move |world: DeferredWorld| color_stops.get(&world),
-                            |(num_color_stops, color_stops), ent| {
-                                let material_handle = ent
-                                    .get::<MaterialNode<GradientRectMaterial>>()
+                builder.spawn((
+                    MaterialNode::<GradientRectMaterial>::default(),
+                    Styles(style_gradient),
+                    MutateDyn::new(
+                        move |world: DeferredWorld| color_stops.get(&world),
+                        |(num_color_stops, color_stops), ent| {
+                            let material_handle = ent
+                                .get::<MaterialNode<GradientRectMaterial>>()
+                                .unwrap()
+                                .0
+                                .clone();
+                            let mut ui_materials = unsafe {
+                                ent.world_mut()
+                                    .get_resource_mut::<Assets<GradientRectMaterial>>()
                                     .unwrap()
-                                    .0
-                                    .clone();
-                                let mut ui_materials = unsafe {
-                                    ent.world_mut()
-                                        .get_resource_mut::<Assets<GradientRectMaterial>>()
-                                        .unwrap()
-                                };
-                                if material_handle == Handle::default() {
-                                    let material = ui_materials.add(GradientRectMaterial {
-                                        color_stops,
-                                        num_color_stops: IVec4::new(num_color_stops as i32, 0, 0, 0),
-                                        cap_size: THUMB_WIDTH * 0.5,
-                                    });
-                                    ent.insert(MaterialNode(material));
-                                } else {
-                                    let material = ui_materials.get_mut(&material_handle).unwrap();
-                                    material.num_color_stops.x = num_color_stops as i32;
-                                    material.color_stops = color_stops;
-                                }
-                            },
-                        )
-                    );
+                            };
+                            if material_handle == Handle::default() {
+                                let material = ui_materials.add(GradientRectMaterial {
+                                    color_stops,
+                                    num_color_stops: IVec4::new(num_color_stops as i32, 0, 0, 0),
+                                    cap_size: THUMB_WIDTH * 0.5,
+                                });
+                                ent.insert(MaterialNode(material));
+                            } else {
+                                let material = ui_materials.get_mut(&material_handle).unwrap();
+                                material.num_color_stops.x = num_color_stops as i32;
+                                material.color_stops = color_stops;
+                            }
+                        },
+                    ),
+                ));
                 builder
-                    .spawn((Node::default(), Name::new("GradientSlider::Track"), Styles(style_track)))
+                    .spawn((
+                        Node::default(),
+                        Name::new("GradientSlider::Track"),
+                        Styles(style_track),
+                    ))
                     .with_children(|builder| {
-                        builder
-                            .spawn((
-                                ImageNode {
-                                    color: Srgba::WHITE.into(),
-                                    ..default()
+                        builder.spawn((
+                            ImageNode {
+                                color: Srgba::WHITE.into(),
+                                ..default()
+                            },
+                            UiImageHandle(
+                                "embedded://thorium_ui_controls/assets/icons/gradient_thumb.png"
+                                    .into(),
+                            ),
+                            Name::new("GradientSlider::Thumb"),
+                            Styles(style_thumb),
+                            StyleDyn::new(
+                                move |world: DeferredWorld| {
+                                    let min = min.get(&world);
+                                    let max = max.get(&world);
+                                    let value = value.get(&world);
+                                    CoreSlider::new(value, min, max).thumb_position()
                                 },
-                                UiImageHandle("embedded://thorium_ui_controls/assets/icons/gradient_thumb.png".into()),
-                                Name::new("GradientSlider::Thumb"),
-                                Styles(style_thumb)
-                            ))
-                            .attach(
-                                StyleDyn::new(
-                                    move |world: DeferredWorld| {
-                                        let min = min.get(&world);
-                                        let max = max.get(&world);
-                                        let value = value.get(&world);
-                                        CoreSlider::new(value, min, max).thumb_position()
-                                    },
-                                    |percent, ec| {
-                                        ec.entry::<Node>().and_modify(move |mut node| {
-                                            node.left = ui::Val::Percent(percent * 100.);
-                                        });
-                                    },
-                                )
-                            );
+                                |percent, ec| {
+                                    ec.entry::<Node>().and_modify(move |mut node| {
+                                        node.left = ui::Val::Percent(percent * 100.);
+                                    });
+                                },
+                            ),
+                        ));
                     });
             });
     }
