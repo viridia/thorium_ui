@@ -25,7 +25,7 @@ pub use dyn_children::{
     DynChildOf, DynChildSpawner, DynChildSpawnerCommands, DynChildren, Fragment,
 };
 use effect_cell::update_effects;
-pub use foreach::{CreateForEach, For, ListItems};
+pub use foreach::{For, ListItems};
 pub use insert_when::InsertWhen;
 pub use memo::{CreateMemo, Memo, ReadMemo};
 pub use mutable::{CreateMutable, Mutable, ReadMutable, WriteMutable};
