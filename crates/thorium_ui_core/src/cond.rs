@@ -19,10 +19,10 @@ use crate::{
 pub struct Cond<
     M: Send + Sync + 'static,
     TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-    PosBundle: SpawnableList<DynChildOf> + 'static,
-    NegBundle: SpawnableList<DynChildOf> + 'static,
-    Pos: Fn() -> PosBundle + Send + Sync + 'static,
-    Neg: Fn() -> NegBundle + Send + Sync + 'static,
+    PosChildren: SpawnableList<DynChildOf> + 'static,
+    NegChildren: SpawnableList<DynChildOf> + 'static,
+    Pos: Fn() -> PosChildren + Send + Sync + 'static,
+    Neg: Fn() -> NegChildren + Send + Sync + 'static,
 > {
     test_fn: TestFn,
     pos: Pos,
@@ -33,11 +33,11 @@ pub struct Cond<
 impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<DynChildOf> + 'static,
-        NegBundle: SpawnableList<DynChildOf> + 'static,
-        Pos: Fn() -> PosBundle + Send + Sync + 'static,
-        Neg: Fn() -> NegBundle + Send + Sync + 'static,
-    > Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
+        PosChildren: SpawnableList<DynChildOf> + 'static,
+        NegChildren: SpawnableList<DynChildOf> + 'static,
+        Pos: Fn() -> PosChildren + Send + Sync + 'static,
+        Neg: Fn() -> NegChildren + Send + Sync + 'static,
+    > Cond<M, TestFn, PosChildren, NegChildren, Pos, Neg>
 {
     pub fn new(test_fn: TestFn, pos: Pos, neg: Neg) -> Self {
         Self {
@@ -52,11 +52,11 @@ impl<
 unsafe impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
-        NegBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
-        Pos: Fn() -> PosBundle + Send + Sync + 'static,
-        Neg: Fn() -> NegBundle + Send + Sync + 'static,
-    > Bundle for Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
+        PosChildren: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        NegChildren: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        Pos: Fn() -> PosChildren + Send + Sync + 'static,
+        Neg: Fn() -> NegChildren + Send + Sync + 'static,
+    > Bundle for Cond<M, TestFn, PosChildren, NegChildren, Pos, Neg>
 {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
@@ -82,11 +82,11 @@ unsafe impl<
 impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
-        NegBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
-        Pos: Fn() -> PosBundle + Send + Sync + 'static,
-        Neg: Fn() -> NegBundle + Send + Sync + 'static,
-    > DynamicBundle for Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
+        PosChildren: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        NegChildren: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        Pos: Fn() -> PosChildren + Send + Sync + 'static,
+        Neg: Fn() -> NegChildren + Send + Sync + 'static,
+    > DynamicBundle for Cond<M, TestFn, PosChildren, NegChildren, Pos, Neg>
 {
     type Effect = Self;
 
@@ -101,11 +101,11 @@ impl<
 impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
-        NegBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
-        Pos: Fn() -> PosBundle + Send + Sync + 'static,
-        Neg: Fn() -> NegBundle + Send + Sync + 'static,
-    > BundleEffect for Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
+        PosChildren: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        NegChildren: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        Pos: Fn() -> PosChildren + Send + Sync + 'static,
+        Neg: Fn() -> NegChildren + Send + Sync + 'static,
+    > BundleEffect for Cond<M, TestFn, PosChildren, NegChildren, Pos, Neg>
 {
     fn apply(self, entity: &mut EntityWorldMut) {
         let test_sys = unsafe { entity.world_mut().register_system(self.test_fn) };
@@ -216,10 +216,10 @@ impl<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> 
 /// Conditional control-flow node.
 struct CondEffect2<
     M,
-    PosBundle: SpawnableList<DynChildOf>,
-    Pos: Fn() -> PosBundle,
-    NegBundle: SpawnableList<DynChildOf>,
-    Neg: Fn() -> NegBundle,
+    PosChildren: SpawnableList<DynChildOf>,
+    Pos: Fn() -> PosChildren,
+    NegChildren: SpawnableList<DynChildOf>,
+    Neg: Fn() -> NegChildren,
 > {
     state: bool,
     first: bool,
@@ -231,11 +231,11 @@ struct CondEffect2<
 
 impl<
         M,
-        PosBundle: SpawnableList<DynChildOf>,
-        Pos: Fn() -> PosBundle,
-        NegBundle: SpawnableList<DynChildOf>,
-        Neg: Fn() -> NegBundle,
-    > AnyEffect for CondEffect2<M, PosBundle, Pos, NegBundle, Neg>
+        PosChildren: SpawnableList<DynChildOf>,
+        Pos: Fn() -> PosChildren,
+        NegChildren: SpawnableList<DynChildOf>,
+        Neg: Fn() -> NegChildren,
+    > AnyEffect for CondEffect2<M, PosChildren, Pos, NegChildren, Neg>
 {
     fn update(&mut self, world: &mut World, entity: Entity) {
         // Run the condition and see if the result changed.

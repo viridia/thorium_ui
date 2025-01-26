@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{CreateForEach, ListItems, ThoriumUiCorePlugin};
+use thorium_ui::{For, ListItems, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -31,47 +31,41 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands
-        .spawn((
-            Node {
-                left: ui::Val::Px(0.),
-                top: ui::Val::Px(0.),
-                right: ui::Val::Px(0.),
-                // bottom: ui::Val::Px(0.),
-                position_type: ui::PositionType::Absolute,
-                display: ui::Display::Flex,
-                flex_direction: ui::FlexDirection::Column,
-                border: ui::UiRect::all(ui::Val::Px(3.)),
-                ..default()
+    commands.spawn((
+        Node {
+            left: ui::Val::Px(0.),
+            top: ui::Val::Px(0.),
+            right: ui::Val::Px(0.),
+            // bottom: ui::Val::Px(0.),
+            position_type: ui::PositionType::Absolute,
+            display: ui::Display::Flex,
+            flex_direction: ui::FlexDirection::Column,
+            border: ui::UiRect::all(ui::Val::Px(3.)),
+            ..default()
+        },
+        BorderColor(css::ALICE_BLUE.into()),
+        children![For::each(
+            |mut items: InMut<ListItems<String>>, list: Res<List>| {
+                items.clone_from_iter(list.items.iter().cloned());
             },
-            BorderColor(css::ALICE_BLUE.into()),
-        ))
-        .with_children(|builder| {
-            builder.for_each(
-                |mut items: InMut<ListItems<String>>, list: Res<List>| {
-                    items.clone_from_iter(list.items.iter().cloned());
-                },
-                move |suit, builder| {
-                    let suit = suit.clone();
-                    let suit2 = suit.clone();
-                    // let suit3 = suit.clone();
-                    builder
-                        .spawn(Node {
-                            border: ui::UiRect::all(ui::Val::Px(3.)),
-                            ..default()
-                        })
-                        .observe(move |_trigger: Trigger<Pointer<Pressed>>| {
-                            println!("Clicked on {}", suit);
-                        })
-                        .with_children(|builder| {
-                            builder.spawn(Text::new(suit2));
-                        });
-                },
-                |builder| {
-                    builder.spawn(Text::new("No items"));
-                },
-            );
-        });
+            move |suit, builder| {
+                let suit = suit.clone();
+                let suit2 = suit.clone();
+                builder
+                    .spawn(Node {
+                        border: ui::UiRect::all(ui::Val::Px(3.)),
+                        ..default()
+                    })
+                    .observe(move |_trigger: Trigger<Pointer<Pressed>>| {
+                        println!("Clicked on {}", suit);
+                    })
+                    .with_children(|builder| {
+                        builder.spawn(Text::new(suit2));
+                    });
+            },
+            || Spawn(Text::new("No items")),
+        )],
+    ));
 }
 
 const SUITS: &[&str] = &["hearts", "spades", "clubs", "diamonds"];

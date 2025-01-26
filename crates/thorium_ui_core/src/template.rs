@@ -14,3 +14,11 @@ impl InvokeUiTemplate for ChildSpawnerCommands<'_> {
         self
     }
 }
+
+// impl InvokeUiTemplate for ChildSpawner<'_> {
+//     fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
+//         let commands = self.commands();
+//         template.build(self);
+//         self
+//     }
+// }

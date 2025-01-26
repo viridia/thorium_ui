@@ -5,8 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateCallback, CreateForEach, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleHandle,
-    StyleTuple, Styles, UiTemplate,
+    CreateCallback, For, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleHandle, StyleTuple,
+    Styles, UiTemplate,
 };
 
 use crate::colors;
@@ -124,55 +124,51 @@ impl UiTemplate for SwatchGrid {
                 }
             });
 
-        builder
-            .spawn((
-                Node::default(),
-                Name::new("SwatchGrid"),
-                Styles((
-                    style_swatch_grid,
-                    move |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(move |mut node| {
-                            node.grid_template_columns =
-                                vec![ui::RepeatedGridTrack::flex(grid_size.x as u16, 1.)];
-                            node.grid_template_rows =
-                                vec![ui::RepeatedGridTrack::flex(grid_size.y as u16, 1.)];
-                        });
-                    },
-                    self.style.clone(),
-                )),
-            ))
-            .with_children(|builder| {
-                builder.for_each(
-                    move |mut items: InMut<ListItems<Option<(Srgba, bool)>>>,
-                          world: DeferredWorld| {
-                        let colors = colors.get_clone(&world);
-                        let selected_color = selected.get(&world);
-                        items.clear();
-                        (0..num_cells).for_each(move |i| {
-                            if i < colors.len() {
-                                let color = colors[i];
-                                let is_selected = selected_color == color;
-                                items.push(Some((color, is_selected)));
-                            } else {
-                                items.push(None);
-                            }
-                        });
-                    },
-                    move |color, builder| match color {
-                        Some((color, selected)) => {
-                            builder.invoke(
-                                Swatch::new(*color)
-                                    .selected(Signal::Constant(*selected))
-                                    .style(style_swatch)
-                                    .on_click(on_click),
-                            );
+        builder.spawn((
+            Node::default(),
+            Name::new("SwatchGrid"),
+            Styles((
+                style_swatch_grid,
+                move |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
+                        node.grid_template_columns =
+                            vec![ui::RepeatedGridTrack::flex(grid_size.x as u16, 1.)];
+                        node.grid_template_rows =
+                            vec![ui::RepeatedGridTrack::flex(grid_size.y as u16, 1.)];
+                    });
+                },
+                self.style.clone(),
+            )),
+            children![For::each(
+                move |mut items: InMut<ListItems<Option<(Srgba, bool)>>>, world: DeferredWorld| {
+                    let colors = colors.get_clone(&world);
+                    let selected_color = selected.get(&world);
+                    items.clear();
+                    (0..num_cells).for_each(move |i| {
+                        if i < colors.len() {
+                            let color = colors[i];
+                            let is_selected = selected_color == color;
+                            items.push(Some((color, is_selected)));
+                        } else {
+                            items.push(None);
                         }
-                        None => {
-                            builder.spawn((Node::default(), Styles(style_empty_slot)));
-                        }
-                    },
-                    |_| {},
-                );
-            });
+                    });
+                },
+                move |color, builder| match color {
+                    Some((color, selected)) => {
+                        builder.invoke(
+                            Swatch::new(*color)
+                                .selected(Signal::Constant(*selected))
+                                .style(style_swatch)
+                                .on_click(on_click),
+                        );
+                    }
+                    None => {
+                        builder.spawn((Node::default(), Styles(style_empty_slot)));
+                    }
+                },
+                || (),
+            )],
+        ));
     }
 }

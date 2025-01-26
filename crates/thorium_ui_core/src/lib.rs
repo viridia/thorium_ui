@@ -21,9 +21,11 @@ use bevy::{
 };
 pub use callback::CreateCallback;
 pub use cond::{Cond, CreateCond};
-pub use dyn_children::{DynChildOf, DynChildren, Fragment};
+pub use dyn_children::{
+    DynChildOf, DynChildSpawner, DynChildSpawnerCommands, DynChildren, Fragment,
+};
 use effect_cell::update_effects;
-pub use foreach::{CreateForEach, ListItems};
+pub use foreach::{CreateForEach, For, ListItems};
 pub use insert_when::InsertWhen;
 pub use memo::{CreateMemo, Memo, ReadMemo};
 pub use mutable::{CreateMutable, Mutable, ReadMutable, WriteMutable};

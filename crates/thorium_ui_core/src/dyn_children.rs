@@ -1,6 +1,9 @@
 use core::slice;
 
-use bevy::prelude::*;
+use bevy::{
+    ecs::relationship::{RelatedSpawner, RelatedSpawnerCommands},
+    prelude::*,
+};
 
 /// Represents a component that is member of a dynamic child list.
 // #[derive(Component, Clone, Reflect, PartialEq, Eq, Debug)]
@@ -58,6 +61,14 @@ macro_rules! dyn_children {
        thorium_ui_core::DynChildren::spawn(($(Spawn($child)),*))
     };
 }
+
+/// A type alias over [`RelatedSpawner`] used to spawn child entities containing a [`DynChildOf`]
+/// relationship.
+pub type DynChildSpawner<'w> = RelatedSpawner<'w, DynChildOf>;
+
+/// A type alias over [`RelatedSpawnerCommands`] used to spawn child entities containing a
+/// [`DynChildOf`] relationship.
+pub type DynChildSpawnerCommands<'w> = RelatedSpawnerCommands<'w, DynChildOf>;
 
 /// The `Fragment` marker component indicates that this entities contains children which
 /// should be spliced into the parent's children list. In other words, when computing the actual

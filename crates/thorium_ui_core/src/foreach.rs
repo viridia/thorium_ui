@@ -1,11 +1,20 @@
 use std::ops::Range;
 
-use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
+use bevy::{
+    ecs::{
+        bundle::{BundleEffect, DynamicBundle},
+        spawn::SpawnableList,
+        system::SystemId,
+    },
+    prelude::*,
+    ui::experimental::GhostNode,
+};
 
 use crate::{
     dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     lcs::lcs,
+    DynChildren,
 };
 
 pub struct ListItems<Item: Clone> {
@@ -41,8 +50,9 @@ pub trait CreateForEach {
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
-        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -56,8 +66,9 @@ pub trait CreateForEach {
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
-        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -73,8 +84,9 @@ impl CreateForEach for ChildSpawnerCommands<'_> {
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone + PartialEq,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
-        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -104,8 +116,9 @@ impl CreateForEach for ChildSpawnerCommands<'_> {
         Item: Send + Sync + 'static + Clone,
         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
-        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     >(
         &mut self,
         items_fn: ItemFn,
@@ -142,8 +155,9 @@ struct ForEachEffect<
     'a,
     Item: Clone + 'static,
     CmpFn: Fn(&Item, &Item) -> bool,
-    EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
-    FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
+    EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+    FallbackChildren: SpawnableList<ChildOf> + 'static,
+    FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
 > where
     Self: Send + Sync,
 {
@@ -158,9 +172,10 @@ struct ForEachEffect<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
-        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
-    > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackChildren, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
     /// array items. Matching items are patched, other items are inserted or deleted.
@@ -296,9 +311,10 @@ impl<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Send + Sync + 'static + Fn(&Item, &mut ChildSpawnerCommands),
-        FallbackFn: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
-    > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackChildren, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {
         // Create a reactive context and call the test condition.
@@ -328,14 +344,17 @@ impl<
                     self.first = false;
                     // Transitioning from non-empty to empty, generate fallback.
                     world.entity_mut(parent).despawn_related::<Children>();
-                    world.commands().entity(parent).with_children(|builder| {
-                        (self.fallback)(builder);
-                    });
+                    world.entity_mut(parent).despawn_related::<DynChildren>();
+                    (self.fallback)().spawn(world, parent);
+                    // world.commands().entity(parent).with_children(|builder| {
+                    //     (self.fallback)(builder);
+                    // });
                 }
             } else {
                 if prev_len == 0 {
                     // Transitioning from non-empty to empty, delete fallback.
                     world.entity_mut(parent).despawn_related::<Children>();
+                    world.entity_mut(parent).despawn_related::<DynChildren>();
                 }
                 world.entity_mut(parent).remove::<Children>();
                 world.entity_mut(parent).add_children(&children);
@@ -345,5 +364,195 @@ impl<
 
     fn cleanup(&self, world: &mut bevy::ecs::world::DeferredWorld, _entity: Entity) {
         world.commands().unregister_system(self.item_sys);
+    }
+}
+
+// pub struct For<
+//     'a: 'static,
+//     M: Send + Sync + 'static,
+//     Item: Send + Sync + 'static + Clone,
+//     ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+//     CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
+//     EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+//     FallbackChildren: SpawnableList<ChildOf> + 'static,
+//     FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+// > {
+//     items_fn: ItemFn,
+//     each: EachFn,
+//     fallback: FallbackFn,
+//     marker: std::marker::PhantomData<(&'a M, Item, CmpFn)>,
+// }
+
+// impl<
+//         'a: 'static,
+//         M: Send + Sync + 'static,
+//         Item: Send + Sync + 'static + Clone,
+//         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+//         CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
+//         EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+//         FallbackChildren: SpawnableList<ChildOf> + 'static,
+//         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+//     > For<'a, M, Item, ItemFn, CmpFn, EachFn, FallbackChildren, FallbackFn>
+// {
+//     pub fn each(items_fn: ItemFn, each: EachFn, fallback: FallbackFn) -> Self
+//     where
+//         Item: PartialEq,
+//     {
+//         Self {
+//             items_fn,
+//             each,
+//             fallback,
+//             marker: std::marker::PhantomData,
+//         }
+//     }
+// }
+
+// impl<
+//         'a: 'static,
+//         M: Send + Sync + 'static,
+//         Item: Send + Sync + 'static + Clone + PartialEq,
+//         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+//         EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+//         FallbackChildren: SpawnableList<ChildOf> + 'static,
+//         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+//     > BundleEffect for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+// {
+//     fn apply(self, entity: &mut EntityWorldMut) {
+//         todo!()
+//     }
+// }
+
+pub struct For<
+    'a: 'static,
+    M: Send + Sync + 'static,
+    Item: Send + Sync + 'static + Clone,
+    // CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
+    ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+    EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+    FallbackChildren: SpawnableList<ChildOf> + 'static,
+    FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+> {
+    items_fn: ItemFn,
+    cmp: fn(&Item, &Item) -> bool,
+    each: EachFn,
+    fallback: FallbackFn,
+    marker: std::marker::PhantomData<(&'a M, Item)>,
+}
+
+impl<
+        'a: 'static,
+        M: Send + Sync + 'static,
+        Item: Send + Sync + 'static + Clone,
+        // CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    > For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+{
+    pub fn each(items_fn: ItemFn, each: EachFn, fallback: FallbackFn) -> Self
+    where
+        Item: PartialEq,
+    {
+        Self {
+            items_fn,
+            cmp: PartialEq::eq,
+            each,
+            fallback,
+            marker: std::marker::PhantomData,
+        }
+    }
+
+    pub fn each_cmp(
+        items_fn: ItemFn,
+        cmp: fn(&Item, &Item) -> bool,
+        each: EachFn,
+        fallback: FallbackFn,
+    ) -> Self {
+        Self {
+            items_fn,
+            cmp,
+            each,
+            fallback,
+            marker: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<
+        'a: 'static,
+        M: Send + Sync + 'static,
+        Item: Send + Sync + 'static + Clone,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    > BundleEffect for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+{
+    fn apply(self, entity: &mut EntityWorldMut) {
+        let item_sys = unsafe { entity.world_mut().register_system(self.items_fn) };
+        entity.insert((
+            EffectCell::new(ForEachEffect {
+                item_sys,
+                cmp: self.cmp,
+                each: self.each,
+                fallback: self.fallback,
+                state: Vec::new(),
+                first: true,
+            }),
+            GhostNode::default(),
+            Fragment,
+        ));
+    }
+}
+
+impl<
+        'a: 'static,
+        M: Send + Sync + 'static,
+        Item: Send + Sync + 'static + Clone,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    > DynamicBundle for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+{
+    type Effect = Self;
+
+    fn get_components(
+        self,
+        _func: &mut impl FnMut(bevy::ecs::component::StorageType, bevy::ptr::OwningPtr<'_>),
+    ) -> Self::Effect {
+        self
+    }
+}
+
+unsafe impl<
+        'a: 'static,
+        M: Send + Sync + 'static,
+        Item: Send + Sync + 'static + Clone,
+        ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
+        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    > Bundle for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+{
+    fn component_ids(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
+    ) {
+    }
+
+    fn get_component_ids(
+        _components: &bevy::ecs::component::Components,
+        _ids: &mut impl FnMut(Option<bevy::ecs::component::ComponentId>),
+    ) {
+    }
+
+    fn register_required_components(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _required_components: &mut bevy::ecs::component::RequiredComponents,
+    ) {
     }
 }
