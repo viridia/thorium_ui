@@ -34,7 +34,7 @@ pub use mutate_dyn2::MutateDyn2;
 pub use owner::{Owned, OwnedBy};
 pub use signal::{IntoSignal, Signal};
 pub use style::{StyleDyn, StyleHandle, StyleTuple, Styles};
-pub use switch::CreateSwitch;
+pub use switch::Switch;
 pub use template::{InvokeUiTemplate, UiTemplate};
 
 pub struct ThoriumUiCorePlugin;

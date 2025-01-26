@@ -1,67 +1,29 @@
 #![allow(clippy::type_complexity)]
-use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
+use bevy::{
+    ecs::{
+        bundle::{BundleEffect, DynamicBundle},
+        system::SystemId,
+    },
+    prelude::*,
+};
 
 use crate::{
     dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     owner::Owned,
+    DynChildOf, DynChildSpawnerCommands, DynChildren,
 };
 
-pub trait CreateSwitch {
-    fn switch<
-        M: Send + Sync + 'static,
-        P: PartialEq + Send + Sync + 'static,
-        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
-        CF: Fn(&mut CaseBuilder<P>),
-    >(
-        &mut self,
-        value_fn: ValueFn,
-        cases_fn: CF,
-    ) -> &mut Self;
-}
-
-impl CreateSwitch for ChildSpawnerCommands<'_> {
-    fn switch<
-        M: Send + Sync + 'static,
-        P: PartialEq + Send + Sync + 'static,
-        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
-        CF: Fn(&mut CaseBuilder<P>),
-    >(
-        &mut self,
-        value_fn: ValueFn,
-        cases_fn: CF,
-    ) -> &mut Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync>)> = Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync>> = None;
-
-        let mut case_builder = CaseBuilder {
-            cases: &mut cases,
-            fallback: &mut fallback,
-        };
-        cases_fn(&mut case_builder);
-        let mut ent = self.spawn_empty();
-        let value_sys = ent.commands().register_system(value_fn);
-        ent.insert((
-            EffectCell::new(SwitchEffect {
-                cases,
-                fallback,
-                value_sys,
-                switch_index: usize::MAX - 1, // Means no case selected yet.
-            }),
-            GhostNode::default(),
-            Fragment,
-        ));
-        self
-    }
-}
-
 pub struct CaseBuilder<'a, Value: Send + Sync> {
-    cases: &'a mut Vec<(Value, Box<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync>)>,
-    fallback: &'a mut Option<Box<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync>>,
+    cases: &'a mut Vec<(
+        Value,
+        Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>,
+    )>,
+    fallback: &'a mut Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>>,
 }
 
 impl<Value: Send + Sync> CaseBuilder<'_, Value> {
-    pub fn case<CF: Send + Sync + 'static + Fn(&mut ChildSpawnerCommands)>(
+    pub fn case<CF: Send + Sync + 'static + Fn(&mut DynChildSpawnerCommands)>(
         &mut self,
         value: Value,
         case_fn: CF,
@@ -70,7 +32,7 @@ impl<Value: Send + Sync> CaseBuilder<'_, Value> {
         self
     }
 
-    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut ChildSpawnerCommands)>(
+    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut DynChildSpawnerCommands)>(
         &mut self,
         fallback_fn: FF,
     ) -> &mut Self {
@@ -83,14 +45,14 @@ impl<Value: Send + Sync> CaseBuilder<'_, Value> {
 struct SwitchEffect<P> {
     switch_index: usize,
     value_sys: SystemId<(), P>,
-    cases: Vec<(P, Box<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync>)>,
-    fallback: Option<Box<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync>>,
+    cases: Vec<(P, Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>)>,
+    fallback: Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>>,
 }
 
 impl<P: PartialEq + Send + Sync + 'static> SwitchEffect<P> {
     /// Adds a new switch case.
     #[allow(dead_code)]
-    pub fn case<F: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static>(
+    pub fn case<F: Fn(&mut DynChildSpawnerCommands) + Send + Sync + 'static>(
         mut self,
         value: P,
         case: F,
@@ -101,7 +63,7 @@ impl<P: PartialEq + Send + Sync + 'static> SwitchEffect<P> {
 
     /// Sets the fallback case.
     #[allow(dead_code)]
-    pub fn fallback<F: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static>(
+    pub fn fallback<F: Fn(&mut DynChildSpawnerCommands) + Send + Sync + 'static>(
         mut self,
         fallback: F,
     ) -> Self {
@@ -126,14 +88,14 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 self.switch_index = index;
                 let mut commands = world.commands();
                 let mut entt = commands.entity(entity);
-                entt.despawn_related::<Children>();
+                entt.despawn_related::<DynChildren>();
                 entt.despawn_related::<Owned>();
                 if index < self.cases.len() {
-                    entt.with_children(|builder| {
+                    entt.with_related::<DynChildOf>(|builder| {
                         (self.cases[index].1)(builder);
                     });
                 } else if let Some(fallback) = self.fallback.as_mut() {
-                    entt.with_children(|builder| {
+                    entt.with_related::<DynChildOf>(|builder| {
                         (fallback)(builder);
                     });
                 };
@@ -143,5 +105,106 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
 
     fn cleanup(&self, world: &mut bevy::ecs::world::DeferredWorld, _entity: Entity) {
         world.commands().unregister_system(self.value_sys);
+    }
+}
+
+pub struct Switch<
+    M: Send + Sync + 'static,
+    P: PartialEq + Send + Sync + 'static,
+    ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+> {
+    value_fn: ValueFn,
+    cases: Vec<(P, Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>)>,
+    fallback: Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>>,
+    marker: std::marker::PhantomData<M>,
+}
+
+impl<
+        M: Send + Sync + 'static,
+        P: PartialEq + Send + Sync + 'static,
+        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+    > Switch<M, P, ValueFn>
+{
+    pub fn new<CF: Fn(&mut CaseBuilder<P>)>(value_fn: ValueFn, cases_fn: CF) -> Self {
+        let mut cases: Vec<(P, Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>)> =
+            Vec::new();
+        let mut fallback: Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>> = None;
+
+        let mut case_builder = CaseBuilder {
+            cases: &mut cases,
+            fallback: &mut fallback,
+        };
+        cases_fn(&mut case_builder);
+
+        Self {
+            value_fn,
+            cases,
+            fallback,
+            marker: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<
+        M: Send + Sync + 'static,
+        P: PartialEq + Send + Sync + 'static,
+        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+    > BundleEffect for Switch<M, P, ValueFn>
+{
+    fn apply(self, entity: &mut EntityWorldMut) {
+        let value_sys = unsafe { entity.world_mut().register_system(self.value_fn) };
+        entity.insert((
+            EffectCell::new(SwitchEffect {
+                cases: self.cases,
+                fallback: self.fallback,
+                value_sys,
+                switch_index: usize::MAX - 1, // Means no case selected yet.
+            }),
+            // GhostNode::default(),
+            Fragment,
+        ));
+    }
+}
+
+impl<
+        M: Send + Sync + 'static,
+        P: PartialEq + Send + Sync + 'static,
+        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+    > DynamicBundle for Switch<M, P, ValueFn>
+{
+    type Effect = Self;
+
+    fn get_components(
+        self,
+        _func: &mut impl FnMut(bevy::ecs::component::StorageType, bevy::ptr::OwningPtr<'_>),
+    ) -> Self::Effect {
+        self
+    }
+}
+
+unsafe impl<
+        M: Send + Sync + 'static,
+        P: PartialEq + Send + Sync + 'static,
+        ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
+    > Bundle for Switch<M, P, ValueFn>
+{
+    fn component_ids(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
+    ) {
+    }
+
+    fn get_component_ids(
+        _components: &bevy::ecs::component::Components,
+        _ids: &mut impl FnMut(Option<bevy::ecs::component::ComponentId>),
+    ) {
+    }
+
+    fn register_required_components(
+        _components: &mut bevy::ecs::component::Components,
+        _storages: &mut bevy::ecs::storage::Storages,
+        _required_components: &mut bevy::ecs::component::RequiredComponents,
+    ) {
     }
 }

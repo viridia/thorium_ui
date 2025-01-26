@@ -1,7 +1,7 @@
 //! Example which uses states and a switch view.
 
 use bevy::{color::palettes::css, prelude::*, ui};
-use thorium_ui::{CreateSwitch, ThoriumUiCorePlugin};
+use thorium_ui::{dyn_children, Switch, ThoriumUiCorePlugin};
 
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameState {
@@ -26,24 +26,22 @@ fn main() {
 fn setup_view_root(mut commands: Commands) {
     let camera = commands.spawn((Camera::default(), Camera2d)).id();
 
-    commands
-        .spawn((
-            Node {
-                left: ui::Val::Px(0.),
-                top: ui::Val::Px(0.),
-                right: ui::Val::Px(0.),
-                position_type: ui::PositionType::Absolute,
-                display: ui::Display::Flex,
-                flex_direction: ui::FlexDirection::Row,
-                border: ui::UiRect::all(ui::Val::Px(3.)),
-                ..default()
-            },
-            BorderColor(css::ALICE_BLUE.into()),
-            UiTargetCamera(camera),
-        ))
-        .with_children(|builder| {
-            builder.spawn(Text::new("Game State: "));
-            builder.switch(
+    commands.spawn((
+        Node {
+            left: ui::Val::Px(0.),
+            top: ui::Val::Px(0.),
+            right: ui::Val::Px(0.),
+            position_type: ui::PositionType::Absolute,
+            display: ui::Display::Flex,
+            flex_direction: ui::FlexDirection::Row,
+            border: ui::UiRect::all(ui::Val::Px(3.)),
+            ..default()
+        },
+        BorderColor(css::ALICE_BLUE.into()),
+        UiTargetCamera(camera),
+        dyn_children![
+            Text::new("Game State: "),
+            Switch::new(
                 |state: Res<State<GameState>>| state.get().clone(),
                 |cases| {
                     cases
@@ -57,8 +55,9 @@ fn setup_view_root(mut commands: Commands) {
                             builder.spawn(Text::new("Playing"));
                         });
                 },
-            );
-        });
+            ),
+        ],
+    ));
 }
 
 fn handle_key_input(
