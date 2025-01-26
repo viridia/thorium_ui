@@ -1,5 +1,6 @@
 mod callback;
 mod cond;
+mod dyn_children;
 mod effect_cell;
 mod foreach;
 mod insert_when;
@@ -14,9 +15,13 @@ mod style;
 mod switch;
 mod template;
 
-use bevy::app::{App, Plugin, Update};
+use bevy::{
+    app::{App, Plugin, PostUpdate, Update},
+    prelude::IntoSystemConfigs,
+};
 pub use callback::CreateCallback;
 pub use cond::{Cond, CreateCond};
+pub use dyn_children::{DynChildOf, DynChildren, Fragment};
 use effect_cell::update_effects;
 pub use foreach::{CreateForEach, ListItems};
 pub use insert_when::InsertWhen;
@@ -35,5 +40,13 @@ pub struct ThoriumUiCorePlugin;
 impl Plugin for ThoriumUiCorePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, update_effects);
+        app.add_systems(
+            PostUpdate,
+            (
+                dyn_children::mark_children_changed,
+                dyn_children::flatten_dyn_children,
+            )
+                .chain(),
+        );
     }
 }

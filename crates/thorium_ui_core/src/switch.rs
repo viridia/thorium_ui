@@ -2,6 +2,7 @@
 use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
 use crate::{
+    dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     owner::Owned,
 };
@@ -48,6 +49,7 @@ impl CreateSwitch for ChildSpawnerCommands<'_> {
                 switch_index: usize::MAX - 1, // Means no case selected yet.
             }),
             GhostNode::default(),
+            Fragment,
         ));
         self
     }

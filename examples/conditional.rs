@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, ThoriumUiCorePlugin};
+use thorium_ui::{dyn_children, Cond, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -43,7 +43,7 @@ fn setup_view_root(mut commands: Commands) {
             ..default()
         },
         BorderColor(css::ALICE_BLUE.into()),
-        children![
+        dyn_children![
             Text::new("Goodbye, "),
             Cond::new(
                 |counter: Res<Counter>| counter.count & 1 == 0,
@@ -56,7 +56,7 @@ fn setup_view_root(mut commands: Commands) {
                                 ..default()
                             },
                             BorderColor(css::RED.into()),
-                            children![Text::new("extra")],
+                            dyn_children![Text::new("extra")],
                         )),
                         Spawn(Text::new("thirsty")),
                     )

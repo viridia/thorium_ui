@@ -6,19 +6,21 @@ use bevy::{
         world::DeferredWorld,
     },
     prelude::*,
-    ui::experimental::GhostNode,
+    // ui::experimental::GhostNode,
 };
 
 use crate::{
+    dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     owner::Owned,
+    DynChildOf, DynChildren,
 };
 
 pub struct Cond<
     M: Send + Sync + 'static,
     TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-    PosBundle: SpawnableList<ChildOf> + 'static,
-    NegBundle: SpawnableList<ChildOf> + 'static,
+    PosBundle: SpawnableList<DynChildOf> + 'static,
+    NegBundle: SpawnableList<DynChildOf> + 'static,
     Pos: Fn() -> PosBundle + Send + Sync + 'static,
     Neg: Fn() -> NegBundle + Send + Sync + 'static,
 > {
@@ -31,8 +33,8 @@ pub struct Cond<
 impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<ChildOf> + 'static,
-        NegBundle: SpawnableList<ChildOf> + 'static,
+        PosBundle: SpawnableList<DynChildOf> + 'static,
+        NegBundle: SpawnableList<DynChildOf> + 'static,
         Pos: Fn() -> PosBundle + Send + Sync + 'static,
         Neg: Fn() -> NegBundle + Send + Sync + 'static,
     > Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
@@ -50,8 +52,8 @@ impl<
 unsafe impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<ChildOf> + Send + Sync + 'static,
-        NegBundle: SpawnableList<ChildOf> + Send + Sync + 'static,
+        PosBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        NegBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
         Pos: Fn() -> PosBundle + Send + Sync + 'static,
         Neg: Fn() -> NegBundle + Send + Sync + 'static,
     > Bundle for Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
@@ -80,8 +82,8 @@ unsafe impl<
 impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<ChildOf> + Send + Sync + 'static,
-        NegBundle: SpawnableList<ChildOf> + Send + Sync + 'static,
+        PosBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        NegBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
         Pos: Fn() -> PosBundle + Send + Sync + 'static,
         Neg: Fn() -> NegBundle + Send + Sync + 'static,
     > DynamicBundle for Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
@@ -99,8 +101,8 @@ impl<
 impl<
         M: Send + Sync + 'static,
         TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        PosBundle: SpawnableList<ChildOf> + Send + Sync + 'static,
-        NegBundle: SpawnableList<ChildOf> + Send + Sync + 'static,
+        PosBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
+        NegBundle: SpawnableList<DynChildOf> + Send + Sync + 'static,
         Pos: Fn() -> PosBundle + Send + Sync + 'static,
         Neg: Fn() -> NegBundle + Send + Sync + 'static,
     > BundleEffect for Cond<M, TestFn, PosBundle, NegBundle, Pos, Neg>
@@ -108,7 +110,7 @@ impl<
     fn apply(self, entity: &mut EntityWorldMut) {
         let test_sys = unsafe { entity.world_mut().register_system(self.test_fn) };
         entity.insert((
-            EffectCell::new(CondEffect2 {
+            EffectCell::new(CondEffect {
                 state: false,
                 first: true,
                 test_sys,
@@ -116,102 +118,18 @@ impl<
                 neg: self.neg,
                 marker: std::marker::PhantomData::<M>,
             }),
-            GhostNode::default(),
+            // GhostNode::default(),
+            Fragment,
         ));
     }
 }
 
-pub trait CreateCond {
-    fn cond<
-        M: Send + Sync + 'static,
-        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
-    >(
-        &mut self,
-        test: TestFn,
-        pos: Pos,
-        neg: Neg,
-    ) -> &mut Self;
-}
-
-impl CreateCond for ChildSpawnerCommands<'_> {
-    fn cond<
-        M: Send + Sync + 'static,
-        TestFn: IntoSystem<(), bool, M> + Send + Sync + 'static,
-        Pos: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
-        Neg: Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static,
-    >(
-        &mut self,
-        test_fn: TestFn,
-        pos: Pos,
-        neg: Neg,
-    ) -> &mut Self {
-        // let test_sys = self.commands().register_system(test);
-        let mut ent = self.spawn_empty();
-        let test_sys = ent.commands().register_system(test_fn);
-        ent.insert((
-            EffectCell::new(CondEffect {
-                state: false,
-                first: true,
-                test_sys,
-                pos,
-                neg,
-                marker: std::marker::PhantomData::<M>,
-            }),
-            GhostNode::default(),
-        ));
-        self
-    }
-}
-
 /// Conditional control-flow node.
-struct CondEffect<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> {
-    state: bool,
-    first: bool,
-    test_sys: SystemId<(), bool>,
-    pos: Pos,
-    neg: Neg,
-    marker: std::marker::PhantomData<M>,
-}
-
-impl<M, Pos: Fn(&mut ChildSpawnerCommands), Neg: Fn(&mut ChildSpawnerCommands)> AnyEffect
-    for CondEffect<M, Pos, Neg>
-{
-    fn update(&mut self, world: &mut World, entity: Entity) {
-        // Run the condition and see if the result changed.
-        let test = world.run_system(self.test_sys);
-        if let Ok(test) = test {
-            if self.state != test || self.first {
-                self.first = false;
-                let mut entt = world.entity_mut(entity);
-                entt.despawn_related::<Children>();
-                entt.despawn_related::<Owned>();
-                if test {
-                    world.commands().entity(entity).with_children(|builder| {
-                        (self.pos)(builder);
-                    });
-                } else {
-                    world.commands().entity(entity).with_children(|builder| {
-                        (self.neg)(builder);
-                    });
-                }
-                self.state = test;
-            }
-        }
-    }
-
-    fn cleanup(&self, world: &mut DeferredWorld, _entity: Entity) {
-        world.commands().unregister_system(self.test_sys);
-    }
-}
-
-/// Conditional control-flow node.
-struct CondEffect2<
+struct CondEffect<
     M,
-    PosBundle: SpawnableList<ChildOf>,
+    PosBundle: SpawnableList<DynChildOf>,
     Pos: Fn() -> PosBundle,
-    NegBundle: SpawnableList<ChildOf>,
+    NegBundle: SpawnableList<DynChildOf>,
     Neg: Fn() -> NegBundle,
 > {
     state: bool,
@@ -224,11 +142,11 @@ struct CondEffect2<
 
 impl<
         M,
-        PosBundle: SpawnableList<ChildOf>,
+        PosBundle: SpawnableList<DynChildOf>,
         Pos: Fn() -> PosBundle,
-        NegBundle: SpawnableList<ChildOf>,
+        NegBundle: SpawnableList<DynChildOf>,
         Neg: Fn() -> NegBundle,
-    > AnyEffect for CondEffect2<M, PosBundle, Pos, NegBundle, Neg>
+    > AnyEffect for CondEffect<M, PosBundle, Pos, NegBundle, Neg>
 {
     fn update(&mut self, world: &mut World, entity: Entity) {
         // Run the condition and see if the result changed.
@@ -237,7 +155,7 @@ impl<
             if self.state != test || self.first {
                 self.first = false;
                 let mut entt = world.entity_mut(entity);
-                entt.despawn_related::<Children>();
+                entt.despawn_related::<DynChildren>();
                 entt.despawn_related::<Owned>();
                 if test {
                     (self.pos)().spawn(world, entity);

@@ -3,6 +3,7 @@ use std::ops::Range;
 use bevy::{ecs::system::SystemId, prelude::*, ui::experimental::GhostNode};
 
 use crate::{
+    dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     lcs::lcs,
 };
@@ -92,6 +93,7 @@ impl CreateForEach for ChildSpawnerCommands<'_> {
                 first: true,
             }),
             GhostNode::default(),
+            Fragment,
         ));
         self
     }
@@ -123,6 +125,7 @@ impl CreateForEach for ChildSpawnerCommands<'_> {
                 first: true,
             }),
             GhostNode::default(),
+            Fragment,
         ));
         self
     }
@@ -196,7 +199,7 @@ impl<
             }
             // Build new elements
             for i in next_range {
-                let child_id = world.spawn(GhostNode::default()).id();
+                let child_id = world.spawn((GhostNode::default(), Fragment)).id();
                 world.commands().entity(child_id).with_children(|builder| {
                     (self.each)(&next_items[i], builder);
                 });
@@ -235,7 +238,7 @@ impl<
         } else if next_start > next_range.start {
             // Insertions
             for i in next_range.start..next_start {
-                let child_id = world.spawn(GhostNode::default()).id();
+                let child_id = world.spawn((GhostNode::default(), Fragment)).id();
                 world.commands().entity(child_id).with_children(|builder| {
                     (self.each)(&next_items[i], builder);
                 });
@@ -277,7 +280,7 @@ impl<
         } else if next_end < next_range.end {
             // Insertions
             for i in next_end..next_range.end {
-                let child_id = world.spawn(GhostNode::default()).id();
+                let child_id = world.spawn((GhostNode::default(), Fragment)).id();
                 world.commands().entity(child_id).with_children(|builder| {
                     (self.each)(&next_items[i], builder);
                 });

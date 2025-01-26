@@ -23,6 +23,7 @@ impl Default for OwnedBy {
     }
 }
 
+/// A component that represents a collection of entities that are owned by another entity.
 // #[derive(Component, Default, Reflect)]
 // #[reflect(Component)]
 #[derive(Component, Default)]
