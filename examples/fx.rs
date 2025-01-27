@@ -30,33 +30,30 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands
-        .spawn((
-            Node {
-                left: ui::Val::Px(0.),
-                top: ui::Val::Px(0.),
-                right: ui::Val::Px(0.),
-                position_type: ui::PositionType::Absolute,
-                display: ui::Display::Flex,
-                flex_direction: ui::FlexDirection::Row,
-                border: ui::UiRect::all(ui::Val::Px(3.)),
-                ..default()
+    commands.spawn((
+        Node {
+            left: ui::Val::Px(0.),
+            top: ui::Val::Px(0.),
+            right: ui::Val::Px(0.),
+            position_type: ui::PositionType::Absolute,
+            display: ui::Display::Flex,
+            flex_direction: ui::FlexDirection::Row,
+            border: ui::UiRect::all(ui::Val::Px(3.)),
+            ..default()
+        },
+        BorderColor(css::ALICE_BLUE.into()),
+        MutateDyn::new(
+            |counter: Res<Counter>| counter.count & 1 == 0,
+            |even, entity| {
+                entity.insert(BorderColor(if even {
+                    css::MAROON.into()
+                } else {
+                    css::LIME.into()
+                }));
             },
-            BorderColor(css::ALICE_BLUE.into()),
-            MutateDyn::new(
-                |counter: Res<Counter>| counter.count & 1 == 0,
-                |even, entity| {
-                    entity.insert(BorderColor(if even {
-                        css::MAROON.into()
-                    } else {
-                        css::LIME.into()
-                    }));
-                },
-            ),
-        ))
-        .with_children(|builder| {
-            builder.spawn(Text::new("Goodbye, "));
-        });
+        ),
+        children![Text::new("Goodbye, ")],
+    ));
 }
 
 #[derive(Resource, Default)]

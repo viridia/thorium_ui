@@ -52,15 +52,15 @@ fn setup_view_root(mut commands: Commands) {
                 let suit = suit.clone();
                 let suit2 = suit.clone();
                 builder
-                    .spawn(Node {
-                        border: ui::UiRect::all(ui::Val::Px(3.)),
-                        ..default()
-                    })
+                    .spawn((
+                        Node {
+                            border: ui::UiRect::all(ui::Val::Px(3.)),
+                            ..default()
+                        },
+                        children![Text::new(suit2)],
+                    ))
                     .observe(move |_trigger: Trigger<Pointer<Pressed>>| {
                         println!("Clicked on {}", suit);
-                    })
-                    .with_children(|builder| {
-                        builder.spawn(Text::new(suit2));
                     });
             },
             || Spawn(Text::new("No items")),

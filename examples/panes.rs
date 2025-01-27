@@ -104,18 +104,15 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.invoke(Splitter::new().value(left_width).on_change(on_resize_left));
 
-            builder
-                .spawn((
-                    Node::default(),
-                    Styles((style_panel, |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(|mut node| {
-                            node.flex_grow = 1.;
-                        });
-                    })),
-                ))
-                .with_children(|builder| {
-                    builder.spawn((Text::new("Middle"), UseInheritedTextStyles));
-                });
+            builder.spawn((
+                Node::default(),
+                Styles((style_panel, |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(|mut node| {
+                        node.flex_grow = 1.;
+                    });
+                })),
+                children![(Text::new("Middle"), UseInheritedTextStyles)],
+            ));
 
             builder.invoke(
                 Splitter::new()
@@ -124,22 +121,19 @@ fn setup_view_root(mut commands: Commands) {
                     .on_change(on_resize_right),
             );
 
-            builder
-                .spawn((
-                    Node::default(),
-                    Styles(style_panel),
-                    StyleDyn::new(
-                        |res: Res<RightPanelWidth>| res.0,
-                        |width, ec| {
-                            ec.entry::<Node>().and_modify(move |mut node| {
-                                node.width = ui::Val::Px(width);
-                            });
-                        },
-                    ),
-                ))
-                .with_children(|builder| {
-                    builder.spawn((Text::new("Right"), UseInheritedTextStyles));
-                });
+            builder.spawn((
+                Node::default(),
+                Styles(style_panel),
+                StyleDyn::new(
+                    |res: Res<RightPanelWidth>| res.0,
+                    |width, ec| {
+                        ec.entry::<Node>().and_modify(move |mut node| {
+                            node.width = ui::Val::Px(width);
+                        });
+                    },
+                ),
+                children![(Text::new("Right"), UseInheritedTextStyles)],
+            ));
         });
 }
 

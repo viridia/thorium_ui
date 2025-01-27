@@ -9,7 +9,10 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, InvokeUiTemplate, ThoriumUiCorePlugin, UiTemplate};
+use thorium_ui::{
+    impl_bundle_template, BundleTemplate, Cond, DynChildSpawner, DynChildren, ThoriumUiCorePlugin,
+    UiTemplate,
+};
 
 fn main() {
     App::new()
@@ -30,31 +33,42 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands
-        .spawn((
-            Node {
-                left: ui::Val::Px(0.),
-                top: ui::Val::Px(0.),
-                right: ui::Val::Px(0.),
-                // bottom: ui::Val::Px(0.),
-                position_type: ui::PositionType::Absolute,
-                display: ui::Display::Flex,
-                flex_direction: ui::FlexDirection::Row,
-                border: ui::UiRect::all(ui::Val::Px(3.)),
-                ..default()
-            },
-            BorderColor(css::ALICE_BLUE.into()),
-        ))
-        .with_children(|builder| {
-            builder.invoke(Hello).invoke(Conditional).invoke(Subject);
-            builder.spawn((
+    commands.spawn((
+        Node {
+            left: ui::Val::Px(0.),
+            top: ui::Val::Px(0.),
+            right: ui::Val::Px(0.),
+            // bottom: ui::Val::Px(0.),
+            position_type: ui::PositionType::Absolute,
+            display: ui::Display::Flex,
+            flex_direction: ui::FlexDirection::Row,
+            border: ui::UiRect::all(ui::Val::Px(3.)),
+            ..default()
+        },
+        BorderColor(css::ALICE_BLUE.into()),
+        DynChildren::spawn((
+            Hello,
+            Conditional,
+            Subject,
+            Spawn((
                 Node {
                     border: ui::UiRect::all(ui::Val::Px(3.)),
                     ..default()
                 },
                 BorderColor(css::LIME.into()),
-            ));
-        });
+            )),
+        )),
+    ));
+    // .with_children(|builder| {
+    //     builder.invoke(Hello).invoke(Conditional).invoke(Subject);
+    //     builder.spawn((
+    //         Node {
+    //             border: ui::UiRect::all(ui::Val::Px(3.)),
+    //             ..default()
+    //         },
+    //         BorderColor(css::LIME.into()),
+    //     ));
+    // });
 }
 
 struct Hello;
@@ -66,10 +80,42 @@ impl UiTemplate for Hello {
     }
 }
 
+impl BundleTemplate for Hello {
+    fn build(&self, builder: &mut DynChildSpawner) {
+        builder.spawn(Text::new("Hello, "));
+    }
+}
+
+impl_bundle_template!(Hello);
+
 struct Conditional;
 
 impl UiTemplate for Conditional {
     fn build(&self, builder: &mut ChildSpawnerCommands) {
+        builder.spawn(Cond::new(
+            |counter: Res<Counter>| counter.count & 1 == 0,
+            || Spawn(Text::new("hungry ")),
+            || {
+                (
+                    Spawn((
+                        Node {
+                            border: ui::UiRect::all(ui::Val::Px(7.)),
+                            ..default()
+                        },
+                        BorderColor(css::MAROON.into()),
+                        children![Text::new("extra ")],
+                    )),
+                    Spawn(Text::new("thirsty ")),
+                )
+            },
+        ));
+    }
+}
+
+impl_bundle_template!(Conditional);
+
+impl BundleTemplate for Conditional {
+    fn build(&self, builder: &mut DynChildSpawner) {
         builder.spawn(Cond::new(
             |counter: Res<Counter>| counter.count & 1 == 0,
             || Spawn(Text::new("hungry ")),
@@ -97,6 +143,14 @@ impl UiTemplate for Subject {
         builder.spawn(Text::new("World!"));
     }
 }
+
+impl BundleTemplate for Subject {
+    fn build(&self, builder: &mut DynChildSpawner) {
+        builder.spawn(Text::new("World!"));
+    }
+}
+
+impl_bundle_template!(Subject);
 
 #[derive(Resource, Default)]
 pub struct Counter {
