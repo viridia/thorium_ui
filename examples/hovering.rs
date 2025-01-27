@@ -12,7 +12,7 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    InvokeUiTemplate, MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiTemplate,
+    MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiInvoke, UiTemplate,
 };
 
 fn main() {
@@ -35,24 +35,21 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands
-        .spawn((
-            Node {
-                left: ui::Val::Px(0.),
-                top: ui::Val::Px(0.),
-                right: ui::Val::Px(0.),
-                // bottom: ui::Val::Px(0.),
-                position_type: ui::PositionType::Absolute,
-                display: ui::Display::Flex,
-                flex_direction: ui::FlexDirection::Row,
-                border: ui::UiRect::all(ui::Val::Px(3.)),
-                ..default()
-            },
-            BorderColor(css::ALICE_BLUE.into()),
-        ))
-        .with_children(|builder| {
-            builder.invoke(Hoverable);
-        });
+    commands.spawn((
+        Node {
+            left: ui::Val::Px(0.),
+            top: ui::Val::Px(0.),
+            right: ui::Val::Px(0.),
+            // bottom: ui::Val::Px(0.),
+            position_type: ui::PositionType::Absolute,
+            display: ui::Display::Flex,
+            flex_direction: ui::FlexDirection::Row,
+            border: ui::UiRect::all(ui::Val::Px(3.)),
+            ..default()
+        },
+        BorderColor(css::ALICE_BLUE.into()),
+        Children::spawn((UiInvoke(Hoverable),)),
+    ));
 }
 
 struct Hoverable;
@@ -67,19 +64,17 @@ impl UiTemplate for Hoverable {
             Hovering::default(),
         ));
         let id = item.id();
-        item.with_child((
-            Text::new("Hover me!"),
-            MutateDyn::new(
-                move |world: DeferredWorld| world.is_hovering(id),
-                |hovering, entity| {
-                    entity.insert(BorderColor(if hovering {
-                        css::LIME.into()
-                    } else {
-                        css::DARK_GREEN.into()
-                    }));
-                },
-            ),
+        item.insert(MutateDyn::new(
+            move |world: DeferredWorld| world.is_hovering(id),
+            |hovering, entity| {
+                entity.insert(BorderColor(if hovering {
+                    css::LIME.into()
+                } else {
+                    css::DARK_GREEN.into()
+                }));
+            },
         ));
+        item.with_child((Text::new("Hover me!"),));
     }
 }
 

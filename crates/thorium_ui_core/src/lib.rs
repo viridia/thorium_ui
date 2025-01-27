@@ -35,7 +35,7 @@ pub use owner::{Owned, OwnedBy};
 pub use signal::{IntoSignal, Signal};
 pub use style::{StyleDyn, StyleHandle, StyleTuple, Styles};
 pub use switch::Switch;
-pub use template::{BundleTemplate, InvokeUiTemplate, UiTemplate};
+pub use template::{Template, Invoke, InvokeUiTemplate, UiInvoke, UiTemplate};
 
 pub struct ThoriumUiCorePlugin;
 

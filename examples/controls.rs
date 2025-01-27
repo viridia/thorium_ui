@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
-    CreateCallback, CreateMutable, InvokeUiTemplate, Signal, Styles, ThoriumUiCorePlugin,
+    CreateCallback, CreateMutable, InvokeUiTemplate, Signal, Styles, ThoriumUiCorePlugin, UiInvoke,
 };
 use thorium_ui_controls::{
     colors, Checkbox, ColorGradient, DisclosureToggle, GradientSlider, InheritableFontColor,
@@ -68,16 +68,17 @@ fn setup_view_root(mut commands: Commands) {
         ))
         .with_children(|builder| {
             builder.spawn((Text::new("Swatch"), UseInheritedTextStyles));
-            builder
-                .spawn((Node::default(), Styles(style_row)))
-                .with_children(|builder| {
-                    builder
-                        .invoke(Swatch::new(palettes::css::GOLDENROD))
-                        .invoke(Swatch::new(palettes::css::LIME))
-                        .invoke(Swatch::new(palettes::css::RED))
-                        .invoke(Swatch::new(Srgba::NONE))
-                        .invoke(Swatch::new(palettes::css::BLUE).selected(true));
-                });
+            builder.spawn((
+                Node::default(),
+                Styles(style_row),
+                Children::spawn((
+                    UiInvoke(Swatch::new(palettes::css::GOLDENROD)),
+                    UiInvoke(Swatch::new(palettes::css::LIME)),
+                    UiInvoke(Swatch::new(palettes::css::RED)),
+                    UiInvoke(Swatch::new(Srgba::NONE)),
+                    UiInvoke(Swatch::new(palettes::css::BLUE).selected(true)),
+                )),
+            ));
 
             builder.spawn((Text::new("SwatchGrid"), UseInheritedTextStyles));
             builder
@@ -183,77 +184,71 @@ fn setup_view_root(mut commands: Commands) {
                 });
 
             builder.spawn((Text::new("GradientSlider"), UseInheritedTextStyles));
-            builder
-                .spawn((
-                    Node::default(),
-                    Styles((style_column, |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(|mut node| {
-                            node.align_items = ui::AlignItems::Stretch;
-                        });
-                    })),
-                ))
-                .with_children(|builder| {
-                    let red = builder.create_mutable::<f32>(128.);
-                    let on_change_red = builder.create_callback_arg(
-                        move |new_value: In<f32>, mut world: DeferredWorld| {
-                            red.set(&mut world, *new_value);
-                        },
-                    );
-                    builder.invoke(
-                        GradientSlider::new()
-                            .gradient(Signal::Constant(ColorGradient::new(&[
-                                Srgba::new(0.0, 0.0, 0.0, 1.0),
-                                Srgba::new(1.0, 0.0, 0.0, 1.0),
-                            ])))
-                            .min(0.)
-                            .max(255.)
-                            .value(red)
-                            // .style(style_slider)
-                            .precision(1)
-                            .on_change(on_change_red),
-                    );
+            let red = builder.create_mutable::<f32>(128.);
+            let on_change_red =
+                builder.create_callback_arg(move |new_value: In<f32>, mut world: DeferredWorld| {
+                    red.set(&mut world, *new_value);
                 });
+            builder.spawn((
+                Node::default(),
+                Styles((style_column, |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(|mut node| {
+                        node.align_items = ui::AlignItems::Stretch;
+                    });
+                })),
+                Children::spawn(UiInvoke(
+                    GradientSlider::new()
+                        .gradient(Signal::Constant(ColorGradient::new(&[
+                            Srgba::new(0.0, 0.0, 0.0, 1.0),
+                            Srgba::new(1.0, 0.0, 0.0, 1.0),
+                        ])))
+                        .min(0.)
+                        .max(255.)
+                        .value(red)
+                        // .style(style_slider)
+                        .precision(1)
+                        .on_change(on_change_red),
+                )),
+            ));
 
             builder.spawn((Text::new("SpinBox"), UseInheritedTextStyles));
-            builder
-                .spawn((
-                    Node::default(),
-                    Styles((style_column, |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(|mut node| {
-                            node.align_items = ui::AlignItems::Stretch;
-                        });
-                    })),
-                ))
-                .with_children(|builder| {
-                    let value = builder.create_mutable::<f32>(50.);
-                    let on_change = builder.create_callback_arg(
-                        move |new_value: In<f32>, mut world: DeferredWorld| {
-                            value.set(&mut world, *new_value);
-                        },
-                    );
-                    builder.invoke(
-                        SpinBox::new()
-                            .min(0.)
-                            .max(100.)
-                            .value(value)
-                            .on_change(on_change),
-                    );
+
+            let spinbox_value = builder.create_mutable::<f32>(50.);
+            let on_change_spinbox =
+                builder.create_callback_arg(move |new_value: In<f32>, mut world: DeferredWorld| {
+                    spinbox_value.set(&mut world, *new_value);
                 });
+            builder.spawn((
+                Node::default(),
+                Styles((style_column, |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(|mut node| {
+                        node.align_items = ui::AlignItems::Stretch;
+                    });
+                })),
+                Children::spawn((UiInvoke(
+                    SpinBox::new()
+                        .min(0.)
+                        .max(100.)
+                        .value(spinbox_value)
+                        .on_change(on_change_spinbox),
+                ),)),
+            ));
 
             builder.spawn((Text::new("DisclosureToggle"), UseInheritedTextStyles));
-            builder.spawn(Node::default()).with_children(|builder| {
-                let expanded = builder.create_mutable(false);
-                let on_change = builder.create_callback_arg(
-                    move |value: In<bool>, mut world: DeferredWorld| {
-                        expanded.set(&mut world, *value);
-                    },
-                );
-                builder.invoke(
+            let expanded = builder.create_mutable(false);
+            let on_change =
+                builder.create_callback_arg(move |value: In<bool>, mut world: DeferredWorld| {
+                    expanded.set(&mut world, *value);
+                });
+
+            builder.spawn((
+                Node::default(),
+                Children::spawn(UiInvoke(
                     DisclosureToggle::new()
                         .expanded(expanded)
                         .on_change(on_change),
-                );
-            });
+                )),
+            ));
         });
 }
 

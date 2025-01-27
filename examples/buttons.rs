@@ -55,7 +55,10 @@ fn setup_view_root(mut commands: Commands) {
 
             builder.spawn((Text::new("Variants"), UseInheritedTextStyles));
             builder
-                .spawn((Node::default(), Styles(style_row)))
+                .spawn((
+                    Node::default(),
+                    Styles(style_row),
+                ))
                 .with_children(|builder| {
                     builder
                         .invoke(

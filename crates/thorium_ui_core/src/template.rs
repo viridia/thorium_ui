@@ -1,7 +1,8 @@
-use bevy::ecs::prelude::*;
+use bevy::ecs::{prelude::*, spawn::SpawnableList};
 
-use crate::DynChildSpawner;
+use crate::{DynChildOf, DynChildSpawner};
 
+/// Old-style template that builds a UI.
 pub trait UiTemplate {
     fn build(&self, builder: &mut ChildSpawnerCommands);
 }
@@ -17,25 +18,39 @@ impl InvokeUiTemplate for ChildSpawnerCommands<'_> {
     }
 }
 
-pub trait BundleTemplate {
+/// New-style template that builds child elements for a parent entity.
+pub trait Template {
     fn build(&self, builder: &mut DynChildSpawner);
 }
 
-#[macro_export]
-macro_rules! impl_bundle_template {
-    ($t:ty) => {
-        impl bevy::ecs::spawn::SpawnableList<thorium_ui_core::DynChildOf> for $t {
-            fn spawn(self, world: &mut World, entity: Entity) {
-                world
-                    .entity_mut(entity)
-                    .with_related::<thorium_ui_core::DynChildOf>(|builder| {
-                        BundleTemplate::build(&self, builder);
-                    });
-            }
+/// Wrapper that invokes a template.
+pub struct Invoke<B: Template>(pub B);
 
-            fn size_hint(&self) -> usize {
-                0
-            }
-        }
-    };
+impl<B: Template> SpawnableList<DynChildOf> for Invoke<B> {
+    fn spawn(self, world: &mut World, entity: Entity) {
+        world
+            .entity_mut(entity)
+            .with_related::<DynChildOf>(|builder| {
+                self.0.build(builder);
+            });
+    }
+
+    fn size_hint(&self) -> usize {
+        0
+    }
+}
+
+/// Backwards-compatible invoke that uses the old UiTemplate trait and regular children.
+pub struct UiInvoke<B: UiTemplate>(pub B);
+
+impl<B: UiTemplate> SpawnableList<ChildOf> for UiInvoke<B> {
+    fn spawn(self, world: &mut World, entity: Entity) {
+        world.commands().entity(entity).with_children(|builder| {
+            self.0.build(builder);
+        });
+    }
+
+    fn size_hint(&self) -> usize {
+        0
+    }
 }

@@ -9,10 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{
-    impl_bundle_template, BundleTemplate, Cond, DynChildSpawner, DynChildren, ThoriumUiCorePlugin,
-    UiTemplate,
-};
+use thorium_ui::{Cond, DynChildSpawner, DynChildren, Invoke, Template, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -47,9 +44,9 @@ fn setup_view_root(mut commands: Commands) {
         },
         BorderColor(css::ALICE_BLUE.into()),
         DynChildren::spawn((
-            Hello,
-            Conditional,
-            Subject,
+            Invoke(Hello),
+            Invoke(Conditional),
+            Invoke(Subject),
             Spawn((
                 Node {
                     border: ui::UiRect::all(ui::Val::Px(3.)),
@@ -59,62 +56,19 @@ fn setup_view_root(mut commands: Commands) {
             )),
         )),
     ));
-    // .with_children(|builder| {
-    //     builder.invoke(Hello).invoke(Conditional).invoke(Subject);
-    //     builder.spawn((
-    //         Node {
-    //             border: ui::UiRect::all(ui::Val::Px(3.)),
-    //             ..default()
-    //         },
-    //         BorderColor(css::LIME.into()),
-    //     ));
-    // });
 }
 
 struct Hello;
 
-impl UiTemplate for Hello {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
-        let mut item = builder.spawn_empty();
-        item.insert(Text::new("Hello, "));
-    }
-}
-
-impl BundleTemplate for Hello {
+impl Template for Hello {
     fn build(&self, builder: &mut DynChildSpawner) {
         builder.spawn(Text::new("Hello, "));
     }
 }
 
-impl_bundle_template!(Hello);
-
 struct Conditional;
 
-impl UiTemplate for Conditional {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
-        builder.spawn(Cond::new(
-            |counter: Res<Counter>| counter.count & 1 == 0,
-            || Spawn(Text::new("hungry ")),
-            || {
-                (
-                    Spawn((
-                        Node {
-                            border: ui::UiRect::all(ui::Val::Px(7.)),
-                            ..default()
-                        },
-                        BorderColor(css::MAROON.into()),
-                        children![Text::new("extra ")],
-                    )),
-                    Spawn(Text::new("thirsty ")),
-                )
-            },
-        ));
-    }
-}
-
-impl_bundle_template!(Conditional);
-
-impl BundleTemplate for Conditional {
+impl Template for Conditional {
     fn build(&self, builder: &mut DynChildSpawner) {
         builder.spawn(Cond::new(
             |counter: Res<Counter>| counter.count & 1 == 0,
@@ -138,19 +92,11 @@ impl BundleTemplate for Conditional {
 
 struct Subject;
 
-impl UiTemplate for Subject {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
-        builder.spawn(Text::new("World!"));
-    }
-}
-
-impl BundleTemplate for Subject {
+impl Template for Subject {
     fn build(&self, builder: &mut DynChildSpawner) {
         builder.spawn(Text::new("World!"));
     }
 }
-
-impl_bundle_template!(Subject);
 
 #[derive(Resource, Default)]
 pub struct Counter {

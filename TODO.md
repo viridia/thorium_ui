@@ -2,7 +2,6 @@
 
 - `.invoke`
 - `.observe` and `observers!`.
-- `owned!`
 - `.with_children`
 
 # TODO
