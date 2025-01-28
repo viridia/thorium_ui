@@ -6,7 +6,7 @@ use bevy::{
 };
 use thorium_ui_core::{
     CreateCallback, For, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleHandle, StyleTuple,
-    Styles, UiTemplate,
+    Styles, Template, TemplateContext,
 };
 
 use crate::colors;
@@ -109,22 +109,21 @@ impl Default for SwatchGrid {
     }
 }
 
-impl UiTemplate for SwatchGrid {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for SwatchGrid {
+    fn build(&self, tc: &mut TemplateContext) {
         let colors = self.colors.clone();
         let num_cells = (self.grid_size.x * self.grid_size.y) as usize;
         let grid_size = self.grid_size;
         let selected = self.selected;
         let on_change = self.on_change;
 
-        let on_click =
-            builder.create_callback_arg(move |color: In<Srgba>, mut commands: Commands| {
-                if let Some(on_change) = on_change.as_ref() {
-                    commands.run_system_with(*on_change, *color)
-                }
-            });
+        let on_click = tc.create_callback_arg(move |color: In<Srgba>, mut commands: Commands| {
+            if let Some(on_change) = on_change.as_ref() {
+                commands.run_system_with(*on_change, *color)
+            }
+        });
 
-        builder.spawn((
+        tc.spawn((
             Node::default(),
             Name::new("SwatchGrid"),
             Styles((

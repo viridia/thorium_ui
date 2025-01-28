@@ -5,7 +5,10 @@ use bevy::{
     prelude::*,
 };
 
-use crate::effect_cell::{AnyEffect, EffectCell};
+use crate::{
+    effect_cell::{AnyEffect, EffectCell},
+    template::TemplateContext,
+};
 
 /// A memoized computation.
 #[derive(Copy, Clone, Debug)]
@@ -72,6 +75,29 @@ impl CreateMemo for ChildSpawnerCommands<'_> {
     ) -> Memo<P> {
         let mut entity = self.spawn_empty();
         let system = entity.commands().register_system(factory);
+        entity.insert((
+            EffectCell::new(MemoEffect { system }),
+            MemoValue(default_value),
+        ));
+        Memo {
+            entity: entity.id(),
+            marker: PhantomData,
+        }
+    }
+}
+
+impl CreateMemo for TemplateContext<'_> {
+    fn create_memo<
+        M: Send + Sync + 'static,
+        P: PartialEq + Clone + Send + Sync + 'static,
+        I: IntoSystem<(), P, M> + Send + Sync + 'static,
+    >(
+        &mut self,
+        factory: I,
+        default_value: P,
+    ) -> Memo<P> {
+        let system = self.commands().register_system(factory);
+        let mut entity = self.spawn_empty();
         entity.insert((
             EffectCell::new(MemoEffect { system }),
             MemoValue(default_value),

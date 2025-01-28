@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::{ecs::world::DeferredWorld, prelude::*};
 
-use crate::{owner::OwnedBy, Signal};
+use crate::{owner::OwnedBy, Signal, TemplateContext};
 
 /// Contains a mutable reactive value.
 #[derive(Component)]
@@ -286,6 +286,25 @@ impl CreateMutable for ChildSpawnerCommands<'_> {
         let owner = self.target_entity();
         let cell = self
             .commands_mut()
+            .spawn((MutableCell::<T>(init), OwnedBy(owner)))
+            .id();
+        // let component = self.register_component::<MutableCell<T>>();
+        Mutable {
+            cell,
+            // component,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl CreateMutable for TemplateContext<'_> {
+    fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
+    where
+        T: Send + Sync + 'static,
+    {
+        let owner = self.target_entity();
+        let cell = self
+            .commands()
             .spawn((MutableCell::<T>(init), OwnedBy(owner)))
             .id();
         // let component = self.register_component::<MutableCell<T>>();

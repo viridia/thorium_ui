@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, DynChildSpawner, DynChildren, Invoke, Template, ThoriumUiCorePlugin};
+use thorium_ui::{Cond, DynChildren, Invoke, Template, TemplateContext, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -61,15 +61,19 @@ fn setup_view_root(mut commands: Commands) {
 struct Hello;
 
 impl Template for Hello {
-    fn build(&self, builder: &mut DynChildSpawner) {
+    fn build(&self, builder: &mut TemplateContext) {
         builder.spawn(Text::new("Hello, "));
+    }
+
+    fn size_hint(&self) -> usize {
+        1
     }
 }
 
 struct Conditional;
 
 impl Template for Conditional {
-    fn build(&self, builder: &mut DynChildSpawner) {
+    fn build(&self, builder: &mut TemplateContext) {
         builder.spawn(Cond::new(
             |counter: Res<Counter>| counter.count & 1 == 0,
             || Spawn(Text::new("hungry ")),
@@ -88,13 +92,21 @@ impl Template for Conditional {
             },
         ));
     }
+
+    fn size_hint(&self) -> usize {
+        1
+    }
 }
 
 struct Subject;
 
 impl Template for Subject {
-    fn build(&self, builder: &mut DynChildSpawner) {
+    fn build(&self, builder: &mut TemplateContext) {
         builder.spawn(Text::new("World!"));
+    }
+
+    fn size_hint(&self) -> usize {
+        1
     }
 }
 

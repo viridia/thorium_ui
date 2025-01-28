@@ -5,7 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
-    CreateCallback, CreateMutable, InvokeUiTemplate, Signal, Styles, ThoriumUiCorePlugin, UiInvoke,
+    CreateCallback, CreateMutable, DynChildren, Invoke, Signal, Styles, Template, TemplateContext,
+    ThoriumUiCorePlugin, UiInvoke,
 };
 use thorium_ui_controls::{
     colors, Checkbox, ColorGradient, DisclosureToggle, GradientSlider, InheritableFontColor,
@@ -65,123 +66,65 @@ fn setup_view_root(mut commands: Commands) {
             Styles(style_test),
             UiTargetCamera(camera),
             TabGroup::default(),
+            DynChildren::spawn((
+                Spawn((Text::new("Swatch"), UseInheritedTextStyles)),
+                Spawn((
+                    Node::default(),
+                    Styles(style_row),
+                    Children::spawn((
+                        UiInvoke(Swatch::new(palettes::css::GOLDENROD)),
+                        UiInvoke(Swatch::new(palettes::css::LIME)),
+                        UiInvoke(Swatch::new(palettes::css::RED)),
+                        UiInvoke(Swatch::new(Srgba::NONE)),
+                        UiInvoke(Swatch::new(palettes::css::BLUE).selected(true)),
+                    )),
+                )),
+                Spawn((Text::new("SwatchGrid"), UseInheritedTextStyles)),
+                Spawn((
+                    Node::default(),
+                    Styles(style_row),
+                    DynChildren::spawn(Invoke(SwatchGridDemo)),
+                )),
+                Spawn((Text::new("Checkbox"), UseInheritedTextStyles)),
+                Spawn((
+                    Node::default(),
+                    Styles(style_column),
+                    DynChildren::spawn(Invoke(CheckboxDemo)),
+                )),
+                Spawn((Text::new("Slider"), UseInheritedTextStyles)),
+            )),
         ))
         .with_children(|builder| {
-            builder.spawn((Text::new("Swatch"), UseInheritedTextStyles));
+            let slider_value = builder.create_mutable::<f32>(50.);
+            let on_change_slider =
+                builder.create_callback_arg(move |new_value: In<f32>, mut world: DeferredWorld| {
+                    slider_value.set(&mut world, *new_value);
+                });
             builder.spawn((
                 Node::default(),
-                Styles(style_row),
+                Styles((style_column, |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(|mut node| {
+                        node.align_items = ui::AlignItems::Stretch;
+                    });
+                })),
                 Children::spawn((
-                    UiInvoke(Swatch::new(palettes::css::GOLDENROD)),
-                    UiInvoke(Swatch::new(palettes::css::LIME)),
-                    UiInvoke(Swatch::new(palettes::css::RED)),
-                    UiInvoke(Swatch::new(Srgba::NONE)),
-                    UiInvoke(Swatch::new(palettes::css::BLUE).selected(true)),
+                    UiInvoke(
+                        Slider::new()
+                            .min(0.)
+                            .max(100.)
+                            .value(slider_value)
+                            .on_change(on_change_slider),
+                    ),
+                    UiInvoke(
+                        Slider::new()
+                            .min(0.)
+                            .max(100.)
+                            .value(slider_value)
+                            .label("Value:")
+                            .on_change(on_change_slider),
+                    ),
                 )),
             ));
-
-            builder.spawn((Text::new("SwatchGrid"), UseInheritedTextStyles));
-            builder
-                .spawn((Node::default(), Styles(style_row)))
-                .with_children(|builder| {
-                    let selected = builder.create_mutable::<Srgba>(palettes::css::BLUE);
-                    let on_change = builder.create_callback_arg(
-                        move |color: In<Srgba>, mut world: DeferredWorld| {
-                            selected.set(&mut world, *color);
-                        },
-                    );
-                    builder.invoke(
-                        SwatchGrid::new(vec![
-                            palettes::css::BLUE,
-                            palettes::css::RED,
-                            palettes::css::GREEN,
-                            palettes::css::REBECCA_PURPLE,
-                        ])
-                        .grid_size(UVec2::new(12, 4))
-                        .selected(selected.signal())
-                        .on_change(on_change),
-                    );
-                });
-
-            builder.spawn((Text::new("Checkbox"), UseInheritedTextStyles));
-            builder
-                .spawn((Node::default(), Styles(style_column)))
-                .with_children(|builder| {
-                    let checked_1 = builder.create_mutable(true);
-                    let checked_2 = builder.create_mutable(false);
-                    let on_change_1 = builder.create_callback_arg(
-                        move |value: In<bool>, mut world: DeferredWorld| {
-                            checked_1.set(&mut world, *value);
-                        },
-                    );
-                    let on_change_2 = builder.create_callback_arg(
-                        move |value: In<bool>, mut world: DeferredWorld| {
-                            checked_2.set(&mut world, *value);
-                        },
-                    );
-                    builder
-                        .invoke(
-                            Checkbox::new()
-                                .labeled("Checked")
-                                .checked(checked_1)
-                                .on_change(on_change_1),
-                        )
-                        .invoke(
-                            Checkbox::new()
-                                .labeled("Checked (disabled)")
-                                .checked(checked_1)
-                                .on_change(on_change_1)
-                                .disabled(true),
-                        )
-                        .invoke(
-                            Checkbox::new()
-                                .labeled("Unchecked")
-                                .checked(checked_2)
-                                .on_change(on_change_2),
-                        )
-                        .invoke(
-                            Checkbox::new()
-                                .labeled("Unchecked (disabled)")
-                                .checked(checked_2)
-                                .on_change(on_change_2)
-                                .disabled(true),
-                        );
-                });
-
-            builder.spawn((Text::new("Slider"), UseInheritedTextStyles));
-            builder
-                .spawn((
-                    Node::default(),
-                    Styles((style_column, |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(|mut node| {
-                            node.align_items = ui::AlignItems::Stretch;
-                        });
-                    })),
-                ))
-                .with_children(|builder| {
-                    let value = builder.create_mutable::<f32>(50.);
-                    let on_change = builder.create_callback_arg(
-                        move |new_value: In<f32>, mut world: DeferredWorld| {
-                            value.set(&mut world, *new_value);
-                        },
-                    );
-                    builder
-                        .invoke(
-                            Slider::new()
-                                .min(0.)
-                                .max(100.)
-                                .value(value)
-                                .on_change(on_change),
-                        )
-                        .invoke(
-                            Slider::new()
-                                .min(0.)
-                                .max(100.)
-                                .value(value)
-                                .label("Value:")
-                                .on_change(on_change),
-                        );
-                });
 
             builder.spawn((Text::new("GradientSlider"), UseInheritedTextStyles));
             let red = builder.create_mutable::<f32>(128.);
@@ -251,6 +194,78 @@ fn setup_view_root(mut commands: Commands) {
             ));
         });
 }
+
+struct SwatchGridDemo;
+
+impl Template for SwatchGridDemo {
+    fn build(&self, tc: &mut TemplateContext) {
+        let selected_color = tc.create_mutable::<Srgba>(palettes::css::BLUE);
+        let on_change_color =
+            tc.create_callback_arg(move |color: In<Srgba>, mut world: DeferredWorld| {
+                selected_color.set(&mut world, *color);
+            });
+        tc.invoke(
+            SwatchGrid::new(vec![
+                palettes::css::BLUE,
+                palettes::css::RED,
+                palettes::css::GREEN,
+                palettes::css::REBECCA_PURPLE,
+            ])
+            .grid_size(UVec2::new(12, 4))
+            .selected(selected_color.signal())
+            .on_change(on_change_color),
+        );
+    }
+}
+
+struct CheckboxDemo;
+
+impl Template for CheckboxDemo {
+    fn build(&self, tc: &mut TemplateContext) {
+        let checked_1 = tc.create_mutable(true);
+        let checked_2 = tc.create_mutable(false);
+        let on_change_1 =
+            tc.create_callback_arg(move |value: In<bool>, mut world: DeferredWorld| {
+                checked_1.set(&mut world, *value);
+            });
+        let on_change_2 =
+            tc.create_callback_arg(move |value: In<bool>, mut world: DeferredWorld| {
+                checked_2.set(&mut world, *value);
+            });
+        tc.invoke(
+            Checkbox::new()
+                .labeled("Checked")
+                .checked(checked_1)
+                .on_change(on_change_1),
+        )
+        .invoke(
+            Checkbox::new()
+                .labeled("Checked (disabled)")
+                .checked(checked_1)
+                .on_change(on_change_1)
+                .disabled(true),
+        )
+        .invoke(
+            Checkbox::new()
+                .labeled("Unchecked")
+                .checked(checked_2)
+                .on_change(on_change_2),
+        )
+        .invoke(
+            Checkbox::new()
+                .labeled("Unchecked (disabled)")
+                .checked(checked_2)
+                .on_change(on_change_2)
+                .disabled(true),
+        );
+    }
+}
+
+// struct SliderDemo;
+
+// impl Template for SliderDemo {
+//     fn build(&self, tc: &mut TemplateContext) {}
+// }
 
 pub fn close_on_esc(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
     if input.just_pressed(KeyCode::Escape) {

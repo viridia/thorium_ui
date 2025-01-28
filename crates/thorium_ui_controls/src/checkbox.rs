@@ -10,8 +10,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    owned, Cond, InsertWhen, IntoSignal, MutateDyn2, Owned, Signal, StyleDyn, StyleHandle,
-    StyleTuple, Styles, UiTemplate,
+    dyn_children, owned, Cond, DynChildOf, InsertWhen, IntoSignal, MutateDyn2, Owned, Signal,
+    StyleDyn, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -76,7 +76,7 @@ pub struct Checkbox {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub label: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
+    pub label: Arc<dyn Fn(&mut ChildSpawner)>,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -148,9 +148,9 @@ impl Checkbox {
     }
 }
 
-impl UiTemplate for Checkbox {
+impl Template for Checkbox {
     /// Construct a checkbox widget.
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+    fn build(&self, builder: &mut TemplateContext) {
         let checked = self.checked;
         let disabled = self.disabled;
         let mut checkbox = builder.spawn((
@@ -179,7 +179,7 @@ impl UiTemplate for Checkbox {
 
         checkbox
             // .insert_if(AutoFocus, || self.autofocus)
-            .with_children(|builder| {
+            .with_related::<DynChildOf>(|builder| {
                 builder.spawn((
                     Node { ..default() },
                     Name::new("Checkbox::Border"),
@@ -215,7 +215,7 @@ impl UiTemplate for Checkbox {
                             };
                         },
                     ),
-                    children![Cond::new(
+                    dyn_children![Cond::new(
                         move |world: DeferredWorld| checked.get(&world),
                         move || Spawn((
                             ImageNode {

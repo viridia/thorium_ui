@@ -1,9 +1,12 @@
 use bevy::{
     ecs::{component::HookContext, system::SystemId, world::DeferredWorld},
-    prelude::{ChildSpawnerCommands, Component, EntityCommands, In, IntoSystem, SystemInput},
+    prelude::{
+        ChildSpawnerCommands, Component, EntityCommands, EntityWorldMut, In, IntoSystem,
+        SystemInput,
+    },
 };
 
-use crate::owner::OwnedBy;
+use crate::{owner::OwnedBy, TemplateContext};
 
 #[derive(Component)]
 #[component(on_remove = on_remove_callback_cell::<I>, storage = "SparseSet")]
@@ -82,6 +85,58 @@ impl CreateCallback for ChildSpawnerCommands<'_> {
         let system_id = self.commands().register_system(callback);
         self.commands()
             .spawn((CallbackCell(system_id), OwnedBy(owner)));
+        system_id
+    }
+}
+
+impl CreateCallback for TemplateContext<'_> {
+    fn create_callback<M, I: IntoSystem<(), (), M> + 'static>(
+        &mut self,
+        callback: I,
+    ) -> SystemId<(), ()> {
+        let system_id = self.commands().register_system(callback);
+        let owner = self.target_entity();
+        self.commands()
+            .spawn((CallbackCell(system_id), OwnedBy(owner)));
+        system_id
+    }
+
+    fn create_callback_arg<M, A: Send + Sync + 'static, I: IntoSystem<In<A>, (), M> + 'static>(
+        &mut self,
+        callback: I,
+    ) -> SystemId<In<A>, ()> {
+        let owner = self.target_entity();
+        let system_id = self.commands().register_system(callback);
+        self.commands()
+            .spawn((CallbackCell(system_id), OwnedBy(owner)));
+        system_id
+    }
+}
+
+impl CreateCallback for EntityWorldMut<'_> {
+    fn create_callback<M, I: IntoSystem<(), (), M> + 'static>(
+        &mut self,
+        callback: I,
+    ) -> SystemId<(), ()> {
+        let system_id = unsafe { self.world_mut().register_system(callback) };
+        let owner = self.id();
+        unsafe {
+            self.world_mut()
+                .spawn((CallbackCell(system_id), OwnedBy(owner)))
+        };
+        system_id
+    }
+
+    fn create_callback_arg<M, A: Send + Sync + 'static, I: IntoSystem<In<A>, (), M> + 'static>(
+        &mut self,
+        callback: I,
+    ) -> SystemId<In<A>, ()> {
+        let owner = self.id();
+        let system_id = unsafe { self.world_mut().register_system(callback) };
+        unsafe {
+            self.world_mut()
+                .spawn((CallbackCell(system_id), OwnedBy(owner)))
+        };
         system_id
     }
 }
