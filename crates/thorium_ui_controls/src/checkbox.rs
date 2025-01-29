@@ -10,8 +10,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    dyn_children, owned, Cond, DynChildOf, InsertWhen, IntoSignal, MutateDyn2, Owned, Signal,
-    StyleDyn, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    dyn_children, owned, Cond, DynChildOf, InsertWhen2, IntoSignal, MutateDyn2, Signal, StyleDyn,
+    StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -163,17 +163,19 @@ impl Template for Checkbox {
                 checked: false,
                 on_change: self.on_change,
             },
-            owned![MutateDyn2::new(
-                move |world: DeferredWorld| checked.get(&world),
-                |checked, ent| {
-                    let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
-                    checkbox.checked = checked;
-                },
-            ),],
-            InsertWhen::new(
-                move |world: DeferredWorld| disabled.get(&world),
-                || InteractionDisabled,
-            ),
+            owned![
+                MutateDyn2::new(
+                    move |world: DeferredWorld| checked.get(&world),
+                    |checked, ent| {
+                        let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
+                        checkbox.checked = checked;
+                    },
+                ),
+                InsertWhen2::new(
+                    move |world: DeferredWorld| disabled.get(&world),
+                    || InteractionDisabled,
+                ),
+            ],
         ));
         let checkbox_id = checkbox.id();
 

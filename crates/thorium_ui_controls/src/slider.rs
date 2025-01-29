@@ -176,8 +176,8 @@ impl Default for Slider {
     }
 }
 
-impl UiTemplate for Slider {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for Slider {
+    fn build(&self, builder: &mut TemplateContext) {
         let mut slider = builder.spawn((
             MaterialNode::<SliderRectMaterial>::default(),
             Name::new("Slider"),
@@ -212,6 +212,15 @@ impl UiTemplate for Slider {
                     commands.run_system_with(on_change, next_value);
                 }
             });
+
+        let dec_disabled = slider.create_memo(
+            move |world: DeferredWorld| value.get(&world) <= min.get(&world),
+            false,
+        );
+        let inc_disabled = slider.create_memo(
+            move |world: DeferredWorld| value.get(&world) >= max.get(&world),
+            false,
+        );
 
         slider
             .insert(MutateDyn::new(
@@ -261,25 +270,17 @@ impl UiTemplate for Slider {
                 },
             )
             .with_children(|builder| {
-                let dec_disabled = builder.create_memo(
-                    move |world: DeferredWorld| value.get(&world) <= min.get(&world),
-                    false,
-                );
-                let inc_disabled = builder.create_memo(
-                    move |world: DeferredWorld| value.get(&world) >= max.get(&world),
-                    false,
-                );
                 builder
                     .spawn((
                         Node::default(),
                         Name::new("Slider::Overlay"),
                         Styles(style_overlay),
                     ))
-                    .with_children(move |builder| {
-                        builder.cond(
+                    .with_related::<DynChildOf>(move |builder| {
+                        builder.spawn(Cond::new(
                             move || true,
-                            move |builder| {
-                                builder.invoke(
+                            move ||
+                                Invoke(
                             IconButton::new(
                                 "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
                             )
@@ -287,44 +288,50 @@ impl UiTemplate for Slider {
                             .style(style_slider_button)
                             .minimal(true)
                             .disabled(dec_disabled)
-                            .on_click(dec_click));
-                            },
-                            |_| {},
-                        );
+                            .on_click(dec_click))
+                            ,
+                            || (),
+                        ));
+
                         builder
-                            .spawn((Node::default(), Styles(style_label)))
-                            .with_children(|builder| {
-                                if let Some(label) = label {
+                            .spawn((Node::default(), Styles(style_label),
+                        DynChildren::spawn((
+                            InvokeWith(move |builder: &mut TemplateContext| {
+                                if let Some(ref label) = label {
                                     builder.spawn((Text::new(label), UseInheritedTextStyles));
                                     builder.invoke(Spacer);
                                 }
-                                builder.spawn((
-                                    Text::new(""),
-                                    UseInheritedTextStyles,
-                                    MutateDyn::new(
-                                        move |world: DeferredWorld| value.get(&world),
-                                        move |value, ent| {
-                                            ent.entry::<Text>().and_modify(|mut text| {
-                                                text.0 = format!("{:.*}", precision, value);
-                                            });
-                                        },
-                                    ),
-                                ));
-                            });
-                        builder.cond(
-                            move || true,
-                            move |builder| {
-                                builder.invoke(
-                                IconButton::new(
-                                    "embedded://thorium_ui_controls/assets/icons/chevron_right.png",
-                                )
-                                .corners(RoundedCorners::Right)
-                                .style(style_slider_button)
-                                .minimal(true)
-                                .disabled(inc_disabled)
-                                .on_click(inc_click));
-                            },
-                            |_| {},
+                            }),
+                            Spawn((
+                                Text::new(""),
+                                UseInheritedTextStyles,
+                                MutateDyn::new(
+                                    move |world: DeferredWorld| value.get(&world),
+                                    move |value, ent| {
+                                        ent.entry::<Text>().and_modify(|mut text| {
+                                            text.0 = format!("{:.*}", precision, value);
+                                        });
+                                    },
+                                ),
+                            )),
+                        ))));
+
+                        builder.spawn(
+                            Cond::new(
+                                move || true,
+                                move ||
+                                    Invoke(
+                                    IconButton::new(
+                                        "embedded://thorium_ui_controls/assets/icons/chevron_right.png",
+                                    )
+                                    .corners(RoundedCorners::Right)
+                                    .style(style_slider_button)
+                                    .minimal(true)
+                                    .disabled(inc_disabled)
+                                    .on_click(inc_click))
+                                ,
+                                || (),
+                            )
                         );
                     });
             });

@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{For, ListItems, ThoriumUiCorePlugin};
+use thorium_ui::{dyn_children, For, ListItems, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -44,7 +44,7 @@ fn setup_view_root(mut commands: Commands) {
             ..default()
         },
         BorderColor(css::ALICE_BLUE.into()),
-        children![For::each(
+        dyn_children![For::each(
             |mut items: InMut<ListItems<String>>, list: Res<List>| {
                 items.clone_from_iter(list.items.iter().cloned());
             },

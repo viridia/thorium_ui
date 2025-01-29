@@ -6,7 +6,7 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateMemo, IntoSignal, InvokeUiTemplate, Signal, StyleHandle, StyleTuple, UiTemplate,
+    CreateMemo, IntoSignal, Invoke, Signal, StyleHandle, StyleTuple, Template, TemplateContext,
 };
 use thorium_ui_headless::handle::HandleOrOwnedPath;
 
@@ -99,8 +99,8 @@ impl IconButton {
     }
 }
 
-impl UiTemplate for IconButton {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for IconButton {
+    fn build(&self, builder: &mut TemplateContext) {
         let disabled = self.disabled;
         let size = self.size;
         let icon = self.icon.clone();
@@ -115,35 +115,36 @@ impl UiTemplate for IconButton {
             Color::from(colors::DIM),
         );
 
-        Button {
-            size: self.size,
-            disabled,
-            style: StyleHandle::new((
-                |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(|mut node| {
-                        node.padding = ui::UiRect::axes(ui::Val::Px(4.0), ui::Val::Px(0.0))
-                    });
-                },
-                self.style.clone(),
-            )),
-            on_click: self.on_click,
-            tab_index: self.tab_index,
-            autofocus: self.autofocus,
-            minimal: self.minimal,
-            corners: self.corners,
-            ..default()
-        }
-        .children(move |builder| {
-            builder.invoke(Icon::new(icon.clone()).color(icon_color).size(match size {
-                Size::Xl => Vec2::splat(20.),
-                Size::Lg => Vec2::splat(18.),
-                Size::Md => Vec2::splat(16.),
-                Size::Sm => Vec2::splat(14.),
-                Size::Xs => Vec2::splat(12.),
-                Size::Xxs => Vec2::splat(11.),
-                Size::Xxxs => Vec2::splat(10.),
-            }));
-        })
-        .build(builder);
+        builder.invoke(
+            Button {
+                size: self.size,
+                disabled,
+                style: StyleHandle::new((
+                    |ec: &mut EntityCommands| {
+                        ec.entry::<Node>().and_modify(|mut node| {
+                            node.padding = ui::UiRect::axes(ui::Val::Px(4.0), ui::Val::Px(0.0))
+                        });
+                    },
+                    self.style.clone(),
+                )),
+                on_click: self.on_click,
+                tab_index: self.tab_index,
+                autofocus: self.autofocus,
+                minimal: self.minimal,
+                corners: self.corners,
+                ..default()
+            }
+            .contents(move || {
+                Invoke(Icon::new(icon.clone()).color(icon_color).size(match size {
+                    Size::Xl => Vec2::splat(20.),
+                    Size::Lg => Vec2::splat(18.),
+                    Size::Md => Vec2::splat(16.),
+                    Size::Sm => Vec2::splat(14.),
+                    Size::Xs => Vec2::splat(12.),
+                    Size::Xxs => Vec2::splat(11.),
+                    Size::Xxxs => Vec2::splat(10.),
+                }))
+            }),
+        );
     }
 }

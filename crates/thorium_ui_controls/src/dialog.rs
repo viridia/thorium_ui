@@ -7,7 +7,10 @@ use bevy::{
     prelude::*,
     ui::{self, experimental::GhostNode},
 };
-use thorium_ui_core::{CreateCond, MutateDyn, Signal, Styles, UiTemplate};
+use thorium_ui_core::{
+    Cond, DynChildren, IndirectSpawnableList, InvokeIndirect, MutateDyn, Signal, Styles, Template,
+    TemplateContext,
+};
 use thorium_ui_headless::CoreBarrier;
 
 use crate::{
@@ -72,8 +75,8 @@ pub struct Dialog {
     /// the dialog will still remain visible until it completes its closing animation.
     pub open: Signal<bool>,
 
-    /// The content of the dialog.
-    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands) + Send + Sync + 'static>,
+    /// The content to display inside the dialog.
+    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<SystemId>,
@@ -87,7 +90,7 @@ impl Default for Dialog {
         Self {
             width: ui::Val::Px(400.0),
             open: Signal::Constant(false),
-            children: Arc::new(|_| {}),
+            contents: None,
             on_close: None,
             on_exited: None,
         }
@@ -113,11 +116,8 @@ impl Dialog {
     }
 
     /// Sets the content of the dialog.
-    pub fn children<V: 'static + Send + Sync + Fn(&mut ChildSpawnerCommands)>(
-        mut self,
-        children: V,
-    ) -> Self {
-        self.children = Arc::new(children);
+    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.contents = Some(Arc::new(elts));
         self
     }
 
@@ -134,8 +134,8 @@ impl Dialog {
     }
 }
 
-impl UiTemplate for Dialog {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for Dialog {
+    fn build(&self, builder: &mut TemplateContext) {
         let on_close = self.on_close;
         let on_exited = self.on_exited;
         let open = self.open;
@@ -153,8 +153,8 @@ impl UiTemplate for Dialog {
         ));
         let transition_id = transition_entity.id();
 
-        let children = self.children.clone();
-        builder.cond(
+        let contents = self.contents.clone();
+        builder.spawn(Cond::new(
             move |world: DeferredWorld| {
                 world
                     .entity(transition_id)
@@ -163,15 +163,50 @@ impl UiTemplate for Dialog {
                     .state
                     != BistableTransitionState::Exited
             },
-            move |builder| {
-                let children = children.clone();
-                // Portal::new(
-                builder
-                    .spawn((
+            move || {
+                Spawn((
+                    Node::default(),
+                    Name::new("Dialog::Overlay"),
+                    Styles(style_dialog_barrier),
+                    CoreBarrier { on_close },
+                    MutateDyn::new(
+                        move |world: DeferredWorld| match world
+                            .entity(transition_id)
+                            .get::<BistableTransition>()
+                            .unwrap()
+                            .state
+                        {
+                            BistableTransitionState::Entering
+                            | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
+                            BistableTransitionState::Exiting | BistableTransitionState::Exited => {
+                                colors::U2.with_alpha(0.0)
+                            }
+                        },
+                        move |color, ent| {
+                            AnimatedTransition::<AnimatedBackgroundColor>::start(
+                                ent,
+                                color,
+                                None,
+                                TRANSITION_DURATION,
+                            );
+                        },
+                    ),
+                    DynChildren::spawn(Spawn((
                         Node::default(),
-                        Name::new("Dialog::Overlay"),
-                        Styles(style_dialog_barrier),
-                        CoreBarrier { on_close },
+                        Name::new("Dialog"),
+                        Styles((
+                            text_default,
+                            style_dialog,
+                            move |ec: &mut EntityCommands| {
+                                ec.entry::<Node>().and_modify(move |mut node| {
+                                    node.width = width;
+                                });
+                            },
+                        )),
+                        TabGroup {
+                            order: 0,
+                            modal: true,
+                        },
                         MutateDyn::new(
                             move |world: DeferredWorld| match world
                                 .entity(transition_id)
@@ -179,73 +214,118 @@ impl UiTemplate for Dialog {
                                 .unwrap()
                                 .state
                             {
-                                BistableTransitionState::Entering
-                                | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
-                                BistableTransitionState::Exiting
-                                | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
+                                BistableTransitionState::Entering => (0.0, 1.0),
+                                BistableTransitionState::Exiting => (1.0, 0.0),
+                                BistableTransitionState::Entered => (1.0, 1.0),
+                                BistableTransitionState::Exited => (0.0, 0.0),
                             },
-                            move |color, ent| {
-                                AnimatedTransition::<AnimatedBackgroundColor>::start(
+                            move |(origin, target), ent| {
+                                AnimatedTransition::<AnimatedScale>::start(
                                     ent,
-                                    color,
-                                    None,
+                                    Vec3::splat(target),
+                                    Some(Vec3::splat(origin)),
                                     TRANSITION_DURATION,
                                 );
                             },
                         ),
-                    ))
-                    .with_children(|builder| {
-                        builder
-                            .spawn((
-                                Node::default(),
-                                Name::new("Dialog"),
-                                Styles((
-                                    text_default,
-                                    style_dialog,
-                                    move |ec: &mut EntityCommands| {
-                                        ec.entry::<Node>().and_modify(move |mut node| {
-                                            node.width = width;
-                                        });
-                                    },
-                                )),
-                                TabGroup {
-                                    order: 0,
-                                    modal: true,
-                                },
-                                MutateDyn::new(
-                                    move |world: DeferredWorld| match world
-                                        .entity(transition_id)
-                                        .get::<BistableTransition>()
-                                        .unwrap()
-                                        .state
-                                    {
-                                        BistableTransitionState::Entering => (0.0, 1.0),
-                                        BistableTransitionState::Exiting => (1.0, 0.0),
-                                        BistableTransitionState::Entered => (1.0, 1.0),
-                                        BistableTransitionState::Exited => (0.0, 0.0),
-                                    },
-                                    move |(origin, target), ent| {
-                                        AnimatedTransition::<AnimatedScale>::start(
-                                            ent,
-                                            Vec3::splat(target),
-                                            Some(Vec3::splat(origin)),
-                                            TRANSITION_DURATION,
-                                        );
-                                    },
-                                ),
-                            ))
-                            .observe(|mut trigger: Trigger<Pointer<Pressed>>| {
-                                // Prevent clicks from propagating to the barrier and closing
-                                // the dialog.
-                                trigger.propagate(false);
-                            })
-                            .with_children(|builder| {
-                                (children.as_ref())(builder);
-                            });
-                    });
+                        DynChildren::spawn(InvokeIndirect(contents.clone())),
+                    ))),
+                ))
             },
-            |_| {},
-        );
+            || (),
+        ));
+
+        // builder.cond(
+        //     move |world: DeferredWorld| {
+        //         world
+        //             .entity(transition_id)
+        //             .get::<BistableTransition>()
+        //             .unwrap()
+        //             .state
+        //             != BistableTransitionState::Exited
+        //     },
+        //     move |builder| {
+        //         // Portal::new(
+        //         builder
+        //             .spawn((
+        //                 Node::default(),
+        //                 Name::new("Dialog::Overlay"),
+        //                 Styles(style_dialog_barrier),
+        //                 CoreBarrier { on_close },
+        //                 MutateDyn::new(
+        //                     move |world: DeferredWorld| match world
+        //                         .entity(transition_id)
+        //                         .get::<BistableTransition>()
+        //                         .unwrap()
+        //                         .state
+        //                     {
+        //                         BistableTransitionState::Entering
+        //                         | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
+        //                         BistableTransitionState::Exiting
+        //                         | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
+        //                     },
+        //                     move |color, ent| {
+        //                         AnimatedTransition::<AnimatedBackgroundColor>::start(
+        //                             ent,
+        //                             color,
+        //                             None,
+        //                             TRANSITION_DURATION,
+        //                         );
+        //                     },
+        //                 ),
+        //             ))
+        //             .with_children(|builder| {
+        //                 builder
+        //                     .spawn((
+        //                         Node::default(),
+        //                         Name::new("Dialog"),
+        //                         Styles((
+        //                             text_default,
+        //                             style_dialog,
+        //                             move |ec: &mut EntityCommands| {
+        //                                 ec.entry::<Node>().and_modify(move |mut node| {
+        //                                     node.width = width;
+        //                                 });
+        //                             },
+        //                         )),
+        //                         TabGroup {
+        //                             order: 0,
+        //                             modal: true,
+        //                         },
+        //                         MutateDyn::new(
+        //                             move |world: DeferredWorld| match world
+        //                                 .entity(transition_id)
+        //                                 .get::<BistableTransition>()
+        //                                 .unwrap()
+        //                                 .state
+        //                             {
+        //                                 BistableTransitionState::Entering => (0.0, 1.0),
+        //                                 BistableTransitionState::Exiting => (1.0, 0.0),
+        //                                 BistableTransitionState::Entered => (1.0, 1.0),
+        //                                 BistableTransitionState::Exited => (0.0, 0.0),
+        //                             },
+        //                             move |(origin, target), ent| {
+        //                                 AnimatedTransition::<AnimatedScale>::start(
+        //                                     ent,
+        //                                     Vec3::splat(target),
+        //                                     Some(Vec3::splat(origin)),
+        //                                     TRANSITION_DURATION,
+        //                                 );
+        //                             },
+        //                         ),
+        //                     ))
+        //                     .observe(|mut trigger: Trigger<Pointer<Pressed>>| {
+        //                         // Prevent clicks from propagating to the barrier and closing
+        //                         // the dialog.
+        //                         trigger.propagate(false);
+        //                     })
+        //                     .with_children(|builder| {
+        //                         (children.as_ref())(builder);
+        //                     });
+        //             });
+        //     },
+        //     |_| {},
+        // );
     }
 }
 
@@ -265,7 +345,7 @@ fn style_dialog_header(ec: &mut EntityCommands) {
 #[derive(Clone)]
 pub struct DialogHeader {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
+    pub children: Arc<dyn Fn(&mut ChildSpawner)>,
 }
 
 impl Default for DialogHeader {
@@ -283,14 +363,14 @@ impl DialogHeader {
     }
 
     /// Set the content of the dialog header.
-    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
+    pub fn children<V: 'static + Fn(&mut ChildSpawner)>(mut self, children: V) -> Self {
         self.children = Arc::new(children);
         self
     }
 }
 
-impl UiTemplate for DialogHeader {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for DialogHeader {
+    fn build(&self, builder: &mut TemplateContext) {
         builder
             .spawn((Node::default(), Styles(style_dialog_header)))
             .with_children(|builder| {
@@ -314,7 +394,7 @@ fn style_dialog_body(ec: &mut EntityCommands) {
 #[derive(Clone)]
 pub struct DialogBody {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
+    pub children: Arc<dyn Fn(&mut ChildSpawner)>,
 }
 
 impl Default for DialogBody {
@@ -332,14 +412,14 @@ impl DialogBody {
     }
 
     /// Set the content of the dialog body.
-    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
+    pub fn children<V: 'static + Fn(&mut ChildSpawner)>(mut self, children: V) -> Self {
         self.children = Arc::new(children);
         self
     }
 }
 
-impl UiTemplate for DialogBody {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for DialogBody {
+    fn build(&self, builder: &mut TemplateContext) {
         builder
             .spawn((Node::default(), Styles(style_dialog_body)))
             .with_children(|builder| {
@@ -364,7 +444,7 @@ fn style_dialog_footer(ec: &mut EntityCommands) {
 #[derive(Clone)]
 pub struct DialogFooter {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
+    pub children: Arc<dyn Fn(&mut ChildSpawner)>,
 }
 
 impl Default for DialogFooter {
@@ -382,14 +462,14 @@ impl DialogFooter {
     }
 
     /// Set the content of the dialog footer.
-    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
+    pub fn children<V: 'static + Fn(&mut ChildSpawner)>(mut self, children: V) -> Self {
         self.children = Arc::new(children);
         self
     }
 }
 
-impl UiTemplate for DialogFooter {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for DialogFooter {
+    fn build(&self, builder: &mut TemplateContext) {
         builder
             .spawn((Node::default(), Styles(style_dialog_footer)))
             .with_children(|builder| {

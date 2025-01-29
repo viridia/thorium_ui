@@ -11,7 +11,8 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
-    CreateCallback, InvokeUiTemplate, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiTemplate,
+    CreateCallback, DynChildren, Invoke, Template, TemplateContext, ThoriumUiCorePlugin,
+    ThoriumUiHeadlessPlugin,
 };
 
 fn main() {
@@ -51,17 +52,15 @@ fn setup_view_root(mut commands: Commands) {
     let on_click = item.create_callback(|| {
         println!("Clicked!");
     });
-    item.with_children(|builder| {
-        builder.invoke(Clickable { on_click });
-    });
+    item.insert(DynChildren::spawn(Invoke(Clickable { on_click })));
 }
 
 struct Clickable {
     on_click: SystemId,
 }
 
-impl UiTemplate for Clickable {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for Clickable {
+    fn build(&self, builder: &mut TemplateContext) {
         let on_click = self.on_click;
         builder
             .spawn((

@@ -152,7 +152,7 @@ impl<
     > BundleEffect for Switch<M, P, ValueFn>
 {
     fn apply(self, entity: &mut EntityWorldMut) {
-        let value_sys = unsafe { entity.world_mut().register_system(self.value_fn) };
+        let value_sys = entity.world_scope(|world| world.register_system(self.value_fn));
         entity.insert((
             EffectCell::new(SwitchEffect {
                 cases: self.cases,

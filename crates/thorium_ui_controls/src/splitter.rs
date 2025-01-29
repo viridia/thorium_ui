@@ -6,7 +6,9 @@ use bevy::{
     window::SystemCursorIcon,
     winit::cursor::CursorIcon,
 };
-use thorium_ui_core::{CreateMutable, IntoSignal, Signal, StyleDyn, Styles, UiTemplate};
+use thorium_ui_core::{
+    CreateMutable, IntoSignal, Signal, StyleDyn, Styles, Template, TemplateContext,
+};
 use thorium_ui_headless::hover::{Hovering, IsHovering};
 
 use crate::colors;
@@ -129,8 +131,8 @@ impl Default for Splitter {
     }
 }
 
-impl UiTemplate for Splitter {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for Splitter {
+    fn build(&self, builder: &mut TemplateContext) {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let style_splitter = match self.direction {
             SplitterDirection::Horizontal | SplitterDirection::HorizontalReverse => style_hsplitter,

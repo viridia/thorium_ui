@@ -1,7 +1,6 @@
 use bevy::{ecs::world::DeferredWorld, prelude::*, ui};
 use thorium_ui_core::{
     IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
-    UiTemplate,
 };
 use thorium_ui_headless::handle::HandleOrOwnedPath;
 
@@ -59,36 +58,6 @@ impl Default for Icon {
             color: Signal::Constant(colors::FOREGROUND.into()),
             style: StyleHandle::default(),
         }
-    }
-}
-
-impl UiTemplate for Icon {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
-        let icon = self.icon.clone();
-        let size = self.size;
-        let color = self.color;
-
-        builder.spawn((
-            ImageNode { ..default() },
-            UiImageHandle(icon),
-            Styles((
-                move |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(move |mut node| {
-                        node.width = ui::Val::Px(size.x);
-                        node.height = ui::Val::Px(size.y);
-                    });
-                },
-                self.style.clone(),
-            )),
-            StyleDyn::new(
-                move |world: DeferredWorld| color.get(&world),
-                |color, ent| {
-                    ent.entry::<ImageNode>().and_modify(move |mut img| {
-                        img.color = color;
-                    });
-                },
-            ),
-        ));
     }
 }
 

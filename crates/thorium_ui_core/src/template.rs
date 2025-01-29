@@ -1,22 +1,8 @@
+use std::sync::Arc;
+
 use bevy::ecs::{prelude::*, spawn::SpawnableList};
 
 use crate::DynChildOf;
-
-/// Old-style template that builds a UI.
-pub trait UiTemplate {
-    fn build(&self, builder: &mut ChildSpawnerCommands);
-}
-
-pub trait InvokeUiTemplate {
-    fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self;
-}
-
-impl InvokeUiTemplate for ChildSpawnerCommands<'_> {
-    fn invoke<T: UiTemplate>(&mut self, template: T) -> &mut Self {
-        template.build(self);
-        self
-    }
-}
 
 /// New-style template that builds child elements for a parent entity.
 pub trait Template {
@@ -28,7 +14,7 @@ pub trait Template {
 }
 
 /// Wrapper that invokes a template.
-pub struct Invoke<B: Template>(pub B);
+pub struct Invoke<B>(pub B);
 
 impl<B: Template> SpawnableList<DynChildOf> for Invoke<B> {
     fn spawn(self, world: &mut World, entity: Entity) {
@@ -38,6 +24,45 @@ impl<B: Template> SpawnableList<DynChildOf> for Invoke<B> {
 
     fn size_hint(&self) -> usize {
         Template::size_hint(&self.0)
+    }
+}
+
+/// Wrapper that invokes a function with a template context.
+pub struct InvokeWith<F: Fn(&mut TemplateContext)>(pub F);
+
+impl<F: Fn(&mut TemplateContext)> SpawnableList<DynChildOf> for InvokeWith<F> {
+    fn spawn(self, world: &mut World, entity: Entity) {
+        let mut tc = TemplateContext::new(entity, world);
+        (self.0)(&mut tc);
+    }
+
+    fn size_hint(&self) -> usize {
+        0
+    }
+}
+
+pub trait IndirectSpawnableList: Send + Sync {
+    fn spawn(&self, world: &mut World, entity: Entity);
+}
+
+impl<S: SpawnableList<DynChildOf>, F: Fn() -> S + Send + Sync> IndirectSpawnableList for F {
+    fn spawn(&self, world: &mut World, entity: Entity) {
+        self().spawn(world, entity);
+    }
+}
+
+/// Wrapper that invokes a function with a template context.
+pub struct InvokeIndirect(pub Option<Arc<dyn IndirectSpawnableList + Send + Sync + 'static>>);
+
+impl SpawnableList<DynChildOf> for InvokeIndirect {
+    fn spawn(self, world: &mut World, entity: Entity) {
+        if let Some(indirect) = self.0 {
+            indirect.spawn(world, entity);
+        }
+    }
+
+    fn size_hint(&self) -> usize {
+        0
     }
 }
 
@@ -77,23 +102,7 @@ impl<'w> TemplateContext<'w> {
 
     /// Creates a new [`Commands`] instance that writes to the world's command queue
     /// Use [`World::flush`] to apply all queued commands
-    /// TODO: We can get rid this, all we really need is register_system
     pub fn commands(&mut self) -> Commands {
         self.world.commands()
-    }
-}
-
-/// Backwards-compatible invoke that uses the old UiTemplate trait and regular children.
-pub struct UiInvoke<B: UiTemplate>(pub B);
-
-impl<B: UiTemplate> SpawnableList<ChildOf> for UiInvoke<B> {
-    fn spawn(self, world: &mut World, entity: Entity) {
-        world.commands().entity(entity).with_children(|builder| {
-            self.0.build(builder);
-        });
-    }
-
-    fn size_hint(&self) -> usize {
-        0
     }
 }

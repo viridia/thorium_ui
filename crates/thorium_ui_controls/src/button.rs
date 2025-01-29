@@ -16,7 +16,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    InsertWhen, IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, UiTemplate,
+    owned, DynChildren, IndirectSpawnableList, InsertWhen2, IntoSignal, InvokeIndirect, Signal,
+    StyleDyn, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -52,7 +53,7 @@ pub struct Button {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
+    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -116,18 +117,17 @@ impl Button {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
-        self.children = Arc::new(children);
+    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.contents = Some(Arc::new(elts));
         self
     }
 
     /// Set a child which is a text label.
-    pub fn labeled(mut self, label: impl Into<String>) -> Self {
+    pub fn label(mut self, label: impl Into<String>) -> Self {
         let s: String = label.into();
-        self.children = Arc::new(move |builder| {
-            // TODO: Figure out how to avoid the double-copy here.
-            builder.spawn((Text::new(s.clone()), UseInheritedTextStyles));
-        });
+        self.contents = Some(Arc::new(move || {
+            Spawn((Text::new(s.clone()), UseInheritedTextStyles))
+        }));
         self
     }
 
@@ -168,7 +168,7 @@ impl Default for Button {
             variant: Signal::default(),
             size: Size::default(),
             disabled: default(),
-            children: Arc::new(|_builder| {}),
+            contents: None,
             style: StyleHandle::none(),
             on_click: None,
             tab_index: 0,
@@ -179,8 +179,8 @@ impl Default for Button {
     }
 }
 
-impl UiTemplate for Button {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for Button {
+    fn build(&self, builder: &mut TemplateContext) {
         let variant = self.variant;
         let corners = self.corners;
         let minimal = self.minimal;
@@ -213,10 +213,10 @@ impl UiTemplate for Button {
             // Button behaviors and observers.
             CoreButton { on_click },
             AccessibilityNode::from(accesskit::Node::new(Role::Button)),
-            InsertWhen::new(
+            owned![InsertWhen2::new(
                 move |world: DeferredWorld| disabled.get(&world),
                 || InteractionDisabled,
-            ),
+            )],
             Styles((
                 // Calculate button size based on `size` enum.
                 move |ec: &mut EntityCommands| {
@@ -239,61 +239,62 @@ impl UiTemplate for Button {
         ));
         let button_id = button.id();
 
-        button
-            .insert_if(AutoFocus, || self.autofocus)
-            .with_children(|builder| {
-                builder.spawn((
-                    Node {
-                        display: ui::Display::Grid,
-                        position_type: ui::PositionType::Absolute,
-                        left: ui::Val::Px(0.0),
-                        right: ui::Val::Px(0.0),
-                        top: ui::Val::Px(0.0),
-                        bottom: ui::Val::Px(0.0),
-                        ..default()
+        if self.autofocus {
+            button.insert(AutoFocus);
+        }
+
+        button.insert(DynChildren::spawn((
+            Spawn((
+                Node {
+                    display: ui::Display::Grid,
+                    position_type: ui::PositionType::Absolute,
+                    left: ui::Val::Px(0.0),
+                    right: ui::Val::Px(0.0),
+                    top: ui::Val::Px(0.0),
+                    bottom: ui::Val::Px(0.0),
+                    ..default()
+                },
+                Name::new("Button::Background"),
+                corners.to_border_radius(self.size.border_radius()),
+                StyleDyn::new(
+                    move |world: DeferredWorld| {
+                        if minimal {
+                            colors::TRANSPARENT
+                        } else {
+                            let entity = world.entity(button_id);
+                            let pressed = entity
+                                .get::<CoreButtonPressed>()
+                                .map(|pressed| pressed.0)
+                                .unwrap_or_default();
+                            button_bg_color(
+                                variant.get(&world),
+                                world.is_interaction_disabled(button_id),
+                                pressed,
+                                world.is_hovering(button_id),
+                            )
+                        }
                     },
-                    Name::new("Button::Background"),
-                    corners.to_border_radius(self.size.border_radius()),
-                    StyleDyn::new(
-                        move |world: DeferredWorld| {
-                            if minimal {
-                                colors::TRANSPARENT
-                            } else {
-                                let entity = world.entity(button_id);
-                                let pressed = entity
-                                    .get::<CoreButtonPressed>()
-                                    .map(|pressed| pressed.0)
-                                    .unwrap_or_default();
-                                button_bg_color(
-                                    variant.get(&world),
-                                    world.is_interaction_disabled(button_id),
-                                    pressed,
-                                    world.is_hovering(button_id),
-                                )
-                            }
-                        },
-                        |color, ent| {
-                            ent.insert(BackgroundColor(color.into()));
-                        },
-                    ),
-                    StyleDyn::new(
-                        move |world: DeferredWorld| world.is_focus_visible(button_id),
-                        |is_focused, ent| {
-                            if is_focused {
-                                ent.insert(Outline {
-                                    color: colors::FOCUS.into(),
-                                    width: ui::Val::Px(2.0),
-                                    offset: ui::Val::Px(2.0),
-                                });
-                            } else {
-                                ent.remove::<Outline>();
-                            };
-                        },
-                    ),
-                ));
-                let children = self.children.as_ref();
-                (children)(builder);
-            });
+                    |color, ent| {
+                        ent.insert(BackgroundColor(color.into()));
+                    },
+                ),
+                StyleDyn::new(
+                    move |world: DeferredWorld| world.is_focus_visible(button_id),
+                    |is_focused, ent| {
+                        if is_focused {
+                            ent.insert(Outline {
+                                color: colors::FOCUS.into(),
+                                width: ui::Val::Px(2.0),
+                                offset: ui::Val::Px(2.0),
+                            });
+                        } else {
+                            ent.remove::<Outline>();
+                        };
+                    },
+                ),
+            )),
+            InvokeIndirect(self.contents.clone()),
+        )));
     }
 }
 

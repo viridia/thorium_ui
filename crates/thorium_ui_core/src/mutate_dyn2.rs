@@ -119,8 +119,7 @@ impl<
     > BundleEffect for MutateDyn2<P, M, DepsFn, EffectFn>
 {
     fn apply(self, parent: &mut EntityWorldMut) {
-        let world = unsafe { parent.world_mut() };
-        let deps_sys = world.register_system(self.deps_fn);
+        let deps_sys = parent.world_scope(|world| world.register_system(self.deps_fn));
         parent.insert((EffectCell::new(MutateDyn2Effect {
             deps: None,
             deps_sys,

@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, ecs::system::SystemId, prelude::*, ui};
-use thorium_ui_core::{IntoSignal, Signal, StyleHandle, StyleTuple, Styles, UiTemplate};
+use thorium_ui_core::{
+    DynChildren, IndirectSpawnableList, IntoSignal, InvokeIndirect, Signal, StyleHandle,
+    StyleTuple, Styles, Template, TemplateContext,
+};
 
 use crate::{rounded_corners::RoundedCorners, size::Size};
 
@@ -18,9 +21,10 @@ fn style_tool_palette(ec: &mut EntityCommands) {
 }
 
 /// ToolPalette - a grid of tool buttons
+#[derive(Default)]
 pub struct ToolPalette {
     /// The buttons to display.
-    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
+    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
 
     /// Additional styles to be applied to the palette.
     pub style: StyleHandle,
@@ -29,25 +33,15 @@ pub struct ToolPalette {
     pub columns: u16,
 }
 
-impl Default for ToolPalette {
-    fn default() -> Self {
-        Self {
-            children: Arc::new(|_builder| {}),
-            style: Default::default(),
-            columns: Default::default(),
-        }
-    }
-}
-
 impl ToolPalette {
     /// Create a new tool palette.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Set the child views for this element.
-    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
-        self.children = Arc::new(children);
+    /// Set the children for this element.
+    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.contents = Some(Arc::new(elts));
         self
     }
 
@@ -64,30 +58,26 @@ impl ToolPalette {
     }
 }
 
-impl UiTemplate for ToolPalette {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for ToolPalette {
+    fn build(&self, builder: &mut TemplateContext) {
         let columns = self.columns;
         // let size = self.size;
 
-        builder
-            .spawn((
-                Node::default(),
-                Name::new("ToolPalette"),
-                Styles((
-                    style_tool_palette,
-                    move |ec: &mut EntityCommands| {
-                        ec.entry::<Node>().and_modify(move |mut node| {
-                            node.grid_template_columns = vec![ui::RepeatedGridTrack::auto(columns)];
-                        });
-                    },
-                    self.style.clone(),
-                )),
-            ))
-            // .insert(ToolPaletteContext { size: self.size })
-            .insert(AccessibilityNode::from(accesskit::Node::new(Role::Group)))
-            .with_children(|builder| {
-                (self.children.as_ref())(builder);
-            });
+        builder.spawn((
+            Node::default(),
+            Name::new("ToolPalette"),
+            AccessibilityNode::from(accesskit::Node::new(Role::Group)),
+            Styles((
+                style_tool_palette,
+                move |ec: &mut EntityCommands| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
+                        node.grid_template_columns = vec![ui::RepeatedGridTrack::auto(columns)];
+                    });
+                },
+                self.style.clone(),
+            )),
+            DynChildren::spawn(InvokeIndirect(self.contents.clone())),
+        ));
     }
 }
 
@@ -103,7 +93,7 @@ pub struct ToolButton {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: Arc<dyn Fn(&mut ChildSpawnerCommands)>,
+    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
 
     /// Callback called when clicked
     pub(crate) on_click: Option<SystemId>,
@@ -155,8 +145,8 @@ impl ToolButton {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: 'static + Fn(&mut ChildSpawnerCommands)>(mut self, children: V) -> Self {
-        self.children = Arc::new(children);
+    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.contents = Some(Arc::new(elts));
         self
     }
 
@@ -191,7 +181,7 @@ impl Default for ToolButton {
             size: Default::default(),
             variant: Default::default(),
             disabled: Default::default(),
-            children: Arc::new(|_builder| {}),
+            contents: None,
             on_click: Default::default(),
             tab_index: 0,
             corners: RoundedCorners::None,
@@ -200,8 +190,8 @@ impl Default for ToolButton {
     }
 }
 
-impl UiTemplate for ToolButton {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for ToolButton {
+    fn build(&self, builder: &mut TemplateContext) {
         let mut btn = Button::new()
             .size(self.size)
             .variant(self.variant)
@@ -209,8 +199,8 @@ impl UiTemplate for ToolButton {
             .tab_index(self.tab_index)
             .autofocus(self.autofocus)
             .corners(self.corners);
-        btn.children = self.children.clone();
+        btn.contents = self.contents.clone();
         btn.on_click = self.on_click;
-        btn.build(builder);
+        Template::build(&btn, builder);
     }
 }

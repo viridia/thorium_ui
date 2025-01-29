@@ -8,6 +8,7 @@ use bevy::{
 use crate::{
     effect_cell::{AnyEffect, EffectCell},
     template::TemplateContext,
+    OwnedBy,
 };
 
 /// A memoized computation.
@@ -73,11 +74,13 @@ impl CreateMemo for ChildSpawnerCommands<'_> {
         factory: I,
         default_value: P,
     ) -> Memo<P> {
+        let owner = self.target_entity();
         let mut entity = self.spawn_empty();
         let system = entity.commands().register_system(factory);
         entity.insert((
             EffectCell::new(MemoEffect { system }),
             MemoValue(default_value),
+            OwnedBy(owner),
         ));
         Memo {
             entity: entity.id(),
@@ -96,16 +99,45 @@ impl CreateMemo for TemplateContext<'_> {
         factory: I,
         default_value: P,
     ) -> Memo<P> {
+        let owner = self.target_entity();
         let system = self.commands().register_system(factory);
         let mut entity = self.spawn_empty();
         entity.insert((
             EffectCell::new(MemoEffect { system }),
             MemoValue(default_value),
+            OwnedBy(owner),
         ));
         Memo {
             entity: entity.id(),
             marker: PhantomData,
         }
+    }
+}
+
+impl CreateMemo for EntityWorldMut<'_> {
+    fn create_memo<
+        M: Send + Sync + 'static,
+        P: PartialEq + Clone + Send + Sync + 'static,
+        I: IntoSystem<(), P, M> + Send + Sync + 'static,
+    >(
+        &mut self,
+        factory: I,
+        default_value: P,
+    ) -> Memo<P> {
+        let owner = self.id();
+        self.world_scope(|world| {
+            let system = world.register_system(factory);
+            let mut entity = world.spawn_empty();
+            entity.insert((
+                EffectCell::new(MemoEffect { system }),
+                MemoValue(default_value),
+                OwnedBy(owner),
+            ));
+            Memo {
+                entity: entity.id(),
+                marker: PhantomData,
+            }
+        })
     }
 }
 

@@ -14,7 +14,7 @@ use crate::{
     dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     lcs::lcs,
-    DynChildren,
+    DynChildOf, DynChildren, TemplateContext,
 };
 
 pub struct ListItems<Item: Clone> {
@@ -55,8 +55,8 @@ struct ForEachEffect<
     'a,
     Item: Clone + 'static,
     CmpFn: Fn(&Item, &Item) -> bool,
-    EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-    FallbackChildren: SpawnableList<ChildOf> + 'static,
+    EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+    FallbackChildren: SpawnableList<DynChildOf> + 'static,
     FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
 > where
     Self: Send + Sync,
@@ -72,8 +72,8 @@ struct ForEachEffect<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<DynChildOf> + 'static,
         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackChildren, FallbackFn>
 {
@@ -115,9 +115,8 @@ impl<
             // Build new elements
             for i in next_range {
                 let child_id = world.spawn((GhostNode::default(), Fragment)).id();
-                world.commands().entity(child_id).with_children(|builder| {
-                    (self.each)(&next_items[i], builder);
-                });
+                let mut tc = TemplateContext::new(child_id, world);
+                (self.each)(&next_items[i], &mut tc);
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -154,9 +153,8 @@ impl<
             // Insertions
             for i in next_range.start..next_start {
                 let child_id = world.spawn((GhostNode::default(), Fragment)).id();
-                world.commands().entity(child_id).with_children(|builder| {
-                    (self.each)(&next_items[i], builder);
-                });
+                let mut tc = TemplateContext::new(child_id, world);
+                (self.each)(&next_items[i], &mut tc);
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -196,9 +194,8 @@ impl<
             // Insertions
             for i in next_end..next_range.end {
                 let child_id = world.spawn((GhostNode::default(), Fragment)).id();
-                world.commands().entity(child_id).with_children(|builder| {
-                    (self.each)(&next_items[i], builder);
-                });
+                let mut tc = TemplateContext::new(child_id, world);
+                (self.each)(&next_items[i], &mut tc);
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -211,8 +208,8 @@ impl<
 impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
-        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<DynChildOf> + 'static,
         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackChildren, FallbackFn>
 {
@@ -243,21 +240,18 @@ impl<
                 if prev_len > 0 || self.first {
                     self.first = false;
                     // Transitioning from non-empty to empty, generate fallback.
-                    world.entity_mut(parent).despawn_related::<Children>();
                     world.entity_mut(parent).despawn_related::<DynChildren>();
                     (self.fallback)().spawn(world, parent);
-                    // world.commands().entity(parent).with_children(|builder| {
-                    //     (self.fallback)(builder);
-                    // });
                 }
             } else {
                 if prev_len == 0 {
                     // Transitioning from non-empty to empty, delete fallback.
-                    world.entity_mut(parent).despawn_related::<Children>();
                     world.entity_mut(parent).despawn_related::<DynChildren>();
                 }
-                world.entity_mut(parent).remove::<Children>();
-                world.entity_mut(parent).add_children(&children);
+                world.entity_mut(parent).remove::<DynChildren>();
+                world
+                    .entity_mut(parent)
+                    .add_related::<DynChildOf>(&children);
             }
         }
     }
@@ -273,8 +267,8 @@ pub struct For<
     Item: Send + Sync + 'static + Clone,
     // CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
     ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-    EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-    FallbackChildren: SpawnableList<ChildOf> + 'static,
+    EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+    FallbackChildren: SpawnableList<DynChildOf> + 'static,
     FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
 > {
     items_fn: ItemFn,
@@ -290,8 +284,8 @@ impl<
         Item: Send + Sync + 'static + Clone,
         // CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<DynChildOf> + 'static,
         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     > For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
 {
@@ -329,13 +323,13 @@ impl<
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<DynChildOf> + 'static,
         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     > BundleEffect for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
 {
     fn apply(self, entity: &mut EntityWorldMut) {
-        let item_sys = unsafe { entity.world_mut().register_system(self.items_fn) };
+        let item_sys = entity.world_scope(|world| world.register_system(self.items_fn));
         entity.insert((
             EffectCell::new(ForEachEffect {
                 item_sys,
@@ -345,7 +339,7 @@ impl<
                 state: Vec::new(),
                 first: true,
             }),
-            GhostNode::default(),
+            // GhostNode::default(),
             Fragment,
         ));
     }
@@ -356,8 +350,8 @@ impl<
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<DynChildOf> + 'static,
         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     > DynamicBundle for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
 {
@@ -376,8 +370,8 @@ unsafe impl<
         M: Send + Sync + 'static,
         Item: Send + Sync + 'static + Clone,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
-        EachFn: Fn(&Item, &mut ChildSpawnerCommands) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<ChildOf> + 'static,
+        EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
+        FallbackChildren: SpawnableList<DynChildOf> + 'static,
         FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
     > Bundle for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
 {

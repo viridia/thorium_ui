@@ -2,9 +2,8 @@ use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use thorium_ui_core::{
-    Cond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
+    Cond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
-// use bevy_tabindex::TabIndex;
 
 use crate::materials::SwatchRectMaterial;
 
@@ -83,8 +82,8 @@ impl Swatch {
     }
 }
 
-impl UiTemplate for Swatch {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for Swatch {
+    fn build(&self, builder: &mut TemplateContext) {
         let color = self.color;
         let selected = self.selected;
         let on_click = self.on_click;

@@ -5,8 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles,
-    UiTemplate,
+    CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, Template,
+    TemplateContext,
 };
 use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
 
@@ -214,8 +214,8 @@ impl Default for GradientSlider {
     }
 }
 
-impl UiTemplate for GradientSlider {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for GradientSlider {
+    fn build(&self, builder: &mut TemplateContext) {
         // This should really be an effect.
         let color_stops: Signal<(usize, [Vec4; 8])> = {
             let gradient = self.gradient;

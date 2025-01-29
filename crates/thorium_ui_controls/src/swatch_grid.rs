@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateCallback, For, IntoSignal, InvokeUiTemplate, ListItems, Signal, StyleHandle, StyleTuple,
+    dyn_children, CreateCallback, For, IntoSignal, ListItems, Signal, StyleHandle, StyleTuple,
     Styles, Template, TemplateContext,
 };
 
@@ -138,7 +138,7 @@ impl Template for SwatchGrid {
                 },
                 self.style.clone(),
             )),
-            children![For::each(
+            dyn_children![For::each(
                 move |mut items: InMut<ListItems<Option<(Srgba, bool)>>>, world: DeferredWorld| {
                     let colors = colors.get_clone(&world);
                     let selected_color = selected.get(&world);

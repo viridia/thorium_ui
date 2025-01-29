@@ -52,6 +52,6 @@ impl core::ops::Deref for Owned {
 #[macro_export]
 macro_rules! owned {
     [$($child:expr),*$(,)?] => {
-       Owned::spawn(($(Spawn($child)),*))
+       thorium_ui_core::Owned::spawn(($(Spawn($child)),*))
     };
 }

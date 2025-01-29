@@ -2,7 +2,8 @@
 
 use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
 use thorium_ui::{
-    CreateCallback, CreateMemo, InvokeUiTemplate, StyleDyn, Styles, ThoriumUiCorePlugin,
+    CreateCallback, CreateMemo, DynChildren, Invoke, StyleDyn, Styles, Template,
+    ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     colors, InheritableFontColor, Splitter, SplitterDirection, ThoriumUiControlsPlugin,
@@ -53,88 +54,87 @@ fn main() {
 fn setup_view_root(mut commands: Commands) {
     let camera = commands.spawn((Camera::default(), Camera2d)).id();
 
-    commands
-        .spawn(Node::default())
-        .insert((
-            UiTargetCamera(camera),
-            TabGroup::default(),
-            Styles(style_test),
-        ))
-        .with_children(|builder| {
-            let left_width = builder.create_memo(|res: Res<LeftPanelWidth>| res.0, 0.);
-            let on_resize_left =
-                builder.create_callback_arg(|value: In<f32>, mut world: DeferredWorld| {
-                    world.resource_mut::<LeftPanelWidth>().0 = value.max(100.);
-                });
-            let right_width = builder.create_memo(|res: Res<RightPanelWidth>| res.0, 0.);
-            let on_resize_right =
-                builder.create_callback_arg(|value: In<f32>, mut world: DeferredWorld| {
-                    world.resource_mut::<RightPanelWidth>().0 = value.max(100.);
-                });
+    commands.spawn(Node::default()).insert((
+        UiTargetCamera(camera),
+        TabGroup::default(),
+        Styles(style_test),
+        DynChildren::spawn(Invoke(SplitterDemo)),
+    ));
+}
 
-            // let dummy_text = "The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps. Bawds jog, flick quartz, vex nymphs. Waltz, bad nymph, for quick jigs vex! Fox nymphs grab quick-jived waltz.";
+struct SplitterDemo;
 
-            builder
-                .spawn((
-                    Node::default(),
-                    Styles(style_panel),
-                    StyleDyn::new(
-                        |res: Res<LeftPanelWidth>| res.0,
-                        |width, ec| {
-                            ec.entry::<Node>().and_modify(move |mut node| {
-                                node.width = ui::Val::Px(width);
-                            });
-                        },
-                    ),
-                ))
-                .with_children(|builder| {
-                    builder.spawn((Text::new("Left"), UseInheritedTextStyles));
-                    // builder.invoke(
-                    //     ScrollView::new()
-                    //         .style(|ec: &mut EntityCommands| {
-                    //             sb.flex_grow(1.);
-                    //         })
-                    //         .scroll_enable_x(true)
-                    //         .scroll_enable_y(true)
-                    //         .children(|builder| {
-                    //             builder.text(dummy_text.to_owned());
-                    //         }),
-                    // );
-                });
-
-            builder.invoke(Splitter::new().value(left_width).on_change(on_resize_left));
-
-            builder.spawn((
-                Node::default(),
-                Styles((style_panel, |ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(|mut node| {
-                        node.flex_grow = 1.;
-                    });
-                })),
-                children![(Text::new("Middle"), UseInheritedTextStyles)],
-            ));
-
-            builder.invoke(
-                Splitter::new()
-                    .direction(SplitterDirection::VerticalReverse)
-                    .value(right_width)
-                    .on_change(on_resize_right),
-            );
-
-            builder.spawn((
-                Node::default(),
-                Styles(style_panel),
-                StyleDyn::new(
-                    |res: Res<RightPanelWidth>| res.0,
-                    |width, ec| {
-                        ec.entry::<Node>().and_modify(move |mut node| {
-                            node.width = ui::Val::Px(width);
-                        });
-                    },
-                ),
-                children![(Text::new("Right"), UseInheritedTextStyles)],
-            ));
+impl Template for SplitterDemo {
+    fn build(&self, tc: &mut thorium_ui::TemplateContext) {
+        let left_width = tc.create_memo(|res: Res<LeftPanelWidth>| res.0, 0.);
+        let on_resize_left = tc.create_callback_arg(|value: In<f32>, mut world: DeferredWorld| {
+            world.resource_mut::<LeftPanelWidth>().0 = value.max(100.);
         });
+        let right_width = tc.create_memo(|res: Res<RightPanelWidth>| res.0, 0.);
+        let on_resize_right = tc.create_callback_arg(|value: In<f32>, mut world: DeferredWorld| {
+            world.resource_mut::<RightPanelWidth>().0 = value.max(100.);
+        });
+
+        // let dummy_text = "The quick, brown fox jumps over a lazy dog. DJs flock by when MTV ax quiz prog. Junk MTV quiz graced by fox whelps. Bawds jog, flick quartz, vex nymphs. Waltz, bad nymph, for quick jigs vex! Fox nymphs grab quick-jived waltz.";
+
+        tc.spawn((
+            Node::default(),
+            Styles(style_panel),
+            StyleDyn::new(
+                |res: Res<LeftPanelWidth>| res.0,
+                |width, ec| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
+                        node.width = ui::Val::Px(width);
+                    });
+                },
+            ),
+            Children::spawn(Spawn((Text::new("Left"), UseInheritedTextStyles))),
+        ));
+        // builder.invoke(
+        //     ScrollView::new()
+        //         .style(|ec: &mut EntityCommands| {
+        //             sb.flex_grow(1.);
+        //         })
+        //         .scroll_enable_x(true)
+        //         .scroll_enable_y(true)
+        //         .children(|builder| {
+        //             builder.text(dummy_text.to_owned());
+        //         }),
+        // );
+
+        tc.invoke(Splitter::new().value(left_width).on_change(on_resize_left));
+
+        tc.spawn((
+            Node::default(),
+            Styles((style_panel, |ec: &mut EntityCommands| {
+                ec.entry::<Node>().and_modify(|mut node| {
+                    node.flex_grow = 1.;
+                });
+            })),
+            children![(Text::new("Middle"), UseInheritedTextStyles)],
+        ));
+
+        tc.invoke(
+            Splitter::new()
+                .direction(SplitterDirection::VerticalReverse)
+                .value(right_width)
+                .on_change(on_resize_right),
+        );
+
+        tc.spawn((
+            Node::default(),
+            Styles(style_panel),
+            StyleDyn::new(
+                |res: Res<RightPanelWidth>| res.0,
+                |width, ec| {
+                    ec.entry::<Node>().and_modify(move |mut node| {
+                        node.width = ui::Val::Px(width);
+                    });
+                },
+            ),
+            children![(Text::new("Right"), UseInheritedTextStyles)],
+        ));
+    }
 }
 
 pub fn close_on_esc(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {

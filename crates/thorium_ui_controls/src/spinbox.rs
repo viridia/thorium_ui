@@ -6,8 +6,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    CreateCallback, CreateCond, CreateMemo, CreateMutable, IntoSignal, InvokeUiTemplate, MutateDyn,
-    Signal, StyleHandle, StyleTuple, Styles, UiTemplate,
+    Cond, CreateCallback, CreateMemo, CreateMutable, DynChildOf, IntoSignal, Invoke, MutateDyn,
+    Signal, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 
 use crate::{
@@ -184,8 +184,8 @@ impl Default for SpinBox {
     }
 }
 
-impl UiTemplate for SpinBox {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for SpinBox {
+    fn build(&self, builder: &mut TemplateContext) {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let mut spinbox = builder.spawn((
             Node::default(),
@@ -225,20 +225,20 @@ impl UiTemplate for SpinBox {
                 }
             });
 
-        spinbox.with_children(|builder| {
-            let dec_disabled = builder.create_memo(
-                move |world: DeferredWorld| value.get(&world) <= min.get(&world),
-                false,
-            );
-            let inc_disabled = builder.create_memo(
-                move |world: DeferredWorld| value.get(&world) >= max.get(&world),
-                false,
-            );
+        let dec_disabled = spinbox.create_memo(
+            move |world: DeferredWorld| value.get(&world) <= min.get(&world),
+            false,
+        );
+        let inc_disabled = spinbox.create_memo(
+            move |world: DeferredWorld| value.get(&world) >= max.get(&world),
+            false,
+        );
 
-            builder.cond(
+        spinbox.with_related::<DynChildOf>(|builder| {
+            builder.spawn(Cond::new(
                 move || true,
-                move |builder| {
-                    builder.invoke(
+                move || {
+                    Invoke(
                         IconButton::new(
                             "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
                         )
@@ -247,10 +247,10 @@ impl UiTemplate for SpinBox {
                         .minimal(true)
                         .disabled(dec_disabled)
                         .on_click(dec_click),
-                    );
+                    )
                 },
-                |_| {},
-            );
+                || (),
+            ));
 
             builder
                 .spawn((
@@ -336,10 +336,10 @@ impl UiTemplate for SpinBox {
                     ));
                 });
 
-            builder.cond(
+            builder.spawn(Cond::new(
                 move || true,
-                move |builder| {
-                    builder.invoke(
+                move || {
+                    Invoke(
                         IconButton::new(
                             "embedded://thorium_ui_controls/assets/icons/chevron_right.png",
                         )
@@ -348,10 +348,10 @@ impl UiTemplate for SpinBox {
                         .minimal(true)
                         .disabled(inc_disabled)
                         .on_click(inc_click),
-                    );
+                    )
                 },
-                |_| {},
-            );
+                || (),
+            ));
         });
     }
 }

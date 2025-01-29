@@ -12,7 +12,8 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    MutateDyn, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin, UiInvoke, UiTemplate,
+    DynChildren, Invoke, MutateDyn, Template, TemplateContext, ThoriumUiCorePlugin,
+    ThoriumUiHeadlessPlugin,
 };
 
 fn main() {
@@ -48,14 +49,14 @@ fn setup_view_root(mut commands: Commands) {
             ..default()
         },
         BorderColor(css::ALICE_BLUE.into()),
-        Children::spawn((UiInvoke(Hoverable),)),
+        DynChildren::spawn((Invoke(Hoverable),)),
     ));
 }
 
 struct Hoverable;
 
-impl UiTemplate for Hoverable {
-    fn build(&self, builder: &mut ChildSpawnerCommands) {
+impl Template for Hoverable {
+    fn build(&self, builder: &mut TemplateContext) {
         let mut item = builder.spawn((
             Node {
                 border: ui::UiRect::all(ui::Val::Px(5.)),

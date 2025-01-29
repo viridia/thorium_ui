@@ -4,8 +4,8 @@ use bevy::{
 };
 use thorium_ui::{
     hover::{Hovering, IsHovering},
-    CreateCallback, CreateMemo, CreateMutable, InvokeUiTemplate, MutateDyn, Styles,
-    ThoriumUiCorePlugin,
+    CreateCallback, CreateMemo, CreateMutable, DynChildren, Invoke, InvokeWith, MutateDyn, Styles,
+    Template, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     animation::{BistableTransition, BistableTransitionState},
@@ -50,33 +50,22 @@ fn main() {
 fn setup_view_root(mut commands: Commands) {
     let camera = commands.spawn((Camera::default(), Camera2d)).id();
 
-    commands
-        .spawn((
-            Node::default(),
-            UiTargetCamera(camera),
-            TabGroup::default(),
-            Styles(style_test),
-        ))
-        .with_children(|builder| {
-            builder.spawn((Text::new("bistable_transition"), UseInheritedTextStyles));
-            let mut row = builder.spawn((
-                Node::default(),
-                Hovering::default(),
-                BistableTransition::new(false, 0.3),
-                Styles(style_row),
-            ));
-            let row_id = row.id();
-            row.insert(MutateDyn::new(
-                move |world: DeferredWorld| world.is_hovering(row_id),
-                |hovering, ent| {
-                    ent.entry::<BistableTransition>()
-                        .and_modify(|mut transition| {
-                            transition.set_open(hovering);
-                        });
-                },
-            ));
-            row.with_children(|builder| {
-                let color = builder.create_memo(
+    commands.spawn((
+        Node::default(),
+        UiTargetCamera(camera),
+        TabGroup::default(),
+        Styles(style_test),
+        DynChildren::spawn((
+            Spawn((Text::new("bistable_transition"), UseInheritedTextStyles)),
+            InvokeWith(|builder| {
+                let mut row = builder.spawn((
+                    Node::default(),
+                    Hovering::default(),
+                    BistableTransition::new(false, 0.3),
+                    Styles(style_row),
+                ));
+                let row_id = row.id();
+                let color = row.create_memo(
                     move |world: DeferredWorld| match world
                         .entity(row_id)
                         .get::<BistableTransition>()
@@ -90,89 +79,110 @@ fn setup_view_root(mut commands: Commands) {
                     },
                     palettes::css::WHITE,
                 );
-                builder.invoke(Swatch::new(color).style(|ec: &mut EntityCommands| {
-                    ec.entry::<Node>().and_modify(|mut node| {
-                        node.width = ui::Val::Px(64.);
-                    });
-                }));
-            });
-
-            builder.spawn((Text::new("DisclosureToggle"), UseInheritedTextStyles));
-            builder.spawn(Node::default()).with_children(|builder| {
-                let expanded = builder.create_mutable(false);
-                let on_change = builder.create_callback_arg(
-                    move |value: In<bool>, mut world: DeferredWorld| {
-                        expanded.set(&mut world, *value);
-                    },
-                );
-                builder.invoke(
-                    DisclosureToggle::new()
-                        .expanded(expanded)
-                        .on_change(on_change),
-                );
-            });
-
-            builder.spawn((Text::new("Dialog"), UseInheritedTextStyles));
-            builder.spawn(Node::default()).with_children(|builder| {
-                let open = builder.create_mutable(false);
-                let on_open = builder.create_callback(move |mut world: DeferredWorld| {
-                    open.set(&mut world, true);
-                });
-                let on_close = builder.create_callback(move |mut world: DeferredWorld| {
-                    open.set(&mut world, false);
-                });
-                let on_exit = builder.create_callback(move || {
-                    println!("Dialog exited");
-                });
-                builder.invoke(Button::new().labeled("Open").on_click(on_open));
-                builder.invoke(
-                    Dialog::new()
-                        .open(open.signal())
-                        .on_close(on_close)
-                        .on_exited(on_exit)
-                        .children(move |builder| {
-                            builder.invoke(DialogHeader::new().children(|builder| {
-                                builder.spawn((Text::new("Dialog Header"), UseInheritedTextStyles));
-                            }));
-                            builder.invoke(DialogBody::new().children(|builder| {
-                                builder.spawn((Text::new("Dialog Body"), UseInheritedTextStyles));
-                            }));
-                            builder.invoke(DialogFooter::new().children(move |builder| {
-                                builder.invoke(Button::new().labeled("Close").on_click(on_close));
-                            }));
-                        }),
-                );
-            });
-
-            builder.spawn((Text::new("Text"), UseInheritedTextStyles));
-            builder
-                .spawn((
-                    TextLayout::default(),
-                    Text::default(),
-                    Styles((typography::text_default, |ec: &mut EntityCommands| {
-                        ec.insert(InheritableFontSize(32.));
-                        ec.insert(InheritableFontColor(palettes::css::GRAY.into()));
-                    })),
-                ))
-                .with_children(|builder| {
-                    builder.spawn((
+                row.insert((
+                    MutateDyn::new(
+                        move |world: DeferredWorld| world.is_hovering(row_id),
+                        |hovering, ent| {
+                            ent.entry::<BistableTransition>()
+                                .and_modify(|mut transition| {
+                                    transition.set_open(hovering);
+                                });
+                        },
+                    ),
+                    DynChildren::spawn(Invoke(Swatch::new(color).style(
+                        |ec: &mut EntityCommands| {
+                            ec.entry::<Node>().and_modify(|mut node| {
+                                node.width = ui::Val::Px(64.);
+                            });
+                        },
+                    ))),
+                ));
+            }),
+            Spawn((Text::new("DisclosureToggle"), UseInheritedTextStyles)),
+            Spawn((
+                Node::default(),
+                DynChildren::spawn(InvokeWith(|builder| {
+                    let expanded = builder.create_mutable(false);
+                    let on_change = builder.create_callback_arg(
+                        move |value: In<bool>, mut world: DeferredWorld| {
+                            expanded.set(&mut world, *value);
+                        },
+                    );
+                    builder.invoke(
+                        DisclosureToggle::new()
+                            .expanded(expanded)
+                            .on_change(on_change),
+                    );
+                })),
+            )),
+            Spawn((Text::new("Dialog"), UseInheritedTextStyles)),
+            Spawn((Node::default(), DynChildren::spawn(Invoke(DialogDemo)))),
+            Spawn((Text::new("Text"), UseInheritedTextStyles)),
+            Spawn((
+                TextLayout::default(),
+                Text::default(),
+                Styles((typography::text_default, |ec: &mut EntityCommands| {
+                    ec.insert(InheritableFontSize(32.));
+                    ec.insert(InheritableFontColor(palettes::css::GRAY.into()));
+                })),
+                DynChildren::spawn((
+                    Spawn((
                         Text("The quick brown fox jumps over the ".to_string()),
                         TextColor::default(),
                         UseInheritedTextStyles,
-                    ));
-                    builder.spawn((
+                    )),
+                    Spawn((
                         Text("lazy".to_string()),
                         TextColor::default(),
                         UseInheritedTextStyles,
                         AnimateTextColor { hue: 0. },
-                    ));
-                    builder.spawn((
+                    )),
+                    Spawn((
                         Text(" dog".to_string()),
                         TextColor::default(),
                         UseInheritedTextStyles,
-                    ));
-                });
+                    )),
+                )),
+            )),
+        )),
+    ));
+}
+
+struct DialogDemo;
+
+impl Template for DialogDemo {
+    fn build(&self, tc: &mut thorium_ui::TemplateContext) {
+        let open = tc.create_mutable(false);
+        let on_open = tc.create_callback(move |mut world: DeferredWorld| {
+            open.set(&mut world, true);
         });
+        let on_close = tc.create_callback(move |mut world: DeferredWorld| {
+            open.set(&mut world, false);
+        });
+        let on_exit = tc.create_callback(move || {
+            println!("Dialog exited");
+        });
+        tc.invoke(Button::new().label("Open").on_click(on_open));
+        tc.invoke(
+            Dialog::new()
+                .open(open.signal())
+                .on_close(on_close)
+                .on_exited(on_exit)
+                .contents(move || {
+                    (
+                        Invoke(DialogHeader::new().children(|builder| {
+                            builder.spawn((Text::new("Dialog Header"), UseInheritedTextStyles));
+                        })),
+                        Invoke(DialogBody::new().children(|builder| {
+                            builder.spawn((Text::new("Dialog Body"), UseInheritedTextStyles));
+                        })),
+                        Invoke(DialogFooter::new().children(move |_builder| {
+                            // builder.invoke(Button::new().label("Close").on_click(on_close));
+                        })),
+                    )
+                }),
+        );
+    }
 }
 
 #[derive(Component)]
