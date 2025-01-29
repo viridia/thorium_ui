@@ -118,12 +118,11 @@ impl CreateCallback for EntityWorldMut<'_> {
         &mut self,
         callback: I,
     ) -> SystemId<(), ()> {
-        let system_id = unsafe { self.world_mut().register_system(callback) };
         let owner = self.id();
-        unsafe {
-            self.world_mut()
-                .spawn((CallbackCell(system_id), OwnedBy(owner)))
-        };
+        let system_id = self.world_scope(|world| world.register_system(callback));
+        self.world_scope(|world| {
+            world.spawn((CallbackCell(system_id), OwnedBy(owner)));
+        });
         system_id
     }
 
@@ -132,11 +131,10 @@ impl CreateCallback for EntityWorldMut<'_> {
         callback: I,
     ) -> SystemId<In<A>, ()> {
         let owner = self.id();
-        let system_id = unsafe { self.world_mut().register_system(callback) };
-        unsafe {
-            self.world_mut()
-                .spawn((CallbackCell(system_id), OwnedBy(owner)))
-        };
+        let system_id = self.world_scope(|world| world.register_system(callback));
+        self.world_scope(|world| {
+            world.spawn((CallbackCell(system_id), OwnedBy(owner)));
+        });
         system_id
     }
 }

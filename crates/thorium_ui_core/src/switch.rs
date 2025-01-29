@@ -11,7 +11,7 @@ use crate::{
     dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     owner::Owned,
-    DynChildOf, DynChildSpawnerCommands, DynChildren,
+    Computations, DynChildOf, DynChildSpawnerCommands, DynChildren,
 };
 
 pub struct CaseBuilder<'a, Value: Send + Sync> {
@@ -89,6 +89,7 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 let mut commands = world.commands();
                 let mut entt = commands.entity(entity);
                 entt.despawn_related::<DynChildren>();
+                entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if index < self.cases.len() {
                     entt.with_related::<DynChildOf>(|builder| {

@@ -12,7 +12,7 @@ use crate::{
     dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     owner::Owned,
-    DynChildOf, DynChildren,
+    Computations, DynChildOf, DynChildren,
 };
 
 pub struct Cond<
@@ -155,6 +155,7 @@ impl<
                 self.first = false;
                 let mut entt = world.entity_mut(entity);
                 entt.despawn_related::<DynChildren>();
+                entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if test {
                     (self.pos)().spawn(world, entity);

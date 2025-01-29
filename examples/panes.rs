@@ -2,7 +2,7 @@
 
 use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
 use thorium_ui::{
-    CreateCallback, CreateMemo, DynChildren, Invoke, StyleDyn, Styles, Template,
+    computations, CreateCallback, CreateMemo, DynChildren, Invoke, Calc, Styles, Template,
     ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
@@ -80,14 +80,14 @@ impl Template for SplitterDemo {
         tc.spawn((
             Node::default(),
             Styles(style_panel),
-            StyleDyn::new(
+            computations![Calc::new(
                 |res: Res<LeftPanelWidth>| res.0,
                 |width, ec| {
                     ec.entry::<Node>().and_modify(move |mut node| {
                         node.width = ui::Val::Px(width);
                     });
                 },
-            ),
+            )],
             Children::spawn(Spawn((Text::new("Left"), UseInheritedTextStyles))),
         ));
         // builder.invoke(
@@ -124,14 +124,14 @@ impl Template for SplitterDemo {
         tc.spawn((
             Node::default(),
             Styles(style_panel),
-            StyleDyn::new(
+            computations![Calc::new(
                 |res: Res<RightPanelWidth>| res.0,
                 |width, ec| {
                     ec.entry::<Node>().and_modify(move |mut node| {
                         node.width = ui::Val::Px(width);
                     });
                 },
-            ),
+            )],
             children![(Text::new("Right"), UseInheritedTextStyles)],
         ));
     }

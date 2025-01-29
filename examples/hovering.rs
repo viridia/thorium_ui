@@ -11,8 +11,9 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
+    computations,
     hover::{Hovering, IsHovering},
-    DynChildren, Invoke, MutateDyn, Template, TemplateContext, ThoriumUiCorePlugin,
+    DynChildren, Invoke, Calc, Template, TemplateContext, ThoriumUiCorePlugin,
     ThoriumUiHeadlessPlugin,
 };
 
@@ -65,7 +66,7 @@ impl Template for Hoverable {
             Hovering::default(),
         ));
         let id = item.id();
-        item.insert(MutateDyn::new(
+        item.insert(computations![Calc::new(
             move |world: DeferredWorld| world.is_hovering(id),
             |hovering, entity| {
                 entity.insert(BorderColor(if hovering {
@@ -74,7 +75,7 @@ impl Template for Hoverable {
                     css::DARK_GREEN.into()
                 }));
             },
-        ));
+        )]);
         item.with_child((Text::new("Hover me!"),));
     }
 }

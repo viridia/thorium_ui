@@ -3,8 +3,9 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
+    computations,
     hover::{Hovering, IsHovering},
-    CreateCallback, CreateMemo, CreateMutable, DynChildren, Invoke, InvokeWith, MutateDyn, Styles,
+    Calc, CreateCallback, CreateMemo, CreateMutable, DynChildren, Invoke, InvokeWith, Styles,
     Template, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
@@ -80,7 +81,7 @@ fn setup_view_root(mut commands: Commands) {
                     palettes::css::WHITE,
                 );
                 row.insert((
-                    MutateDyn::new(
+                    computations![Calc::new(
                         move |world: DeferredWorld| world.is_hovering(row_id),
                         |hovering, ent| {
                             ent.entry::<BistableTransition>()
@@ -88,7 +89,7 @@ fn setup_view_root(mut commands: Commands) {
                                     transition.set_open(hovering);
                                 });
                         },
-                    ),
+                    )],
                     DynChildren::spawn(Invoke(Swatch::new(color).style(
                         |ec: &mut EntityCommands| {
                             ec.entry::<Node>().and_modify(|mut node| {

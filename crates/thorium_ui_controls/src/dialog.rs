@@ -8,8 +8,8 @@ use bevy::{
     ui::{self, experimental::GhostNode},
 };
 use thorium_ui_core::{
-    Cond, DynChildren, IndirectSpawnableList, InvokeIndirect, MutateDyn, Signal, Styles, Template,
-    TemplateContext,
+    computations, dyn_children, Cond, DynChildren, IndirectSpawnableList, Calc, Signal,
+    SpawnIndirect, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::CoreBarrier;
 
@@ -144,12 +144,12 @@ impl Template for Dialog {
         let transition_entity = builder.spawn((
             GhostNode::default(),
             BistableTransition::new(false, TRANSITION_DURATION).set_exit_callback(on_exited),
-            MutateDyn::new(
+            computations![Calc::new(
                 move |world: DeferredWorld| open.get(&world),
                 |open, ent| {
                     ent.get_mut::<BistableTransition>().unwrap().set_open(open);
                 },
-            ),
+            )],
         ));
         let transition_id = transition_entity.id();
 
@@ -169,7 +169,7 @@ impl Template for Dialog {
                     Name::new("Dialog::Overlay"),
                     Styles(style_dialog_barrier),
                     CoreBarrier { on_close },
-                    MutateDyn::new(
+                    computations![Calc::new(
                         move |world: DeferredWorld| match world
                             .entity(transition_id)
                             .get::<BistableTransition>()
@@ -190,8 +190,8 @@ impl Template for Dialog {
                                 TRANSITION_DURATION,
                             );
                         },
-                    ),
-                    DynChildren::spawn(Spawn((
+                    )],
+                    dyn_children!((
                         Node::default(),
                         Name::new("Dialog"),
                         Styles((
@@ -207,7 +207,7 @@ impl Template for Dialog {
                             order: 0,
                             modal: true,
                         },
-                        MutateDyn::new(
+                        computations![Calc::new(
                             move |world: DeferredWorld| match world
                                 .entity(transition_id)
                                 .get::<BistableTransition>()
@@ -227,105 +227,20 @@ impl Template for Dialog {
                                     TRANSITION_DURATION,
                                 );
                             },
-                        ),
-                        DynChildren::spawn(InvokeIndirect(contents.clone())),
-                    ))),
+                        )],
+                        DynChildren::spawn(SpawnIndirect(contents.clone())),
+                    )),
                 ))
             },
             || (),
         ));
 
-        // builder.cond(
-        //     move |world: DeferredWorld| {
-        //         world
-        //             .entity(transition_id)
-        //             .get::<BistableTransition>()
-        //             .unwrap()
-        //             .state
-        //             != BistableTransitionState::Exited
-        //     },
-        //     move |builder| {
-        //         // Portal::new(
-        //         builder
-        //             .spawn((
-        //                 Node::default(),
-        //                 Name::new("Dialog::Overlay"),
-        //                 Styles(style_dialog_barrier),
-        //                 CoreBarrier { on_close },
-        //                 MutateDyn::new(
-        //                     move |world: DeferredWorld| match world
-        //                         .entity(transition_id)
-        //                         .get::<BistableTransition>()
-        //                         .unwrap()
-        //                         .state
-        //                     {
-        //                         BistableTransitionState::Entering
-        //                         | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
-        //                         BistableTransitionState::Exiting
-        //                         | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
-        //                     },
-        //                     move |color, ent| {
-        //                         AnimatedTransition::<AnimatedBackgroundColor>::start(
-        //                             ent,
-        //                             color,
-        //                             None,
-        //                             TRANSITION_DURATION,
-        //                         );
-        //                     },
-        //                 ),
-        //             ))
-        //             .with_children(|builder| {
-        //                 builder
-        //                     .spawn((
-        //                         Node::default(),
-        //                         Name::new("Dialog"),
-        //                         Styles((
-        //                             text_default,
-        //                             style_dialog,
-        //                             move |ec: &mut EntityCommands| {
-        //                                 ec.entry::<Node>().and_modify(move |mut node| {
-        //                                     node.width = width;
-        //                                 });
-        //                             },
-        //                         )),
-        //                         TabGroup {
-        //                             order: 0,
-        //                             modal: true,
-        //                         },
-        //                         MutateDyn::new(
-        //                             move |world: DeferredWorld| match world
-        //                                 .entity(transition_id)
-        //                                 .get::<BistableTransition>()
-        //                                 .unwrap()
-        //                                 .state
-        //                             {
-        //                                 BistableTransitionState::Entering => (0.0, 1.0),
-        //                                 BistableTransitionState::Exiting => (1.0, 0.0),
-        //                                 BistableTransitionState::Entered => (1.0, 1.0),
-        //                                 BistableTransitionState::Exited => (0.0, 0.0),
-        //                             },
-        //                             move |(origin, target), ent| {
-        //                                 AnimatedTransition::<AnimatedScale>::start(
-        //                                     ent,
-        //                                     Vec3::splat(target),
-        //                                     Some(Vec3::splat(origin)),
-        //                                     TRANSITION_DURATION,
-        //                                 );
-        //                             },
-        //                         ),
-        //                     ))
+        // TODO: re-enable this code.
         //                     .observe(|mut trigger: Trigger<Pointer<Pressed>>| {
         //                         // Prevent clicks from propagating to the barrier and closing
         //                         // the dialog.
         //                         trigger.propagate(false);
         //                     })
-        //                     .with_children(|builder| {
-        //                         (children.as_ref())(builder);
-        //                     });
-        //             });
-        //     },
-        //     |_| {},
-        // );
     }
 }
 

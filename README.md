@@ -3,8 +3,8 @@
 Thorium is a library that provides dynamic control-flow and effects for Scenes and UIs built
 using the Bevy game engine. The core library provides the following features:
 
-- Conditional children using `.cond()` and `.switch()`.
-- Iterative generation using `.for_each()`.
+- Conditional children using `Cond` and `Switch`.
+- Iterative generation using `For::each()`.
 - Dynamic effects.
 - Nested templates.
 - Scoped registration of one-shot systems, that is, one-shot systems which are tied to an entity.
@@ -163,15 +163,14 @@ The `effects` method takes either a single effect, or a tuple of effects. Exampl
 are:
 
 - `InsertWhen` - insert or remove a component based on a boolean condition.
-- `StyleDyn` - apply style changes to an entity
-- `MutateDyn` - perform general mutations on an entity
+- `Calc` - perform general mutations on an entity
 
-`MutateDyn::new()` takes two arguments: the first argument is a one-shot system that returns a
+`Calc::new()` takes two arguments: the first argument is a one-shot system that returns a
 value. The second argument is called once at the next sync point, and is called again whenever the
 value changes. The arguments to the second function are the value, and an `EntityWorldMut` instance.
 
 **Maintaining Correctness**: Having an `EntityWorldMut` means that you can do pretty much anything
-you want to the entity. However, unlike the other Thorium methods, `MutateDyn` does not do any
+you want to the entity. However, unlike the other Thorium methods, `Calc` does not do any
 kind of automatic cleanup - it doesn't know how to undo the previous changes. So you will need to
 ensure that whatever changes you make to the entity completely overwrite whatever you did the
 last time.

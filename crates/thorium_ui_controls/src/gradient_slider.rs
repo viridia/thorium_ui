@@ -5,8 +5,8 @@ use bevy::{
     ui,
 };
 use thorium_ui_core::{
-    CreateMemo, IntoSignal, MutateDyn, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, Template,
-    TemplateContext,
+    computations, CreateMemo, IntoSignal, Calc, Signal, StyleHandle, StyleTuple, Styles,
+    Template, TemplateContext,
 };
 use thorium_ui_headless::{hover::Hovering, CoreSlider, ValueChange};
 
@@ -254,12 +254,12 @@ impl Template for GradientSlider {
         let on_change = self.on_change;
 
         slider
-            .insert(MutateDyn::new(
+            .insert(computations![Calc::new(
                 move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
                 |(value, min, max), ent| {
                     ent.insert(CoreSlider::new(value, min, max));
-                },
-            ))
+                }
+            )])
             .observe(
                 move |mut trigger: Trigger<ValueChange<f32>>,
                       world: DeferredWorld,
@@ -310,7 +310,7 @@ impl Template for GradientSlider {
                 builder.spawn((
                     MaterialNode::<GradientRectMaterial>::default(),
                     Styles(style_gradient),
-                    MutateDyn::new(
+                    computations![Calc::new(
                         move |world: DeferredWorld| color_stops.get(&world),
                         |(num_color_stops, color_stops), ent| {
                             let material_handle = ent
@@ -336,7 +336,7 @@ impl Template for GradientSlider {
                                 material.color_stops = color_stops;
                             }
                         },
-                    ),
+                    ),],
                 ));
                 builder.spawn((
                     Node::default(),
@@ -352,7 +352,7 @@ impl Template for GradientSlider {
                         ),
                         Name::new("GradientSlider::Thumb"),
                         Styles(style_thumb),
-                        StyleDyn::new(
+                        computations![Calc::new(
                             move |world: DeferredWorld| {
                                 let min = min.get(&world);
                                 let max = max.get(&world);
@@ -364,7 +364,7 @@ impl Template for GradientSlider {
                                     node.left = ui::Val::Percent(percent * 100.);
                                 });
                             },
-                        ),
+                        ),]
                     )],
                 ));
             });

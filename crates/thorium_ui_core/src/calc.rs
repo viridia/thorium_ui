@@ -8,12 +8,11 @@ use bevy::{
 };
 
 use crate::{
+    computations::ComputationOf,
     effect_cell::{AnyEffect, EffectCell},
-    owner::OwnedBy,
 };
 
-pub struct MutateDynEffect<P, M, EffectFn: Fn(P, &mut EntityWorldMut)> {
-    target: Entity,
+pub struct CalcEffect<P, M, EffectFn: Fn(P, &mut EntityWorldMut)> {
     deps: Option<P>,
     deps_sys: SystemId<(), P>,
     effect_fn: EffectFn,
@@ -21,15 +20,19 @@ pub struct MutateDynEffect<P, M, EffectFn: Fn(P, &mut EntityWorldMut)> {
 }
 
 impl<P: 'static + PartialEq + Send + Sync + Clone, M, EffectFn: Fn(P, &mut EntityWorldMut)>
-    AnyEffect for MutateDynEffect<P, M, EffectFn>
+    AnyEffect for CalcEffect<P, M, EffectFn>
 {
-    fn update(&mut self, world: &mut World, _entity: Entity) {
+    fn update(&mut self, world: &mut World, entity: Entity) {
+        let Some(owner) = world.get::<ComputationOf>(entity) else {
+            return;
+        };
+        let owner = owner.get();
         // Run the dependencies and see if the result changed.
         let deps = world.run_system(self.deps_sys).ok();
         if deps.is_some() && deps != self.deps {
             self.deps = deps.clone();
             // Run the effect
-            (self.effect_fn)(deps.unwrap(), &mut world.entity_mut(self.target));
+            (self.effect_fn)(deps.unwrap(), &mut world.entity_mut(owner));
         }
     }
 
@@ -38,7 +41,7 @@ impl<P: 'static + PartialEq + Send + Sync + Clone, M, EffectFn: Fn(P, &mut Entit
     }
 }
 
-pub struct MutateDyn<
+pub struct Calc<
     P: PartialEq + Clone + Send + Sync + 'static,
     M: Send + Sync + 'static,
     DepsFn: IntoSystem<(), P, M> + 'static,
@@ -54,7 +57,7 @@ impl<
         M: Send + Sync + 'static,
         DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
         EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    > MutateDyn<P, M, DepsFn, EffectFn>
+    > Calc<P, M, DepsFn, EffectFn>
 {
     pub fn new(deps_fn: DepsFn, effect_fn: EffectFn) -> Self {
         Self {
@@ -70,7 +73,7 @@ unsafe impl<
         M: Send + Sync + 'static,
         DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
         EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    > Bundle for MutateDyn<P, M, DepsFn, EffectFn>
+    > Bundle for Calc<P, M, DepsFn, EffectFn>
 {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
@@ -99,7 +102,7 @@ impl<
         M: Send + Sync + 'static,
         DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
         EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    > DynamicBundle for MutateDyn<P, M, DepsFn, EffectFn>
+    > DynamicBundle for Calc<P, M, DepsFn, EffectFn>
 {
     type Effect = Self;
 
@@ -116,21 +119,15 @@ impl<
         M: Send + Sync + 'static,
         DepsFn: IntoSystem<(), P, M> + Send + Sync + 'static,
         EffectFn: Fn(P, &mut EntityWorldMut) + Send + Sync + 'static,
-    > BundleEffect for MutateDyn<P, M, DepsFn, EffectFn>
+    > BundleEffect for Calc<P, M, DepsFn, EffectFn>
 {
-    fn apply(self, parent: &mut EntityWorldMut) {
-        let target = parent.id();
-        let world = unsafe { parent.world_mut() };
-        let deps_sys = world.register_system(self.deps_fn);
-        world.spawn((
-            EffectCell::new(MutateDynEffect {
-                target,
-                deps: None,
-                deps_sys,
-                effect_fn: self.effect_fn,
-                marker: std::marker::PhantomData::<M>,
-            }),
-            OwnedBy(target),
-        ));
+    fn apply(self, entity: &mut EntityWorldMut) {
+        let deps_sys = entity.world_scope(|world| world.register_system(self.deps_fn));
+        entity.insert((EffectCell::new(CalcEffect {
+            deps: None,
+            deps_sys,
+            effect_fn: self.effect_fn,
+            marker: std::marker::PhantomData::<M>,
+        }),));
     }
 }

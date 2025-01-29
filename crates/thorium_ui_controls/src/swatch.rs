@@ -2,7 +2,8 @@ use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use thorium_ui_core::{
-    Cond, IntoSignal, MutateDyn, Signal, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, dyn_children, Calc, Cond, IntoSignal, Signal, StyleHandle, StyleTuple, Styles,
+    Template, TemplateContext,
 };
 
 use crate::materials::SwatchRectMaterial;
@@ -93,9 +94,17 @@ impl Template for Swatch {
                 MaterialNode::<SwatchRectMaterial>::default(),
                 Name::new("Swatch"),
                 Styles((style_swatch, self.style.clone())),
-                MutateDyn::new(
+                // Handle the selected outline
+                dyn_children![Cond::new(
+                    move |world: DeferredWorld| selected.get(&world),
+                    || Spawn((Node::default(), Styles(style_selection))),
+                    || (),
+                )],
+                // Update the color
+                computations![Calc::new(
                     move |world: DeferredWorld| LinearRgba::from(color.get(&world)),
                     |color, ent| {
+                        // In order to handle the transparency grid, we need a custom shader.
                         let material_handle = ent
                             .get::<MaterialNode<SwatchRectMaterial>>()
                             .unwrap()
@@ -116,7 +125,7 @@ impl Template for Swatch {
                             ui_materials.get_mut(&material_handle).unwrap().color = color.to_vec4();
                         }
                     },
-                ),
+                ),],
             ))
             .observe(
                 move |mut trigger: Trigger<Pointer<Click>>,
@@ -128,13 +137,6 @@ impl Template for Swatch {
                         commands.run_system_with(on_click, c);
                     }
                 },
-            )
-            .with_children(|builder| {
-                builder.spawn(Cond::new(
-                    move |world: DeferredWorld| selected.get(&world),
-                    || Spawn((Node::default(), Styles(style_selection))),
-                    || (),
-                ));
-            });
+            );
     }
 }

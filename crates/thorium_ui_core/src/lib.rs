@@ -1,15 +1,14 @@
+mod calc;
 mod callback;
+mod computations;
 mod cond;
 mod dyn_children;
 mod effect_cell;
 mod foreach;
 mod insert_when;
-mod insert_when2;
 mod lcs;
 mod memo;
 mod mutable;
-mod mutate_dyn;
-mod mutate_dyn2;
 mod owner;
 mod signal;
 mod style;
@@ -20,7 +19,9 @@ use bevy::{
     app::{App, Plugin, PostUpdate, Update},
     prelude::IntoSystemConfigs,
 };
+pub use calc::Calc;
 pub use callback::CreateCallback;
+pub use computations::{ComputationOf, Computations};
 pub use cond::Cond;
 pub use dyn_children::{
     DynChildOf, DynChildSpawner, DynChildSpawnerCommands, DynChildren, Fragment,
@@ -28,17 +29,14 @@ pub use dyn_children::{
 use effect_cell::update_effects;
 pub use foreach::{For, ListItems};
 pub use insert_when::InsertWhen;
-pub use insert_when2::InsertWhen2;
 pub use memo::{CreateMemo, Memo, ReadMemo};
 pub use mutable::{CreateMutable, Mutable, ReadMutable, WriteMutable};
-pub use mutate_dyn::MutateDyn;
-pub use mutate_dyn2::MutateDyn2;
 pub use owner::{Owned, OwnedBy};
 pub use signal::{IntoSignal, Signal};
-pub use style::{StyleDyn, StyleHandle, StyleTuple, Styles};
+pub use style::{StyleHandle, StyleTuple, Styles};
 pub use switch::Switch;
 pub use template::{
-    IndirectSpawnableList, Invoke, InvokeIndirect, InvokeWith, Template, TemplateContext,
+    IndirectSpawnableList, Invoke, InvokeWith, SpawnIndirect, Template, TemplateContext,
 };
 
 pub struct ThoriumUiCorePlugin;

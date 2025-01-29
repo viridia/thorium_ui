@@ -16,8 +16,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    owned, DynChildren, IndirectSpawnableList, InsertWhen2, IntoSignal, InvokeIndirect, Signal,
-    StyleDyn, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, Calc, DynChildren, IndirectSpawnableList, InsertWhen, IntoSignal, Signal,
+    SpawnIndirect, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -213,7 +213,7 @@ impl Template for Button {
             // Button behaviors and observers.
             CoreButton { on_click },
             AccessibilityNode::from(accesskit::Node::new(Role::Button)),
-            owned![InsertWhen2::new(
+            computations![InsertWhen::new(
                 move |world: DeferredWorld| disabled.get(&world),
                 || InteractionDisabled,
             )],
@@ -256,44 +256,46 @@ impl Template for Button {
                 },
                 Name::new("Button::Background"),
                 corners.to_border_radius(self.size.border_radius()),
-                StyleDyn::new(
-                    move |world: DeferredWorld| {
-                        if minimal {
-                            colors::TRANSPARENT
-                        } else {
-                            let entity = world.entity(button_id);
-                            let pressed = entity
-                                .get::<CoreButtonPressed>()
-                                .map(|pressed| pressed.0)
-                                .unwrap_or_default();
-                            button_bg_color(
-                                variant.get(&world),
-                                world.is_interaction_disabled(button_id),
-                                pressed,
-                                world.is_hovering(button_id),
-                            )
-                        }
-                    },
-                    |color, ent| {
-                        ent.insert(BackgroundColor(color.into()));
-                    },
-                ),
-                StyleDyn::new(
-                    move |world: DeferredWorld| world.is_focus_visible(button_id),
-                    |is_focused, ent| {
-                        if is_focused {
-                            ent.insert(Outline {
-                                color: colors::FOCUS.into(),
-                                width: ui::Val::Px(2.0),
-                                offset: ui::Val::Px(2.0),
-                            });
-                        } else {
-                            ent.remove::<Outline>();
-                        };
-                    },
-                ),
+                computations![
+                    Calc::new(
+                        move |world: DeferredWorld| {
+                            if minimal {
+                                colors::TRANSPARENT
+                            } else {
+                                let entity = world.entity(button_id);
+                                let pressed = entity
+                                    .get::<CoreButtonPressed>()
+                                    .map(|pressed| pressed.0)
+                                    .unwrap_or_default();
+                                button_bg_color(
+                                    variant.get(&world),
+                                    world.is_interaction_disabled(button_id),
+                                    pressed,
+                                    world.is_hovering(button_id),
+                                )
+                            }
+                        },
+                        |color, ent| {
+                            ent.insert(BackgroundColor(color.into()));
+                        },
+                    ),
+                    Calc::new(
+                        move |world: DeferredWorld| world.is_focus_visible(button_id),
+                        |is_focused, ent| {
+                            if is_focused {
+                                ent.insert(Outline {
+                                    color: colors::FOCUS.into(),
+                                    width: ui::Val::Px(2.0),
+                                    offset: ui::Val::Px(2.0),
+                                });
+                            } else {
+                                ent.remove::<Outline>();
+                            };
+                        },
+                    ),
+                ],
             )),
-            InvokeIndirect(self.contents.clone()),
+            SpawnIndirect(self.contents.clone()),
         )));
     }
 }

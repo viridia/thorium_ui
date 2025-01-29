@@ -2,17 +2,17 @@
 
 - `.observe` and `observers!`.
 - `.with_children`
-- `owned!` -> ??
 - children -> contents
 - children! -> dyn_children!
-- DynChildren -> Contents?
-- Text inheritance
+- DynChildren -> Contents? ChildElements?
 - Make Fallback / Cond consistent with Button.
 - Dialog footer button example
+- close dialog warnings
+- Dialog and checkbox children
 
 # TODO
 
-- Dialog animation starts one frame too late; visible glitch.
+- Dynamic
 - Portals and/or fixed positioning
 - Scrolling
 - ListView

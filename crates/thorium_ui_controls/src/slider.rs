@@ -223,35 +223,36 @@ impl Template for Slider {
         );
 
         slider
-            .insert(MutateDyn::new(
-                move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
-                |(value, min, max), ent| {
-                    let core_slider = CoreSlider { value, min, max };
-                    let material_handle = ent
-                        .get::<MaterialNode<SliderRectMaterial>>()
-                        .unwrap()
-                        .0
-                        .clone();
-                    let mut ui_materials = unsafe {
-                        ent.world_mut()
-                            .get_resource_mut::<Assets<SliderRectMaterial>>()
+            .insert(
+                computations![Calc::new(
+                    move |world: DeferredWorld| (value.get(&world), min.get(&world), max.get(&world)),
+                    |(value, min, max), ent| {
+                        let core_slider = CoreSlider { value, min, max };
+                        let material_handle = ent
+                            .get::<MaterialNode<SliderRectMaterial>>()
                             .unwrap()
-                    };
-                    if material_handle == Handle::default() {
-                        let material = ui_materials.add(SliderRectMaterial {
-                            color_lo: LinearRgba::from(colors::U1).to_vec4(),
-                            color_hi: LinearRgba::from(colors::U3).to_vec4(),
-                            value: Vec4::new(core_slider.thumb_position(), 0., 0., 0.),
-                            radius: RoundedCorners::All.to_vec(4.),
-                        });
-                        ent.insert((core_slider, MaterialNode(material)));
-                    } else {
-                        ui_materials.get_mut(&material_handle).unwrap().value.x =
-                            core_slider.thumb_position();
-                        ent.insert(core_slider);
-                    }
-                },
-            ))
+                            .0
+                            .clone();
+                        let mut ui_materials = unsafe {
+                            ent.world_mut()
+                                .get_resource_mut::<Assets<SliderRectMaterial>>()
+                                .unwrap()
+                        };
+                        if material_handle == Handle::default() {
+                            let material = ui_materials.add(SliderRectMaterial {
+                                color_lo: LinearRgba::from(colors::U1).to_vec4(),
+                                color_hi: LinearRgba::from(colors::U3).to_vec4(),
+                                value: Vec4::new(core_slider.thumb_position(), 0., 0., 0.),
+                                radius: RoundedCorners::All.to_vec(4.),
+                            });
+                            ent.insert((core_slider, MaterialNode(material)));
+                        } else {
+                            ui_materials.get_mut(&material_handle).unwrap().value.x =
+                                core_slider.thumb_position();
+                            ent.insert(core_slider);
+                        }
+                    },
+            )])
             .observe(
                 move |mut trigger: Trigger<ValueChange<f32>>,
                       world: DeferredWorld,
@@ -305,14 +306,17 @@ impl Template for Slider {
                             Spawn((
                                 Text::new(""),
                                 UseInheritedTextStyles,
-                                MutateDyn::new(
-                                    move |world: DeferredWorld| value.get(&world),
-                                    move |value, ent| {
-                                        ent.entry::<Text>().and_modify(|mut text| {
-                                            text.0 = format!("{:.*}", precision, value);
-                                        });
-                                    },
-                                ),
+                                computations![
+                                    Calc::new(
+                                        move |world: DeferredWorld| value.get(&world),
+                                        move |value, ent| {
+                                            ent.entry::<Text>().and_modify(|mut text| {
+                                                text.0 = format!("{:.*}", precision, value);
+                                            });
+                                        },
+                                    )
+                                ]
+,
                             )),
                         ))));
 

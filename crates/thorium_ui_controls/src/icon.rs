@@ -1,6 +1,7 @@
 use bevy::{ecs::world::DeferredWorld, prelude::*, ui};
 use thorium_ui_core::{
-    IntoSignal, Signal, StyleDyn, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, IntoSignal, Calc, Signal, StyleHandle, StyleTuple, Styles, Template,
+    TemplateContext,
 };
 use thorium_ui_headless::handle::HandleOrOwnedPath;
 
@@ -79,14 +80,14 @@ impl Template for Icon {
                 },
                 self.style.clone(),
             )),
-            StyleDyn::new(
+            computations![Calc::new(
                 move |world: DeferredWorld| color.get(&world),
                 |color, ent| {
                     ent.entry::<ImageNode>().and_modify(move |mut img| {
                         img.color = color;
                     });
                 },
-            ),
+            )],
         ));
     }
 }

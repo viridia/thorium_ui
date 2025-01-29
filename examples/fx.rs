@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{MutateDyn, ThoriumUiCorePlugin};
+use thorium_ui::{computations, Calc, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -42,7 +42,7 @@ fn setup_view_root(mut commands: Commands) {
             ..default()
         },
         BorderColor(css::ALICE_BLUE.into()),
-        MutateDyn::new(
+        computations![Calc::new(
             |counter: Res<Counter>| counter.count & 1 == 0,
             |even, entity| {
                 entity.insert(BorderColor(if even {
@@ -51,7 +51,7 @@ fn setup_view_root(mut commands: Commands) {
                     css::LIME.into()
                 }));
             },
-        ),
+        )],
         children![Text::new("Goodbye, ")],
     ));
 }

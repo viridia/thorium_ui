@@ -9,29 +9,29 @@ use bevy::{
 
 use crate::{
     effect_cell::{AnyEffect, EffectCell},
-    owner::OwnedBy,
+    ComputationOf,
 };
 
 pub struct InsertWhenEffect<B: Bundle, FactoryFn: Fn() -> B> {
-    target: Entity,
     state: bool,
     test_sys: SystemId<(), bool>,
     factory: FactoryFn,
 }
 
 impl<B: Bundle, FactoryFn: Fn() -> B> AnyEffect for InsertWhenEffect<B, FactoryFn> {
-    fn update(&mut self, world: &mut World, _entity: Entity) {
+    fn update(&mut self, world: &mut World, entity: Entity) {
+        let Some(owner) = world.get::<ComputationOf>(entity) else {
+            return;
+        };
+        let owner = owner.get();
         // Run the condition and see if the result changed.
         let test = world.run_system(self.test_sys);
         if let Ok(test) = test {
             if self.state != test {
                 if test {
-                    world
-                        .commands()
-                        .entity(self.target)
-                        .insert((self.factory)());
+                    world.commands().entity(owner).insert((self.factory)());
                 } else {
-                    world.commands().entity(self.target).remove::<B>();
+                    world.commands().entity(owner).remove::<B>();
                 }
                 self.state = test;
             }
@@ -123,17 +123,11 @@ impl<
     > BundleEffect for InsertWhen<M, TestFn, B, FactoryFn>
 {
     fn apply(self, parent: &mut EntityWorldMut) {
-        let target = parent.id();
-        let world = unsafe { parent.world_mut() };
-        let test_sys = world.register_system(self.test_fn);
-        world.spawn((
-            EffectCell::new(InsertWhenEffect {
-                target,
-                state: false,
-                test_sys,
-                factory: self.factory,
-            }),
-            OwnedBy(target),
-        ));
+        let test_sys = parent.world_scope(|world| world.register_system(self.test_fn));
+        parent.insert(EffectCell::new(InsertWhenEffect {
+            state: false,
+            test_sys,
+            factory: self.factory,
+        }));
     }
 }

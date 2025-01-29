@@ -4,7 +4,7 @@ use bevy::ecs::{prelude::*, spawn::SpawnableList};
 
 use crate::DynChildOf;
 
-/// New-style template that builds child elements for a parent entity.
+/// Template that builds child elements for a parent entity.
 pub trait Template {
     fn build(&self, tc: &mut TemplateContext);
     fn size_hint(&self) -> usize {
@@ -51,10 +51,10 @@ impl<S: SpawnableList<DynChildOf>, F: Fn() -> S + Send + Sync> IndirectSpawnable
     }
 }
 
-/// Wrapper that invokes a function with a template context.
-pub struct InvokeIndirect(pub Option<Arc<dyn IndirectSpawnableList + Send + Sync + 'static>>);
+/// Wrapper that invokes a function with shared reference to a function that can produce spawns.
+pub struct SpawnIndirect(pub Option<Arc<dyn IndirectSpawnableList + Send + Sync + 'static>>);
 
-impl SpawnableList<DynChildOf> for InvokeIndirect {
+impl SpawnableList<DynChildOf> for SpawnIndirect {
     fn spawn(self, world: &mut World, entity: Entity) {
         if let Some(indirect) = self.0 {
             indirect.spawn(world, entity);
