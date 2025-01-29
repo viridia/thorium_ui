@@ -9,7 +9,7 @@ use bevy::{
 };
 use thorium_ui_core::{
     computations, dyn_children, Cond, DynChildren, SpawnableListGen, Calc, Signal,
-    SpawnIndirect, Styles, Template, TemplateContext,
+    SpawnArc, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::CoreBarrier;
 
@@ -228,7 +228,7 @@ impl Template for Dialog {
                                 );
                             },
                         )],
-                        DynChildren::spawn(SpawnIndirect(contents.clone())),
+                        DynChildren::spawn(SpawnArc(contents.clone())),
                     )),
                 ))
             },

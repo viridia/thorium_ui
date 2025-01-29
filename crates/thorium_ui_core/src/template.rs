@@ -52,9 +52,9 @@ impl<S: SpawnableList<DynChildOf>, F: Fn() -> S + Send + Sync> SpawnableListGen 
 }
 
 /// Wrapper that invokes a function with shared reference to a function that can produce spawns.
-pub struct SpawnIndirect(pub Option<Arc<dyn SpawnableListGen + Send + Sync + 'static>>);
+pub struct SpawnArc(pub Option<Arc<dyn SpawnableListGen + Send + Sync + 'static>>);
 
-impl SpawnableList<DynChildOf> for SpawnIndirect {
+impl SpawnableList<DynChildOf> for SpawnArc {
     fn spawn(self, world: &mut World, entity: Entity) {
         if let Some(indirect) = self.0 {
             indirect.spawn(world, entity);
@@ -66,6 +66,11 @@ impl SpawnableList<DynChildOf> for SpawnIndirect {
     }
 }
 
+/// Builder context for templates. This is similar to `ChildSpawner`, but is different
+/// in a number of ways:
+/// * It always uses the `DynChildOf` relationship.
+/// * It has methods for invoking other templates.
+/// * Via trait extension, it has methods for spawning owned items such as mutables and callbacks.
 pub struct TemplateContext<'w> {
     target: Entity,
     world: &'w mut World,

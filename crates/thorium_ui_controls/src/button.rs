@@ -16,8 +16,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    computations, Calc, DynChildren, InsertWhen, IntoSignal, Signal, SpawnIndirect,
-    SpawnableListGen, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, Calc, DynChildren, InsertWhen, IntoSignal, Signal, SpawnArc, SpawnableListGen,
+    StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -295,7 +295,7 @@ impl Template for Button {
                     ),
                 ],
             )),
-            SpawnIndirect(self.contents.clone()),
+            SpawnArc(self.contents.clone()),
         )));
     }
 }

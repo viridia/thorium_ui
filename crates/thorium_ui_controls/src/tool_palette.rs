@@ -3,8 +3,8 @@ use std::sync::Arc;
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, ecs::system::SystemId, prelude::*, ui};
 use thorium_ui_core::{
-    DynChildren, IntoSignal, Signal, SpawnIndirect, SpawnableListGen, StyleHandle, StyleTuple,
-    Styles, Template, TemplateContext,
+    DynChildren, IntoSignal, Signal, SpawnArc, SpawnableListGen, StyleHandle, StyleTuple, Styles,
+    Template, TemplateContext,
 };
 
 use crate::{rounded_corners::RoundedCorners, size::Size};
@@ -76,7 +76,7 @@ impl Template for ToolPalette {
                 },
                 self.style.clone(),
             )),
-            DynChildren::spawn(SpawnIndirect(self.contents.clone())),
+            DynChildren::spawn(SpawnArc(self.contents.clone())),
         ));
     }
 }

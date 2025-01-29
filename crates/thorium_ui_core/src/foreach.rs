@@ -3,7 +3,6 @@ use std::ops::Range;
 use bevy::{
     ecs::{
         bundle::{BundleEffect, DynamicBundle},
-        spawn::SpawnableList,
         system::SystemId,
     },
     prelude::*,
@@ -14,7 +13,7 @@ use crate::{
     dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     lcs::lcs,
-    DynChildOf, DynChildren, TemplateContext,
+    DynChildOf, DynChildren, SpawnableListGen, TemplateContext,
 };
 
 pub struct ListItems<Item: Clone> {
@@ -56,8 +55,7 @@ struct ForEachEffect<
     Item: Clone + 'static,
     CmpFn: Fn(&Item, &Item) -> bool,
     EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-    FallbackChildren: SpawnableList<DynChildOf> + 'static,
-    FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    FallbackFn: SpawnableListGen + Send + Sync + 'static,
 > where
     Self: Send + Sync,
 {
@@ -73,9 +71,8 @@ impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<DynChildOf> + 'static,
-        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
-    > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackChildren, FallbackFn>
+        FallbackFn: SpawnableListGen + Send + Sync + 'static,
+    > ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     /// Uses the sequence of key values to match the previous array items with the updated
     /// array items. Matching items are patched, other items are inserted or deleted.
@@ -209,9 +206,8 @@ impl<
         Item: Clone + Send + Sync + 'static,
         CmpFn: Fn(&Item, &Item) -> bool + Send + Sync + 'static,
         EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<DynChildOf> + 'static,
-        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
-    > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackChildren, FallbackFn>
+        FallbackFn: SpawnableListGen + Send + Sync + 'static,
+    > AnyEffect for ForEachEffect<'_, Item, CmpFn, EachFn, FallbackFn>
 {
     fn update(&mut self, world: &mut World, parent: Entity) {
         // Create a reactive context and call the test condition.
@@ -241,7 +237,7 @@ impl<
                     self.first = false;
                     // Transitioning from non-empty to empty, generate fallback.
                     world.entity_mut(parent).despawn_related::<DynChildren>();
-                    (self.fallback)().spawn(world, parent);
+                    self.fallback.spawn(world, parent);
                 }
             } else {
                 if prev_len == 0 {
@@ -268,8 +264,7 @@ pub struct For<
     // CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
     ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
     EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-    FallbackChildren: SpawnableList<DynChildOf> + 'static,
-    FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
+    FallbackFn: SpawnableListGen + Send + Sync + 'static,
 > {
     items_fn: ItemFn,
     cmp: fn(&Item, &Item) -> bool,
@@ -285,9 +280,8 @@ impl<
         // CmpFn: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<DynChildOf> + 'static,
-        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
-    > For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+        FallbackFn: SpawnableListGen + Send + Sync + 'static,
+    > For<'a, M, Item, ItemFn, EachFn, FallbackFn>
 {
     pub fn each(items_fn: ItemFn, each: EachFn, fallback: FallbackFn) -> Self
     where
@@ -324,9 +318,8 @@ impl<
         Item: Send + Sync + 'static + Clone,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<DynChildOf> + 'static,
-        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
-    > BundleEffect for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+        FallbackFn: SpawnableListGen + Send + Sync + 'static,
+    > BundleEffect for For<'a, M, Item, ItemFn, EachFn, FallbackFn>
 {
     fn apply(self, entity: &mut EntityWorldMut) {
         let item_sys = entity.world_scope(|world| world.register_system(self.items_fn));
@@ -351,9 +344,8 @@ impl<
         Item: Send + Sync + 'static + Clone,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<DynChildOf> + 'static,
-        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
-    > DynamicBundle for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+        FallbackFn: SpawnableListGen + Send + Sync + 'static,
+    > DynamicBundle for For<'a, M, Item, ItemFn, EachFn, FallbackFn>
 {
     type Effect = Self;
 
@@ -371,9 +363,8 @@ unsafe impl<
         Item: Send + Sync + 'static + Clone,
         ItemFn: IntoSystem<InMut<'a, ListItems<Item>>, (), M> + Send + Sync + 'static,
         EachFn: Fn(&Item, &mut TemplateContext) + Send + Sync + 'static,
-        FallbackChildren: SpawnableList<DynChildOf> + 'static,
-        FallbackFn: Fn() -> FallbackChildren + Send + Sync + 'static,
-    > Bundle for For<'a, M, Item, ItemFn, EachFn, FallbackChildren, FallbackFn>
+        FallbackFn: SpawnableListGen + Send + Sync + 'static,
+    > Bundle for For<'a, M, Item, ItemFn, EachFn, FallbackFn>
 {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
