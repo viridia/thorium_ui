@@ -41,18 +41,18 @@ impl<F: Fn(&mut TemplateContext)> SpawnableList<DynChildOf> for InvokeWith<F> {
     }
 }
 
-pub trait IndirectSpawnableList: Send + Sync {
+pub trait SpawnableListGen: Send + Sync {
     fn spawn(&self, world: &mut World, entity: Entity);
 }
 
-impl<S: SpawnableList<DynChildOf>, F: Fn() -> S + Send + Sync> IndirectSpawnableList for F {
+impl<S: SpawnableList<DynChildOf>, F: Fn() -> S + Send + Sync> SpawnableListGen for F {
     fn spawn(&self, world: &mut World, entity: Entity) {
         self().spawn(world, entity);
     }
 }
 
 /// Wrapper that invokes a function with shared reference to a function that can produce spawns.
-pub struct SpawnIndirect(pub Option<Arc<dyn IndirectSpawnableList + Send + Sync + 'static>>);
+pub struct SpawnIndirect(pub Option<Arc<dyn SpawnableListGen + Send + Sync + 'static>>);
 
 impl SpawnableList<DynChildOf> for SpawnIndirect {
     fn spawn(self, world: &mut World, entity: Entity) {

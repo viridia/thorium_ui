@@ -3,7 +3,7 @@ use std::sync::Arc;
 use accesskit::Role;
 use bevy::{a11y::AccessibilityNode, ecs::system::SystemId, prelude::*, ui};
 use thorium_ui_core::{
-    DynChildren, IndirectSpawnableList, IntoSignal, Signal, SpawnIndirect, StyleHandle, StyleTuple,
+    DynChildren, IntoSignal, Signal, SpawnIndirect, SpawnableListGen, StyleHandle, StyleTuple,
     Styles, Template, TemplateContext,
 };
 
@@ -24,7 +24,7 @@ fn style_tool_palette(ec: &mut EntityCommands) {
 #[derive(Default)]
 pub struct ToolPalette {
     /// The buttons to display.
-    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
+    pub contents: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 
     /// Additional styles to be applied to the palette.
     pub style: StyleHandle,
@@ -40,7 +40,7 @@ impl ToolPalette {
     }
 
     /// Set the children for this element.
-    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+    pub fn contents<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
         self.contents = Some(Arc::new(elts));
         self
     }
@@ -93,7 +93,7 @@ pub struct ToolButton {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
+    pub contents: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 
     /// Callback called when clicked
     pub(crate) on_click: Option<SystemId>,
@@ -145,7 +145,7 @@ impl ToolButton {
     }
 
     /// Set the child views for this element.
-    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+    pub fn contents<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
         self.contents = Some(Arc::new(elts));
         self
     }

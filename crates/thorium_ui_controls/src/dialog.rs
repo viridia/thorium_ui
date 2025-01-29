@@ -8,7 +8,7 @@ use bevy::{
     ui::{self, experimental::GhostNode},
 };
 use thorium_ui_core::{
-    computations, dyn_children, Cond, DynChildren, IndirectSpawnableList, Calc, Signal,
+    computations, dyn_children, Cond, DynChildren, SpawnableListGen, Calc, Signal,
     SpawnIndirect, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::CoreBarrier;
@@ -76,7 +76,7 @@ pub struct Dialog {
     pub open: Signal<bool>,
 
     /// The content to display inside the dialog.
-    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
+    pub contents: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<SystemId>,
@@ -116,7 +116,7 @@ impl Dialog {
     }
 
     /// Sets the content of the dialog.
-    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+    pub fn contents<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
         self.contents = Some(Arc::new(elts));
         self
     }

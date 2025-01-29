@@ -11,19 +11,16 @@ use crate::{
     dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     owner::Owned,
-    Computations, DynChildOf, DynChildSpawnerCommands, DynChildren,
+    Computations, DynChildren, SpawnableListGen,
 };
 
 pub struct CaseBuilder<'a, Value: Send + Sync> {
-    cases: &'a mut Vec<(
-        Value,
-        Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>,
-    )>,
-    fallback: &'a mut Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>>,
+    cases: &'a mut Vec<(Value, Box<dyn SpawnableListGen + Send + Sync>)>,
+    fallback: &'a mut Option<Box<dyn SpawnableListGen + Send + Sync>>,
 }
 
 impl<Value: Send + Sync> CaseBuilder<'_, Value> {
-    pub fn case<CF: Send + Sync + 'static + Fn(&mut DynChildSpawnerCommands)>(
+    pub fn case<CF: Send + Sync + 'static + SpawnableListGen>(
         &mut self,
         value: Value,
         case_fn: CF,
@@ -32,7 +29,7 @@ impl<Value: Send + Sync> CaseBuilder<'_, Value> {
         self
     }
 
-    pub fn fallback<FF: Send + Sync + 'static + Fn(&mut DynChildSpawnerCommands)>(
+    pub fn fallback<FF: Send + Sync + 'static + SpawnableListGen>(
         &mut self,
         fallback_fn: FF,
     ) -> &mut Self {
@@ -45,28 +42,21 @@ impl<Value: Send + Sync> CaseBuilder<'_, Value> {
 struct SwitchEffect<P> {
     switch_index: usize,
     value_sys: SystemId<(), P>,
-    cases: Vec<(P, Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>)>,
-    fallback: Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>>,
+    cases: Vec<(P, Box<dyn SpawnableListGen + Send + Sync>)>,
+    fallback: Option<Box<dyn SpawnableListGen + Send + Sync>>,
 }
 
 impl<P: PartialEq + Send + Sync + 'static> SwitchEffect<P> {
     /// Adds a new switch case.
     #[allow(dead_code)]
-    pub fn case<F: Fn(&mut DynChildSpawnerCommands) + Send + Sync + 'static>(
-        mut self,
-        value: P,
-        case: F,
-    ) -> Self {
+    pub fn case<F: SpawnableListGen + Send + Sync + 'static>(mut self, value: P, case: F) -> Self {
         self.cases.push((value, Box::new(case)));
         self
     }
 
     /// Sets the fallback case.
     #[allow(dead_code)]
-    pub fn fallback<F: Fn(&mut DynChildSpawnerCommands) + Send + Sync + 'static>(
-        mut self,
-        fallback: F,
-    ) -> Self {
+    pub fn fallback<F: SpawnableListGen + Send + Sync + 'static>(mut self, fallback: F) -> Self {
         self.fallback = Some(Box::new(fallback));
         self
     }
@@ -92,13 +82,9 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if index < self.cases.len() {
-                    entt.with_related::<DynChildOf>(|builder| {
-                        (self.cases[index].1)(builder);
-                    });
+                    self.cases[index].1.spawn(world, entity);
                 } else if let Some(fallback) = self.fallback.as_mut() {
-                    entt.with_related::<DynChildOf>(|builder| {
-                        (fallback)(builder);
-                    });
+                    fallback.spawn(world, entity);
                 };
             }
         }
@@ -115,8 +101,8 @@ pub struct Switch<
     ValueFn: IntoSystem<(), P, M> + Send + Sync + 'static,
 > {
     value_fn: ValueFn,
-    cases: Vec<(P, Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>)>,
-    fallback: Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>>,
+    cases: Vec<(P, Box<dyn SpawnableListGen + Send + Sync>)>,
+    fallback: Option<Box<dyn SpawnableListGen + Send + Sync>>,
     marker: std::marker::PhantomData<M>,
 }
 
@@ -127,9 +113,8 @@ impl<
     > Switch<M, P, ValueFn>
 {
     pub fn new<CF: Fn(&mut CaseBuilder<P>)>(value_fn: ValueFn, cases_fn: CF) -> Self {
-        let mut cases: Vec<(P, Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>)> =
-            Vec::new();
-        let mut fallback: Option<Box<dyn Fn(&mut DynChildSpawnerCommands) + Send + Sync>> = None;
+        let mut cases: Vec<(P, Box<dyn SpawnableListGen + Send + Sync>)> = Vec::new();
+        let mut fallback: Option<Box<dyn SpawnableListGen + Send + Sync>> = None;
 
         let mut case_builder = CaseBuilder {
             cases: &mut cases,

@@ -3,7 +3,7 @@
 use bevy::{color::palettes::css, prelude::*, ui};
 use thorium_ui::{dyn_children, Switch, ThoriumUiCorePlugin};
 
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum GameState {
     #[default]
     Play,
@@ -42,18 +42,12 @@ fn setup_view_root(mut commands: Commands) {
         dyn_children![
             Text::new("Game State: "),
             Switch::new(
-                |state: Res<State<GameState>>| state.get().clone(),
+                |state: Res<State<GameState>>| *state.get(),
                 |cases| {
                     cases
-                        .case(GameState::Intro, |builder| {
-                            builder.spawn(Text::new("Intro"));
-                        })
-                        .case(GameState::Pause, |builder| {
-                            builder.spawn(Text::new("Paused"));
-                        })
-                        .fallback(|builder| {
-                            builder.spawn(Text::new("Playing"));
-                        });
+                        .case(GameState::Intro, || Spawn(Text::new("Intro")))
+                        .case(GameState::Pause, || Spawn(Text::new("Paused")))
+                        .fallback(|| Spawn(Text::new("Playing")));
                 },
             ),
         ],

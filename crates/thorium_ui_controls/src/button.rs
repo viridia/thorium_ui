@@ -16,8 +16,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    computations, Calc, DynChildren, IndirectSpawnableList, InsertWhen, IntoSignal, Signal,
-    SpawnIndirect, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, Calc, DynChildren, InsertWhen, IntoSignal, Signal, SpawnIndirect,
+    SpawnableListGen, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -53,7 +53,7 @@ pub struct Button {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub contents: Option<Arc<dyn IndirectSpawnableList + Send + Sync>>,
+    pub contents: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -117,7 +117,7 @@ impl Button {
     }
 
     /// Set the child views for this element.
-    pub fn contents<L: IndirectSpawnableList + Send + Sync + 'static>(mut self, elts: L) -> Self {
+    pub fn contents<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
         self.contents = Some(Arc::new(elts));
         self
     }

@@ -21,28 +21,28 @@ To initalize the Thorium system, you'll need to install the `ThoriumUiPlugin` in
 Thorium provides mechanisms for dynamically generating and updating both the children and the
 components of an entity. Dynamic constructions operate using a "two-stage" design pattern, where
 the first stage extracts some data from the world, and the second stage updates the children
-or components of the parent entity based on that data. Take for example the `.cond()` method:
+or components of the parent entity based on that data. Take for example the `Cond` component:
 
 ```rust
-// `builder` is a ChildBuilder
-builder.cond(
-    |counter: Res<Counter>| counter.count & 1 == 0, // Even or odd
-    |builder| {
-        builder.spawn(Text::new("Hello"));
-    },
-    |builder| {
-        builder.spawn(Text::new("Goodbye"));
-    },
-);
+// `builder` is a DynChildBuilder
+builder.spawn((
+    Node::default(),
+    dyn_children![
+        Cond::new(
+            |counter: Res<Counter>| counter.count & 1 == 0, // Even or odd
+            || Spawn(Text::new("Hello")),
+            || Spawn(Text::new("Goodbye"))
+        )],
+));
 ```
 
-The first argument to `.cond()` is a _predicate_ function which returns a boolean result. This
+The first argument to `Cond` is a _predicate_ function which returns a boolean result. This
 function is registered as a Bevy one-shot system, and can use dependency injection to access
 parts of the Bevy world. In the example above, we access a `Counter` resource.
 
 The second argument is the "true" or "then" branch, while the third argument is the "false" or
-"else" branch. Each branch accepts a `ChildBuilder` argument which can be used to generate one
-or more child entities.
+"else" branch. Each branch returns a `SpawnableList` which can be used to generate one or more
+child entities.
 
 Whenever the condition is true, the "true" branch will be called, whereas if the condition is
 false, the "false" branch will be called. However, this doesn't happen just once: the predicate
@@ -54,40 +54,40 @@ The condition will continue to run until the parent entity is despawned.
 
 Conditions can be nested: you can have a condition within a condition.
 
+You may have noticed that `Cond` was spawned as a child of `dyn_children![]`. The `DynChildren`
+relationship is similar to the standard Bevy `Children` relationship, except that it understands
+how to handle dynamic children, that is, children that may or may not be present based on some
+condition. This relationship will be discussed later. For now it is sufficient to note that `Cond`
+and other control-flow nodes like `For` and `Switch` can only work within a `DynChildren` list.
+
 **Efficiency considerations**: Because the predicate function is called every frame, you should
 probably avoid doing any really expensive calculations within it.
 
 **Maintaining Correctness**: When the condition changes, the entities in the old branch are despawned
 using `despawn`. This will remove any child nodes that were created from the previous
 branch, in effect undoing the effects of that branch. However, the framework cannot undo other
-kinds of actions like issuing `Commands` which are possible from the `ChildBuilder` interface.
+kinds of actions like issuing `Commands` which are possible using the `SpawnWith` interface.
 So it is important to only call methods that spawn child entities, or are otherwise safe.
 
 > [!NOTE]
-> The name `cond` is short for `conditional` and comes from LISP. We can't use `if` because that's
+> The name `Cond` is short for `conditional` and comes from LISP. We can't use `if` because that's
 > a reserved word in Rust.
 
-### `.switch()`
+### `Switch`
 
-The `.switch()` method acts like a switch statement in C. This can be particularly useful in
+The `Switch` component acts like a switch statement in C. This can be particularly useful in
 conjunction with Bevy game states:
 
 ```rust
-builder.switch(
+Switch::new(
     |state: Res<State<GameState>>| state.get().clone(),
     |cases| {
         cases
-            .case(GameState::Intro, |builder| {
-                builder.spawn(Text::new("Intro"));
-            })
-            .case(GameState::Pause, |builder| {
-                builder.spawn(Text::new("Paused"));
-            })
-            .fallback(|builder| {
-                builder.spawn(Text::new("Playing"));
-            });
+            .case(GameState::Intro, || Spawn(Text::new("Intro")))
+            .case(GameState::Pause, || Spawn(Text::new("Paused")))
+            .fallback(|| Spawn(Text::new("Playing")));
     },
-);
+),
 ```
 
 The first argument is a function which returns a value. The value must be of a type that implements
@@ -99,18 +99,18 @@ is called whenever the case value matches the switch value.
 The `fallback` case is invoked if none of the other cases match. It's equivalent to the `default`
 keyword in C.
 
-Like `.cond()`, this sets up a node which runs the first argument continuously. The switch cases
+Like `Cond`, this sets up a node which runs the first argument continuously. The switch cases
 are called whenever the output changes.
 
-### `.for_each()` and `.for_each_cmp()`
+### `For::each()` and `For::each_cmp()`
 
-The `.for_each()` method takes an array, and creates child nodes for each array element. When
+The `For::each()` method takes an array, and creates child nodes for each array element. When
 the array changes, it does a "diff" of the old array elements with the new ones. This diff is
 then used to generate or despawn the children representing the array elements that changed; the
 other children are not affected.
 
 ```rust
-builder.for_each(
+For::each(
     |list: Res<List>| list.items.clone().into_iter(),
     move |name, builder| {
         builder.spawn(Text::new(name));
@@ -118,6 +118,7 @@ builder.for_each(
     |builder| {
         builder.spawn(Text::new("No items"));
     },
+)
 ```
 
 The first argument is a one-shot system that returns an iterator.

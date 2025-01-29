@@ -36,7 +36,7 @@ pub use signal::{IntoSignal, Signal};
 pub use style::{StyleHandle, StyleTuple, Styles};
 pub use switch::Switch;
 pub use template::{
-    IndirectSpawnableList, Invoke, InvokeWith, SpawnIndirect, Template, TemplateContext,
+    SpawnableListGen, Invoke, InvokeWith, SpawnIndirect, Template, TemplateContext,
 };
 
 pub struct ThoriumUiCorePlugin;
