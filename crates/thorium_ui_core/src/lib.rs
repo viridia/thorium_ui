@@ -39,7 +39,6 @@ pub use style::{StyleDyn, StyleHandle, StyleTuple, Styles};
 pub use switch::Switch;
 pub use template::{
     IndirectSpawnableList, Invoke, InvokeIndirect, InvokeWith, Template, TemplateContext,
-    WithTemplateChildren,
 };
 
 pub struct ThoriumUiCorePlugin;
