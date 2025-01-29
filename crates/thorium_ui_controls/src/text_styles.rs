@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 
 use bevy::prelude::*;
+use thorium_ui_core::DynChildOf;
 use thorium_ui_headless::handle::HandleOrOwnedPath;
 
 /// Path to the font asset.
@@ -57,12 +58,14 @@ impl ComputedFontStyles {
 #[derive(Component)]
 pub struct UseInheritedTextStyles;
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn update_text_styles(
     mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,
     q_inherited_font: Query<Ref<InheritableFont>, ()>,
     q_inherited_color: Query<Ref<InheritableFontColor>, ()>,
     q_inherited_size: Query<Ref<InheritableFontSize>, ()>,
-    parents: Query<&ChildOf>,
+    q_parents: Query<&ChildOf>,
+    q_dyn_parents: Query<&DynChildOf, ()>,
     assets: Res<AssetServer>,
     mut commands: Commands,
 ) {
@@ -76,19 +79,22 @@ pub(crate) fn update_text_styles(
                 &q_inherited_font,
                 &q_inherited_color,
                 &q_inherited_size,
-                &parents,
+                &q_parents,
+                &q_dyn_parents,
                 &assets,
             ));
         }
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn set_initial_text_style(
     trigger: Trigger<OnAdd, UseInheritedTextStyles>,
     q_inherited_font: Query<Ref<InheritableFont>, ()>,
     q_inherited_color: Query<Ref<InheritableFontColor>, ()>,
     q_inherited_size: Query<Ref<InheritableFontSize>, ()>,
     q_parents: Query<&ChildOf, ()>,
+    q_dyn_parents: Query<&DynChildOf, ()>,
     assets: Res<AssetServer>,
     mut commands: Commands,
 ) {
@@ -100,6 +106,7 @@ pub(crate) fn set_initial_text_style(
             &q_inherited_color,
             &q_inherited_size,
             &q_parents,
+            &q_dyn_parents,
             &assets,
         ));
 }
@@ -110,6 +117,7 @@ fn compute_inherited_style(
     inherited_color: &Query<Ref<InheritableFontColor>, ()>,
     inherited_size: &Query<Ref<InheritableFontSize>, ()>,
     parents: &Query<&ChildOf, ()>,
+    dyn_parents: &Query<&DynChildOf, ()>,
     assets: &AssetServer,
 ) -> (TextFont, TextColor) {
     let mut styles = ComputedFontStyles::default();
@@ -138,6 +146,8 @@ fn compute_inherited_style(
         }
         if let Ok(parent) = parents.get(ancestor) {
             ancestor = parent.get();
+        } else if let Ok(dyn_parent) = dyn_parents.get(ancestor) {
+            ancestor = dyn_parent.get();
         } else {
             break;
         }
