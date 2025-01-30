@@ -130,7 +130,9 @@ impl<M, Pos: SpawnableListGen, Neg: SpawnableListGen> AnyEffect for CondEffect<M
             if self.state != test || self.first {
                 self.first = false;
                 let mut entt = world.entity_mut(entity);
-                entt.despawn_related::<DynChildren>();
+                // We remove, but don't despawn the children. They will get despawned later
+                // when we sync the Children.
+                entt.remove::<DynChildren>();
                 entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if test {

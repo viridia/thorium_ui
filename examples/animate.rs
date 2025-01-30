@@ -171,14 +171,14 @@ impl Template for DialogDemo {
                 .on_exited(on_exit)
                 .contents(move || {
                     (
-                        Invoke(DialogHeader::new().children(|builder| {
-                            builder.spawn((Text::new("Dialog Header"), UseInheritedTextStyles));
+                        Invoke(DialogHeader::new().contents(|| {
+                            Spawn((Text::new("Dialog Header"), UseInheritedTextStyles))
                         })),
-                        Invoke(DialogBody::new().children(|builder| {
-                            builder.spawn((Text::new("Dialog Body"), UseInheritedTextStyles));
+                        Invoke(DialogBody::new().contents(|| {
+                            Spawn((Text::new("Dialog Body"), UseInheritedTextStyles))
                         })),
-                        Invoke(DialogFooter::new().children(move |_builder| {
-                            // builder.invoke(Button::new().label("Close").on_click(on_close));
+                        Invoke(DialogFooter::new().contents(move || {
+                            Invoke(Button::new().label("Close").on_click(on_close))
                         })),
                     )
                 }),

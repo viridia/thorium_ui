@@ -8,8 +8,8 @@ use bevy::{
     ui::{self, experimental::GhostNode},
 };
 use thorium_ui_core::{
-    computations, dyn_children, Cond, DynChildren, SpawnableListGen, Calc, Signal,
-    SpawnArc, Styles, Template, TemplateContext,
+    computations, dyn_children, Calc, Cond, DynChildren, Signal, SpawnArc, SpawnableListGen,
+    Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::CoreBarrier;
 
@@ -257,18 +257,10 @@ fn style_dialog_header(ec: &mut EntityCommands) {
 }
 
 /// Displays a standard dialog header.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DialogHeader {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut ChildSpawner)>,
-}
-
-impl Default for DialogHeader {
-    fn default() -> Self {
-        Self {
-            children: Arc::new(|_| {}),
-        }
-    }
+    pub contents: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 }
 
 impl DialogHeader {
@@ -278,19 +270,19 @@ impl DialogHeader {
     }
 
     /// Set the content of the dialog header.
-    pub fn children<V: 'static + Fn(&mut ChildSpawner)>(mut self, children: V) -> Self {
-        self.children = Arc::new(children);
+    pub fn contents<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.contents = Some(Arc::new(elts));
         self
     }
 }
 
 impl Template for DialogHeader {
     fn build(&self, builder: &mut TemplateContext) {
-        builder
-            .spawn((Node::default(), Styles(style_dialog_header)))
-            .with_children(|builder| {
-                (self.children.as_ref())(builder);
-            });
+        builder.spawn((
+            Node::default(),
+            Styles(style_dialog_header),
+            DynChildren::spawn(SpawnArc(self.contents.clone())),
+        ));
     }
 }
 
@@ -306,18 +298,10 @@ fn style_dialog_body(ec: &mut EntityCommands) {
 }
 
 /// Displays a standard dialog body.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DialogBody {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut ChildSpawner)>,
-}
-
-impl Default for DialogBody {
-    fn default() -> Self {
-        Self {
-            children: Arc::new(|_| {}),
-        }
-    }
+    pub contents: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 }
 
 impl DialogBody {
@@ -327,19 +311,19 @@ impl DialogBody {
     }
 
     /// Set the content of the dialog body.
-    pub fn children<V: 'static + Fn(&mut ChildSpawner)>(mut self, children: V) -> Self {
-        self.children = Arc::new(children);
+    pub fn contents<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.contents = Some(Arc::new(elts));
         self
     }
 }
 
 impl Template for DialogBody {
     fn build(&self, builder: &mut TemplateContext) {
-        builder
-            .spawn((Node::default(), Styles(style_dialog_body)))
-            .with_children(|builder| {
-                (self.children.as_ref())(builder);
-            });
+        builder.spawn((
+            Node::default(),
+            Styles(style_dialog_body),
+            DynChildren::spawn(SpawnArc(self.contents.clone())),
+        ));
     }
 }
 
@@ -356,18 +340,10 @@ fn style_dialog_footer(ec: &mut EntityCommands) {
 }
 
 /// Displays a standard dialog footer.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DialogFooter {
     /// The content of the dialog header.
-    pub children: Arc<dyn Fn(&mut ChildSpawner)>,
-}
-
-impl Default for DialogFooter {
-    fn default() -> Self {
-        Self {
-            children: Arc::new(|_| {}),
-        }
-    }
+    pub contents: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 }
 
 impl DialogFooter {
@@ -377,18 +353,18 @@ impl DialogFooter {
     }
 
     /// Set the content of the dialog footer.
-    pub fn children<V: 'static + Fn(&mut ChildSpawner)>(mut self, children: V) -> Self {
-        self.children = Arc::new(children);
+    pub fn contents<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.contents = Some(Arc::new(elts));
         self
     }
 }
 
 impl Template for DialogFooter {
     fn build(&self, builder: &mut TemplateContext) {
-        builder
-            .spawn((Node::default(), Styles(style_dialog_footer)))
-            .with_children(|builder| {
-                (self.children.as_ref())(builder);
-            });
+        builder.spawn((
+            Node::default(),
+            Styles(style_dialog_footer),
+            DynChildren::spawn(SpawnArc(self.contents.clone())),
+        ));
     }
 }

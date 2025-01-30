@@ -41,6 +41,7 @@ impl<F: Fn(&mut TemplateContext)> SpawnableList<DynChildOf> for InvokeWith<F> {
     }
 }
 
+/// Trait that represents a function that can produce a [`SpawnableList`].
 pub trait SpawnableListGen: Send + Sync {
     fn spawn(&self, world: &mut World, entity: Entity);
 }

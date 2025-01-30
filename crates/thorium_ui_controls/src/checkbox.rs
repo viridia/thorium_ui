@@ -10,8 +10,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    computations, dyn_children, Calc, Cond, DynChildOf, InsertWhen, IntoSignal, Signal,
-    StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, dyn_children, Calc, Cond, DynChildOf, DynChildren, InsertWhen, IntoSignal,
+    Signal, SpawnArc, SpawnableListGen, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -68,6 +68,7 @@ fn style_checkbox_label(ec: &mut EntityCommands) {
 }
 
 /// A checkbox widget.
+#[derive(Default)]
 pub struct Checkbox {
     /// Whether the checkbox is checked.
     pub checked: Signal<bool>,
@@ -76,7 +77,7 @@ pub struct Checkbox {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub label: Arc<dyn Fn(&mut ChildSpawner)>,
+    pub label: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -86,19 +87,6 @@ pub struct Checkbox {
 
     /// The tab index of the checkbox (default 0).
     pub tab_index: i32,
-}
-
-impl Default for Checkbox {
-    fn default() -> Self {
-        Self {
-            checked: Default::default(),
-            disabled: Default::default(),
-            label: Arc::new(|_builder| {}),
-            style: Default::default(),
-            on_change: Default::default(),
-            tab_index: Default::default(),
-        }
-    }
 }
 
 impl Checkbox {
@@ -119,13 +107,18 @@ impl Checkbox {
         self
     }
 
-    /// Set the label of the checkbox.
+    /// Set the label of the checkbox from a [`SpawnableList`].
+    pub fn label<L: SpawnableListGen + Send + Sync + 'static>(mut self, elts: L) -> Self {
+        self.label = Some(Arc::new(elts));
+        self
+    }
+
+    /// Set the label of the checkbox from a string.
     pub fn labeled(mut self, label: impl Into<String>) -> Self {
         let s: String = label.into();
-        self.label = Arc::new(move |builder| {
-            // TODO: Figure out how to avoid the double-copy here.
-            builder.spawn((Text::new(s.clone()), UseInheritedTextStyles));
-        });
+        self.label = Some(Arc::new(move || {
+            Spawn((Text::new(s.clone()), UseInheritedTextStyles))
+        }));
         self
     }
 
@@ -233,27 +226,24 @@ impl Template for Checkbox {
                 )],
             ));
 
-            builder
-                .spawn((
-                    Node::default(),
-                    Styles((typography::text_default, style_checkbox_label)),
-                    computations![Calc::new(
-                        move |world: DeferredWorld| disabled.get(&world),
-                        |disabled, ec| {
-                            ec.entry::<InheritableFontColor>()
-                                .and_modify(move |mut color| {
-                                    if disabled {
-                                        color.0 = colors::FOREGROUND.with_alpha(0.2).into();
-                                    } else {
-                                        color.0 = colors::FOREGROUND.into();
-                                    }
-                                });
-                        },
-                    ),],
-                ))
-                .with_children(|builder| {
-                    (self.label.as_ref())(builder);
-                });
+            builder.spawn((
+                Node::default(),
+                Styles((typography::text_default, style_checkbox_label)),
+                computations![Calc::new(
+                    move |world: DeferredWorld| disabled.get(&world),
+                    |disabled, ec| {
+                        ec.entry::<InheritableFontColor>()
+                            .and_modify(move |mut color| {
+                                if disabled {
+                                    color.0 = colors::FOREGROUND.with_alpha(0.2).into();
+                                } else {
+                                    color.0 = colors::FOREGROUND.into();
+                                }
+                            });
+                    },
+                ),],
+                DynChildren::spawn(SpawnArc(self.label.clone())),
+            ));
         });
     }
 }

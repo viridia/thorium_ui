@@ -78,7 +78,9 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 self.switch_index = index;
                 let mut commands = world.commands();
                 let mut entt = commands.entity(entity);
-                entt.despawn_related::<DynChildren>();
+                // We remove, but don't despawn the children. They will get despawned later
+                // when we sync the Children.
+                entt.remove::<DynChildren>();
                 entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if index < self.cases.len() {

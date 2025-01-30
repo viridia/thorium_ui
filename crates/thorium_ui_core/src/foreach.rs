@@ -236,7 +236,8 @@ impl<
                 if prev_len > 0 || self.first {
                     self.first = false;
                     // Transitioning from non-empty to empty, generate fallback.
-                    world.entity_mut(parent).despawn_related::<DynChildren>();
+                    world.entity_mut(parent).remove::<DynChildren>();
+                    world.entity_mut(parent).despawn_related::<Children>();
                     self.fallback.spawn(world, parent);
                 }
             } else {

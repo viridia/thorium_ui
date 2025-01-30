@@ -13,8 +13,6 @@ pub(crate) struct MutableCell<T>(pub(crate) T);
 pub struct Mutable<T> {
     /// The entity that holds the mutable value.
     pub(crate) cell: Entity,
-    // / The component id for the mutable cell.
-    // pub(crate) component: ComponentId,
     /// Marker
     pub(crate) marker: std::marker::PhantomData<T>,
 }
@@ -155,7 +153,6 @@ pub trait CreateMutable {
 }
 
 // /// Custom command which updates the state of a mutable cell.
-// /// (Not used yet, waiting on changes in Bevy 0.14)
 // pub(crate) struct UpdateMutableCell<T> {
 //     pub(crate) mutable: Entity,
 //     pub(crate) value: T,
@@ -235,10 +232,8 @@ impl CreateMutable for World {
         T: Send + Sync + 'static,
     {
         let cell = self.spawn(MutableCell::<T>(init)).id();
-        // let component = self.register_component::<MutableCell<T>>();
         Mutable {
             cell,
-            // component,
             marker: PhantomData,
         }
     }
@@ -250,10 +245,8 @@ impl CreateMutable for Commands<'_, '_> {
         T: Send + Sync + 'static,
     {
         let cell = self.spawn(MutableCell::<T>(init)).id();
-        // let component = self.register_component::<MutableCell<T>>();
         Mutable {
             cell,
-            // component,
             marker: PhantomData,
         }
     }
@@ -269,10 +262,8 @@ impl CreateMutable for EntityCommands<'_> {
             .commands()
             .spawn((MutableCell::<T>(init), OwnedBy(parent)))
             .id();
-        // let component = self.register_component::<MutableCell<T>>();
         Mutable {
             cell,
-            // component,
             marker: PhantomData,
         }
     }
@@ -288,10 +279,8 @@ impl CreateMutable for ChildSpawnerCommands<'_> {
             .commands_mut()
             .spawn((MutableCell::<T>(init), OwnedBy(owner)))
             .id();
-        // let component = self.register_component::<MutableCell<T>>();
         Mutable {
             cell,
-            // component,
             marker: PhantomData,
         }
     }
@@ -307,10 +296,8 @@ impl CreateMutable for TemplateContext<'_> {
             .commands()
             .spawn((MutableCell::<T>(init), OwnedBy(owner)))
             .id();
-        // let component = self.register_component::<MutableCell<T>>();
         Mutable {
             cell,
-            // component,
             marker: PhantomData,
         }
     }
@@ -373,74 +360,3 @@ impl WriteMutable for DeferredWorld<'_> {
         (updater)(inner);
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use crate::{Rcx, TrackingScope};
-
-//     use super::*;
-
-//     #[test]
-//     fn test_mutable_copy() {
-//         let mut world = World::default();
-//         let mut scope = TrackingScope::new(world.change_tick());
-//         let owner = world.spawn_empty().id();
-
-//         let mutable = world.create_mutable::<i32>(0);
-//         // let reader = mutable.signal();
-//         let reader2 = world.create_mutable::<i32>(0).signal();
-//         let rcx = Rcx::new(&world, owner, &mut scope);
-
-//         // Check initial values
-//         assert_eq!(reader.get(&rcx), 0);
-//         assert_eq!(reader2.get(&rcx), 0);
-
-//         // Update signals
-//         mutable.set(&mut world, 1);
-//         let rcx = Rcx::new(&world, owner, &mut scope);
-
-//         // Values should not have changed yet
-//         assert_eq!(reader.get(&rcx), 0);
-//         assert_eq!(reader2.get(&rcx), 0);
-
-//         // Now commit the changes
-//         world.flush();
-
-//         // Signals should have changed
-//         let rcx = Rcx::new(&world, owner, &mut scope);
-//         assert_eq!(reader.get(&rcx), 1);
-//         assert_eq!(reader2.get(&rcx), 0);
-//     }
-
-//     #[test]
-//     fn test_mutable_clone() {
-//         let mut world = World::default();
-//         let mut scope = TrackingScope::new(world.change_tick());
-//         let owner = world.spawn_empty().id();
-
-//         let mutable = world.create_mutable("Hello".to_string());
-//         let reader = mutable.signal();
-//         let reader2 = world.create_mutable::<i32>(0).signal();
-//         let rcx = Rcx::new(&world, owner, &mut scope);
-
-//         // Check initial values
-//         assert_eq!(reader.get_clone(&rcx), "Hello".to_string());
-//         assert_eq!(reader2.get(&rcx), 0);
-
-//         // Update signals
-//         mutable.set_clone(&mut world, "Goodbye".to_string());
-//         let rcx = Rcx::new(&world, owner, &mut scope);
-
-//         // Values should not have changed yet
-//         assert_eq!(reader.get_clone(&rcx), "Hello".to_string());
-//         assert_eq!(reader2.get(&rcx), 0);
-
-//         // Now commit the changes
-//         world.flush();
-
-//         // Signals should have changed
-//         let rcx = Rcx::new(&world, owner, &mut scope);
-//         assert_eq!(reader.get_clone(&rcx), "Goodbye".to_string());
-//         assert_eq!(reader2.get(&rcx), 0);
-//     }
-// }

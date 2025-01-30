@@ -5,10 +5,8 @@
 - children -> contents
 - children! -> dyn_children!
 - DynChildren -> Contents? ChildElements?
-- Make Fallback / Cond consistent with Button.
-- Dialog footer button example
+- Make EachFn consistent with Button.
 - close dialog warnings
-- Dialog and checkbox children
 
 # TODO
 
