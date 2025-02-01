@@ -9,20 +9,22 @@ use bevy::{
 
 use crate::InteractionDisabled;
 
-/// Headless widget implementation for checkboxes.
+/// Headless widget implementation for radio buttons. Note that this does not handle the mutual
+/// exclusion of radio buttons in the same group; that should be handled by the parent component.
+/// (This is relatively easy if the parent is a reactive widget.)
 #[derive(Component, Debug)]
 #[require(AccessibilityNode(|| AccessibilityNode::from(accesskit::Node::new(Role::CheckBox))))]
-#[component(on_add = on_add_checkbox)]
-pub struct CoreCheckbox {
+#[component(on_add = on_add_radio)]
+pub struct CoreRadio {
     pub checked: bool,
-    pub on_change: Option<SystemId<In<bool>>>,
+    pub on_click: Option<SystemId>,
 }
 
-// Hook to set the a11y "checked" state when the checkbox is added.
-fn on_add_checkbox(mut world: DeferredWorld, context: HookContext) {
+// Hook to set the a11y "checked" state when the radio is added.
+fn on_add_radio(mut world: DeferredWorld, context: HookContext) {
     let mut entt = world.entity_mut(context.entity);
-    let checkbox = entt.get::<CoreCheckbox>().unwrap();
-    let checked = checkbox.checked;
+    let radio = entt.get::<CoreRadio>().unwrap();
+    let checked = radio.checked;
     let mut accessibility = entt.get_mut::<AccessibilityNode>().unwrap();
     accessibility.set_toggled(match checked {
         true => accesskit::Toggled::True,
@@ -30,53 +32,54 @@ fn on_add_checkbox(mut world: DeferredWorld, context: HookContext) {
     });
 }
 
-fn checkbox_on_key_input(
+fn radio_on_key_input(
     mut trigger: Trigger<FocusedInput<KeyboardInput>>,
-    q_state: Query<(&CoreCheckbox, Has<InteractionDisabled>)>,
+    q_state: Query<(&CoreRadio, Has<InteractionDisabled>)>,
     mut world: DeferredWorld,
 ) {
-    if let Ok((checkbox, disabled)) = q_state.get(trigger.target()) {
+    if let Ok((radio, disabled)) = q_state.get(trigger.target()) {
         let event = &trigger.event().input;
+        let is_checked = radio.checked;
         if !disabled
             && event.state == ButtonState::Pressed
             && !event.repeat
             && (event.key_code == KeyCode::Enter || event.key_code == KeyCode::Space)
+            && !is_checked
         {
-            let is_checked = checkbox.checked;
-            if let Some(on_change) = checkbox.on_change {
+            if let Some(on_click) = radio.on_click {
                 trigger.propagate(false);
-                world.commands().run_system_with(on_change, !is_checked);
+                world.commands().run_system(on_click);
             }
         }
     }
 }
 
-fn checkbox_on_pointer_click(
+fn radio_on_pointer_click(
     mut trigger: Trigger<Pointer<Click>>,
-    q_state: Query<(&CoreCheckbox, Has<InteractionDisabled>)>,
+    q_state: Query<(&CoreRadio, Has<InteractionDisabled>)>,
     mut focus: ResMut<InputFocus>,
     mut focus_visible: ResMut<InputFocusVisible>,
     mut world: DeferredWorld,
 ) {
-    if let Ok((checkbox, disabled)) = q_state.get(trigger.target()) {
+    if let Ok((radio, disabled)) = q_state.get(trigger.target()) {
         let checkbox_id = trigger.target();
         focus.0 = Some(checkbox_id);
         focus_visible.0 = false;
         trigger.propagate(false);
-        if let Some(on_change) = checkbox.on_change {
-            if !disabled {
-                let is_checked = checkbox.checked;
-                world.commands().run_system_with(on_change, !is_checked);
+        let is_checked = radio.checked;
+        if let Some(on_click) = radio.on_click {
+            if !disabled && !is_checked {
+                world.commands().run_system(on_click);
             }
         }
     }
 }
 
-pub struct CoreCheckboxPlugin;
+pub struct CoreRadioPlugin;
 
-impl Plugin for CoreCheckboxPlugin {
+impl Plugin for CoreRadioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(checkbox_on_key_input)
-            .add_observer(checkbox_on_pointer_click);
+        app.add_observer(radio_on_key_input)
+            .add_observer(radio_on_pointer_click);
     }
 }

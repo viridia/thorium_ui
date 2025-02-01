@@ -109,3 +109,16 @@ pub(crate) fn button_on_pointer_cancel(
         }
     }
 }
+
+pub struct CoreButtonPlugin;
+
+impl Plugin for CoreButtonPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_observer(button_on_key_event)
+            .add_observer(button_on_pointer_down)
+            .add_observer(button_on_pointer_up)
+            .add_observer(button_on_pointer_click)
+            .add_observer(button_on_pointer_drag_end)
+            .add_observer(button_on_pointer_cancel);
+    }
+}
