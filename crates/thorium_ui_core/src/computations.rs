@@ -22,7 +22,7 @@ impl Default for ComputationOf {
 
 /// A collection of computations. See [`ComputationOf`].
 #[derive(Component, Default)]
-#[relationship_target(relationship = ComputationOf, despawn_descendants)]
+#[relationship_target(relationship = ComputationOf, linked_spawn)]
 pub struct Computations(Vec<Entity>);
 
 impl core::ops::Deref for Computations {

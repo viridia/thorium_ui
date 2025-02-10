@@ -111,7 +111,7 @@ impl<
             }
             // Build new elements
             for i in next_range {
-                let child_id = world.spawn((GhostNode::default(), Fragment)).id();
+                let child_id = world.spawn((GhostNode, Fragment)).id();
                 let mut tc = TemplateContext::new(child_id, world);
                 (self.each)(&next_items[i], &mut tc);
                 out.push(ListItem {
@@ -149,7 +149,7 @@ impl<
         } else if next_start > next_range.start {
             // Insertions
             for i in next_range.start..next_start {
-                let child_id = world.spawn((GhostNode::default(), Fragment)).id();
+                let child_id = world.spawn((GhostNode, Fragment)).id();
                 let mut tc = TemplateContext::new(child_id, world);
                 (self.each)(&next_items[i], &mut tc);
                 out.push(ListItem {
@@ -190,7 +190,7 @@ impl<
         } else if next_end < next_range.end {
             // Insertions
             for i in next_end..next_range.end {
-                let child_id = world.spawn((GhostNode::default(), Fragment)).id();
+                let child_id = world.spawn((GhostNode, Fragment)).id();
                 let mut tc = TemplateContext::new(child_id, world);
                 (self.each)(&next_items[i], &mut tc);
                 out.push(ListItem {
@@ -236,16 +236,18 @@ impl<
                 if prev_len > 0 || self.first {
                     self.first = false;
                     // Transitioning from non-empty to empty, generate fallback.
-                    world.entity_mut(parent).remove::<DynChildren>();
-                    world.entity_mut(parent).despawn_related::<Children>();
+                    world.entity_mut(parent).remove::<Children>();
+                    world.entity_mut(parent).despawn_related::<DynChildren>();
                     self.fallback.spawn(world, parent);
                 }
             } else {
                 if prev_len == 0 {
                     // Transitioning from non-empty to empty, delete fallback.
+                    world.entity_mut(parent).remove::<Children>();
                     world.entity_mut(parent).despawn_related::<DynChildren>();
+                } else {
+                    world.entity_mut(parent).remove::<DynChildren>();
                 }
-                world.entity_mut(parent).remove::<DynChildren>();
                 world
                     .entity_mut(parent)
                     .add_related::<DynChildOf>(&children);
@@ -369,7 +371,6 @@ unsafe impl<
 {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
     ) {
     }
@@ -382,7 +383,6 @@ unsafe impl<
 
     fn register_required_components(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _required_components: &mut bevy::ecs::component::RequiredComponents,
     ) {
     }

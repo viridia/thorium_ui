@@ -10,12 +10,12 @@ members = ["crates/*"]
 # bevy = { git = "https://github.com/cart/bevy.git", rev = "9d77f9a", features = [
 #   "ghost_nodes",
 # ] }
-# bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
-#   "ghost_nodes",
-# ] }
-bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "refs/pull/17521/head", features = [
+bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
   "ghost_nodes",
 ] }
+# bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "refs/pull/17521/head", features = [
+#   "ghost_nodes",
+# ] }
 # bevy = { version = "0.15.0-dev", features = ["ghost_nodes"] }
 # bevy = { path = "../bevy", features = ["ghost_nodes"] }
 thorium_ui_core = { path = "crates/thorium_ui_core" }

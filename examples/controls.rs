@@ -178,12 +178,14 @@ impl Template for CheckboxDemo {
         tc.invoke(
             Checkbox::new()
                 .labeled("Checked")
+                .aria_label("Alpha")
                 .checked(checked_1)
                 .on_change(on_change_1),
         )
         .invoke(
             Checkbox::new()
                 .labeled("Checked (disabled)")
+                .aria_label("Beta")
                 .checked(checked_1)
                 .on_change(on_change_1)
                 .disabled(true),
@@ -191,12 +193,14 @@ impl Template for CheckboxDemo {
         .invoke(
             Checkbox::new()
                 .labeled("Unchecked")
+                .aria_label("Gamma")
                 .checked(checked_2)
                 .on_change(on_change_2),
         )
         .invoke(
             Checkbox::new()
                 .labeled("Unchecked (disabled)")
+                .aria_label("Delta")
                 .checked(checked_2)
                 .on_change(on_change_2)
                 .disabled(true),

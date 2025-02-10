@@ -5,7 +5,7 @@ use bevy::{
     ecs::{system::SystemId, world::DeferredWorld},
     input_focus::tab_navigation::TabGroup,
     prelude::*,
-    ui::{self, experimental::GhostNode},
+    ui::{self},
 };
 use thorium_ui_core::{
     computations, dyn_children, Calc, Cond, DynChildren, Signal, SpawnArc, SpawnableListGen,
@@ -142,7 +142,7 @@ impl Template for Dialog {
         let width = self.width;
 
         let transition_entity = builder.spawn((
-            GhostNode::default(),
+            // GhostNode::default(),
             BistableTransition::new(false, TRANSITION_DURATION).set_exit_callback(on_exited),
             computations![Calc::new(
                 move |world: DeferredWorld| open.get(&world),

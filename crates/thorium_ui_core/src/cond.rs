@@ -52,7 +52,6 @@ unsafe impl<
 {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
     ) {
     }
@@ -65,7 +64,6 @@ unsafe impl<
 
     fn register_required_components(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _required_components: &mut bevy::ecs::component::RequiredComponents,
     ) {
     }
@@ -129,10 +127,10 @@ impl<M, Pos: SpawnableListGen, Neg: SpawnableListGen> AnyEffect for CondEffect<M
         if let Ok(test) = test {
             if self.state != test || self.first {
                 self.first = false;
+                self.state = test;
                 let mut entt = world.entity_mut(entity);
-                // We remove, but don't despawn the children. They will get despawned later
-                // when we sync the Children.
-                entt.remove::<DynChildren>();
+                entt.remove::<Children>();
+                entt.despawn_related::<DynChildren>();
                 entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if test {
@@ -140,7 +138,6 @@ impl<M, Pos: SpawnableListGen, Neg: SpawnableListGen> AnyEffect for CondEffect<M
                 } else {
                     self.neg.spawn(world, entity);
                 }
-                self.state = test;
             }
         }
     }

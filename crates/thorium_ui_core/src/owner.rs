@@ -27,7 +27,7 @@ impl Default for OwnedBy {
 // #[derive(Component, Default, Reflect)]
 // #[reflect(Component)]
 #[derive(Component, Default)]
-#[relationship_target(relationship = OwnedBy, despawn_descendants)]
+#[relationship_target(relationship = OwnedBy, linked_spawn)]
 pub struct Owned(Vec<Entity>);
 
 impl<'a> IntoIterator for &'a Owned {

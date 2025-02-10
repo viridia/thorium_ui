@@ -33,7 +33,7 @@ impl Default for DynChildOf {
 // #[derive(Component, Default, Reflect)]
 // #[reflect(Component)]
 #[derive(Component, Default)]
-#[relationship_target(relationship = DynChildOf, despawn_descendants)]
+#[relationship_target(relationship = DynChildOf, linked_spawn)]
 pub struct DynChildren(Vec<Entity>);
 
 impl<'a> IntoIterator for &'a DynChildren {

@@ -77,7 +77,6 @@ unsafe impl<
 {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
     ) {
     }
@@ -90,10 +89,8 @@ unsafe impl<
 
     fn register_required_components(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _required_components: &mut bevy::ecs::component::RequiredComponents,
     ) {
-        todo!()
     }
 }
 

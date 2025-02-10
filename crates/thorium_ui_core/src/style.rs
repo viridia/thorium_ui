@@ -114,7 +114,6 @@ pub struct Styles<S: StyleTuple>(pub S);
 unsafe impl<S: StyleTuple + 'static> Bundle for Styles<S> {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
     ) {
     }
@@ -127,7 +126,6 @@ unsafe impl<S: StyleTuple + 'static> Bundle for Styles<S> {
 
     fn register_required_components(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _required_components: &mut bevy::ecs::component::RequiredComponents,
     ) {
     }

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use bevy::{
+    a11y::AccessibilityNode,
     color::Luminance,
     ecs::{system::SystemId, world::DeferredWorld},
     input_focus::{tab_navigation::TabIndex, IsFocused},
@@ -79,6 +80,9 @@ pub struct Checkbox {
     /// The content to display inside the button.
     pub label: Option<Arc<dyn SpawnableListGen + Send + Sync>>,
 
+    /// ARIA label for this checkbox.
+    pub aria_label: Option<String>,
+
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
 
@@ -122,6 +126,12 @@ impl Checkbox {
         self
     }
 
+    /// Set the ARIA label of the checkbox from a string.
+    pub fn aria_label(mut self, label: impl Into<String>) -> Self {
+        self.aria_label = Some(label.into());
+        self
+    }
+
     /// Set the style of the checkbox.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
         self.style = style.into_handle();
@@ -150,6 +160,11 @@ impl Template for Checkbox {
             Node { ..default() },
             Hovering::default(),
             Name::new("Checkbox"),
+            // AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)).set_label(
+            //     self.aria_label
+            //         .clone()
+            //         .unwrap_or_else(|| "Checkbox".to_string()),
+            // ),
             Styles((style_checkbox, self.style.clone())),
             TabIndex(self.tab_index),
             CoreCheckbox {
@@ -160,8 +175,11 @@ impl Template for Checkbox {
                 Calc::new(
                     move |world: DeferredWorld| checked.get(&world),
                     |checked, ent| {
-                        let mut checkbox = ent.get_mut::<CoreCheckbox>().unwrap();
-                        checkbox.checked = checked;
+                        let checkbox = ent.get::<CoreCheckbox>().unwrap();
+                        ent.insert(CoreCheckbox {
+                            checked,
+                            ..*checkbox
+                        });
                     },
                 ),
                 InsertWhen::new(
@@ -171,6 +189,13 @@ impl Template for Checkbox {
             ],
         ));
         let checkbox_id = checkbox.id();
+
+        // Set ARIA label.
+        if let Some(aria_label) = &self.aria_label {
+            if let Some(mut access_node) = checkbox.get_mut::<AccessibilityNode>() {
+                access_node.set_label(aria_label.clone());
+            }
+        }
 
         checkbox.with_related::<DynChildOf>(|builder| {
             builder.spawn((

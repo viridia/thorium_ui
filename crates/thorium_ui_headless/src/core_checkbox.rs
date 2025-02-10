@@ -12,7 +12,7 @@ use crate::InteractionDisabled;
 /// Headless widget implementation for checkboxes.
 #[derive(Component, Debug)]
 #[require(AccessibilityNode(|| AccessibilityNode::from(accesskit::Node::new(Role::CheckBox))))]
-#[component(on_add = on_add_checkbox)]
+#[component(on_add = on_add_checkbox, on_replace = on_add_checkbox)]
 pub struct CoreCheckbox {
     pub checked: bool,
     pub on_change: Option<SystemId<In<bool>>>,
@@ -33,7 +33,7 @@ fn on_add_checkbox(mut world: DeferredWorld, context: HookContext) {
 fn checkbox_on_key_input(
     mut trigger: Trigger<FocusedInput<KeyboardInput>>,
     q_state: Query<(&CoreCheckbox, Has<InteractionDisabled>)>,
-    mut world: DeferredWorld,
+    mut commands: Commands,
 ) {
     if let Ok((checkbox, disabled)) = q_state.get(trigger.target()) {
         let event = &trigger.event().input;
@@ -45,7 +45,7 @@ fn checkbox_on_key_input(
             let is_checked = checkbox.checked;
             if let Some(on_change) = checkbox.on_change {
                 trigger.propagate(false);
-                world.commands().run_system_with(on_change, !is_checked);
+                commands.run_system_with(on_change, !is_checked);
             }
         }
     }
@@ -56,7 +56,7 @@ fn checkbox_on_pointer_click(
     q_state: Query<(&CoreCheckbox, Has<InteractionDisabled>)>,
     mut focus: ResMut<InputFocus>,
     mut focus_visible: ResMut<InputFocusVisible>,
-    mut world: DeferredWorld,
+    mut commands: Commands,
 ) {
     if let Ok((checkbox, disabled)) = q_state.get(trigger.target()) {
         let checkbox_id = trigger.target();
@@ -66,7 +66,7 @@ fn checkbox_on_pointer_click(
         if let Some(on_change) = checkbox.on_change {
             if !disabled {
                 let is_checked = checkbox.checked;
-                world.commands().run_system_with(on_change, !is_checked);
+                commands.run_system_with(on_change, !is_checked);
             }
         }
     }

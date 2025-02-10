@@ -78,9 +78,8 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 self.switch_index = index;
                 let mut commands = world.commands();
                 let mut entt = commands.entity(entity);
-                // We remove, but don't despawn the children. They will get despawned later
-                // when we sync the Children.
-                entt.remove::<DynChildren>();
+                entt.remove::<Children>();
+                entt.despawn_related::<DynChildren>();
                 entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if index < self.cases.len() {
@@ -178,7 +177,6 @@ unsafe impl<
 {
     fn component_ids(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _ids: &mut impl FnMut(bevy::ecs::component::ComponentId),
     ) {
     }
@@ -191,7 +189,6 @@ unsafe impl<
 
     fn register_required_components(
         _components: &mut bevy::ecs::component::Components,
-        _storages: &mut bevy::ecs::storage::Storages,
         _required_components: &mut bevy::ecs::component::RequiredComponents,
     ) {
     }

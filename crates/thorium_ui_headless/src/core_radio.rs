@@ -35,7 +35,7 @@ fn on_add_radio(mut world: DeferredWorld, context: HookContext) {
 fn radio_on_key_input(
     mut trigger: Trigger<FocusedInput<KeyboardInput>>,
     q_state: Query<(&CoreRadio, Has<InteractionDisabled>)>,
-    mut world: DeferredWorld,
+    mut commands: Commands,
 ) {
     if let Ok((radio, disabled)) = q_state.get(trigger.target()) {
         let event = &trigger.event().input;
@@ -48,7 +48,7 @@ fn radio_on_key_input(
         {
             if let Some(on_click) = radio.on_click {
                 trigger.propagate(false);
-                world.commands().run_system(on_click);
+                commands.run_system(on_click);
             }
         }
     }
@@ -59,7 +59,7 @@ fn radio_on_pointer_click(
     q_state: Query<(&CoreRadio, Has<InteractionDisabled>)>,
     mut focus: ResMut<InputFocus>,
     mut focus_visible: ResMut<InputFocusVisible>,
-    mut world: DeferredWorld,
+    mut commands: Commands,
 ) {
     if let Ok((radio, disabled)) = q_state.get(trigger.target()) {
         let checkbox_id = trigger.target();
@@ -69,7 +69,7 @@ fn radio_on_pointer_click(
         let is_checked = radio.checked;
         if let Some(on_click) = radio.on_click {
             if !disabled && !is_checked {
-                world.commands().run_system(on_click);
+                commands.run_system(on_click);
             }
         }
     }
