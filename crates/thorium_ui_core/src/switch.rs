@@ -5,13 +5,14 @@ use bevy::{
         system::SystemId,
     },
     prelude::*,
+    ui::experimental::GhostNode,
 };
 
 use crate::{
-    dyn_children::Fragment,
+    fragment::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     owner::Owned,
-    Computations, DynChildren, SpawnableListGen,
+    Computations, SpawnableListGen,
 };
 
 pub struct CaseBuilder<'a, Value: Send + Sync> {
@@ -78,8 +79,7 @@ impl<P: PartialEq + Send + Sync + 'static> AnyEffect for SwitchEffect<P> {
                 self.switch_index = index;
                 let mut commands = world.commands();
                 let mut entt = commands.entity(entity);
-                entt.remove::<Children>();
-                entt.despawn_related::<DynChildren>();
+                entt.despawn_related::<Children>();
                 entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if index < self.cases.len() {
@@ -147,7 +147,7 @@ impl<
                 value_sys,
                 switch_index: usize::MAX - 1, // Means no case selected yet.
             }),
-            // GhostNode::default(),
+            GhostNode,
             Fragment,
         ));
     }

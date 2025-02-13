@@ -277,7 +277,7 @@ impl Template for Slider {
                         Name::new("Slider::Overlay"),
                         Styles(style_overlay),
                     ))
-                    .with_related::<DynChildOf>(move |builder| {
+                    .with_related::<ChildOf>(move |builder| {
                         builder.spawn(Cond::new(
                             move || true,
                             move ||
@@ -296,7 +296,7 @@ impl Template for Slider {
 
                         builder
                             .spawn((Node::default(), Styles(style_label),
-                        DynChildren::spawn((
+                        Children::spawn((
                             InvokeWith(move |builder: &mut TemplateContext| {
                                 if let Some(ref label) = label {
                                     builder.spawn((Text::new(label), UseInheritedTextStyles));

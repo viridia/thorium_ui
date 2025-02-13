@@ -2,8 +2,6 @@ use std::sync::Arc;
 
 use bevy::ecs::{prelude::*, spawn::SpawnableList};
 
-use crate::DynChildOf;
-
 /// Template that builds child elements for a parent entity.
 pub trait Template {
     fn build(&self, tc: &mut TemplateContext);
@@ -16,7 +14,7 @@ pub trait Template {
 /// Wrapper that invokes a template.
 pub struct Invoke<B>(pub B);
 
-impl<B: Template> SpawnableList<DynChildOf> for Invoke<B> {
+impl<B: Template> SpawnableList<ChildOf> for Invoke<B> {
     fn spawn(self, world: &mut World, entity: Entity) {
         let mut tc = TemplateContext::new(entity, world);
         self.0.build(&mut tc);
@@ -30,7 +28,7 @@ impl<B: Template> SpawnableList<DynChildOf> for Invoke<B> {
 /// Wrapper that invokes a function with a template context.
 pub struct InvokeWith<F: Fn(&mut TemplateContext)>(pub F);
 
-impl<F: Fn(&mut TemplateContext)> SpawnableList<DynChildOf> for InvokeWith<F> {
+impl<F: Fn(&mut TemplateContext)> SpawnableList<ChildOf> for InvokeWith<F> {
     fn spawn(self, world: &mut World, entity: Entity) {
         let mut tc = TemplateContext::new(entity, world);
         (self.0)(&mut tc);
@@ -46,7 +44,7 @@ pub trait SpawnableListGen: Send + Sync {
     fn spawn(&self, world: &mut World, entity: Entity);
 }
 
-impl<S: SpawnableList<DynChildOf>, F: Fn() -> S + Send + Sync> SpawnableListGen for F {
+impl<S: SpawnableList<ChildOf>, F: Fn() -> S + Send + Sync> SpawnableListGen for F {
     fn spawn(&self, world: &mut World, entity: Entity) {
         self().spawn(world, entity);
     }
@@ -55,7 +53,7 @@ impl<S: SpawnableList<DynChildOf>, F: Fn() -> S + Send + Sync> SpawnableListGen 
 /// Wrapper that invokes a function with shared reference to a function that can produce spawns.
 pub struct SpawnArc(pub Option<Arc<dyn SpawnableListGen + Send + Sync + 'static>>);
 
-impl SpawnableList<DynChildOf> for SpawnArc {
+impl SpawnableList<ChildOf> for SpawnArc {
     fn spawn(self, world: &mut World, entity: Entity) {
         if let Some(indirect) = self.0 {
             indirect.spawn(world, entity);
@@ -69,7 +67,6 @@ impl SpawnableList<DynChildOf> for SpawnArc {
 
 /// Builder context for templates. This is similar to `ChildSpawner`, but is different
 /// in a number of ways:
-/// * It always uses the `DynChildOf` relationship.
 /// * It has methods for invoking other templates.
 /// * Via trait extension, it has methods for spawning owned items such as mutables and callbacks.
 pub struct TemplateContext<'w> {
@@ -89,13 +86,13 @@ impl<'w> TemplateContext<'w> {
     /// Spawns an entity with the given `bundle` and an `R` relationship targeting the `target`
     /// entity this spawner was initialized with.
     pub fn spawn(&mut self, bundle: impl Bundle) -> EntityWorldMut<'_> {
-        self.world.spawn((DynChildOf(self.target), bundle))
+        self.world.spawn((ChildOf(self.target), bundle))
     }
 
     /// Spawns an entity with an `R` relationship targeting the `target`
     /// entity this spawner was initialized with.
     pub fn spawn_empty(&mut self) -> EntityWorldMut<'_> {
-        self.world.spawn(DynChildOf(self.target))
+        self.world.spawn(ChildOf(self.target))
     }
 
     /// Invoke a template on the target entity. Any children spawned by the template will be

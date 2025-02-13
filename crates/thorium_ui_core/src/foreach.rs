@@ -10,10 +10,10 @@ use bevy::{
 };
 
 use crate::{
-    dyn_children::Fragment,
+    fragment::Fragment,
     effect_cell::{AnyEffect, EffectCell},
     lcs::lcs,
-    DynChildOf, DynChildren, SpawnableListGen, TemplateContext,
+    SpawnableListGen, TemplateContext,
 };
 
 pub struct ListItems<Item: Clone> {
@@ -236,21 +236,17 @@ impl<
                 if prev_len > 0 || self.first {
                     self.first = false;
                     // Transitioning from non-empty to empty, generate fallback.
-                    world.entity_mut(parent).remove::<Children>();
-                    world.entity_mut(parent).despawn_related::<DynChildren>();
+                    world.entity_mut(parent).despawn_related::<Children>();
                     self.fallback.spawn(world, parent);
                 }
             } else {
                 if prev_len == 0 {
                     // Transitioning from non-empty to empty, delete fallback.
-                    world.entity_mut(parent).remove::<Children>();
-                    world.entity_mut(parent).despawn_related::<DynChildren>();
+                    world.entity_mut(parent).despawn_related::<Children>();
                 } else {
-                    world.entity_mut(parent).remove::<DynChildren>();
+                    world.entity_mut(parent).remove::<Children>();
                 }
-                world
-                    .entity_mut(parent)
-                    .add_related::<DynChildOf>(&children);
+                world.entity_mut(parent).add_related::<ChildOf>(&children);
             }
         }
     }

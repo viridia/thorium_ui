@@ -1,7 +1,7 @@
 //! Example of a simple UI layout
 
 use bevy::{input_focus::tab_navigation::TabGroup, prelude::*, ui};
-use thorium_ui::{CreateCallback, DynChildren, Invoke, Styles, Template, ThoriumUiCorePlugin};
+use thorium_ui::{CreateCallback, Invoke, Styles, Template, ThoriumUiCorePlugin};
 use thorium_ui_controls::{
     colors, rounded_corners::RoundedCorners, size::Size, Button, ButtonVariant, Icon, IconButton,
     InheritableFontColor, ThoriumUiControlsPlugin, ToolButton, ToolPalette, UseInheritedTextStyles,
@@ -49,7 +49,7 @@ fn setup_view_root(mut commands: Commands) {
         Styles(style_test),
         UiTargetCamera(camera),
         TabGroup::default(),
-        DynChildren::spawn((
+        Children::spawn((
             Invoke(ButtonDemo),
             Invoke(IconButtonDemo),
             Invoke(ToolPaletteDemo),
@@ -69,7 +69,7 @@ impl Template for ButtonDemo {
         tc.spawn((
             Node::default(),
             Styles(style_row),
-            DynChildren::spawn((
+            Children::spawn((
                 Invoke(
                     Button::new()
                         .contents(|| Spawn((Text::new("Default"), UseInheritedTextStyles)))
@@ -94,7 +94,7 @@ impl Template for ButtonDemo {
         tc.spawn((
             Node::default(),
             Styles(style_row),
-            DynChildren::spawn((
+            Children::spawn((
                 Invoke(Button::new().label("Default").disabled(true)),
                 Invoke(
                     Button::new()
@@ -122,7 +122,7 @@ impl Template for ButtonDemo {
         tc.spawn((
             Node::default(),
             Styles(style_row),
-            DynChildren::spawn((
+            Children::spawn((
                 Invoke(Button::new().label("Size: Xl").size(Size::Xl)),
                 Invoke(Button::new().label("Size: Lg").size(Size::Lg)),
                 Invoke(Button::new().label("Size: Md").size(Size::Md)),
@@ -137,7 +137,7 @@ impl Template for ButtonDemo {
         tc.spawn((
             Node::default(),
             Styles(style_row),
-            DynChildren::spawn((
+            Children::spawn((
                 Invoke(
                     Button::new()
                         .label("corners: All")
@@ -181,7 +181,7 @@ impl Template for IconButtonDemo {
         tc.spawn((
             Node::default(),
             Styles(style_row),
-            DynChildren::spawn((
+            Children::spawn((
                 Invoke(IconButton::new(
                     "embedded://thorium_ui_controls/assets/icons/chevron_left.png",
                 )),
@@ -196,7 +196,7 @@ impl Template for IconButtonDemo {
         tc.spawn((
             Node::default(),
             Styles(style_row),
-            DynChildren::spawn((
+            Children::spawn((
                 Invoke(
                     IconButton::new("embedded://thorium_ui_controls/assets/icons/chevron_left.png")
                         .size(Size::Xl),
@@ -238,7 +238,7 @@ impl Template for ToolPaletteDemo {
         tc.spawn((
             Node::default(),
             Styles(style_row),
-            DynChildren::spawn(Invoke(ToolPalette::new().columns(3).contents(|| {
+            Children::spawn(Invoke(ToolPalette::new().columns(3).contents(|| {
                 (
                     Invoke(
                         ToolButton::new()

@@ -13,8 +13,7 @@ use bevy::{
 use thorium_ui::{
     computations,
     hover::{Hovering, IsHovering},
-    DynChildren, Invoke, Calc, Template, TemplateContext, ThoriumUiCorePlugin,
-    ThoriumUiHeadlessPlugin,
+    Calc, Invoke, Template, TemplateContext, ThoriumUiCorePlugin, ThoriumUiHeadlessPlugin,
 };
 
 fn main() {
@@ -50,7 +49,7 @@ fn setup_view_root(mut commands: Commands) {
             ..default()
         },
         BorderColor(css::ALICE_BLUE.into()),
-        DynChildren::spawn((Invoke(Hoverable),)),
+        Children::spawn((Invoke(Hoverable),)),
     ));
 }
 

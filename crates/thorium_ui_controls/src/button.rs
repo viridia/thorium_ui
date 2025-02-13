@@ -16,8 +16,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    computations, Calc, DynChildren, InsertWhen, IntoSignal, Signal, SpawnArc, SpawnableListGen,
-    StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, Calc, InsertWhen, IntoSignal, Signal, SpawnArc, SpawnableListGen, StyleHandle,
+    StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -243,7 +243,7 @@ impl Template for Button {
             button.insert(AutoFocus);
         }
 
-        button.insert(DynChildren::spawn((
+        button.insert(Children::spawn((
             Spawn((
                 Node {
                     display: ui::Display::Grid,

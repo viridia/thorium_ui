@@ -2,8 +2,8 @@ use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use thorium_ui_core::{
-    computations, dyn_children, Calc, Cond, IntoSignal, Signal, StyleHandle, StyleTuple, Styles,
-    Template, TemplateContext,
+    computations, Calc, Cond, IntoSignal, Signal, StyleHandle, StyleTuple, Styles, Template,
+    TemplateContext,
 };
 
 use crate::materials::SwatchRectMaterial;
@@ -95,7 +95,7 @@ impl Template for Swatch {
                 Name::new("Swatch"),
                 Styles((style_swatch, self.style.clone())),
                 // Handle the selected outline
-                dyn_children![Cond::new(
+                children![Cond::new(
                     move |world: DeferredWorld| selected.get(&world),
                     || Spawn((Node::default(), Styles(style_selection))),
                     || (),

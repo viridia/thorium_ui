@@ -2,9 +2,6 @@
 
 - `.observe` and `observers!`.
 - `.with_children`
-- children -> contents
-- children! -> dyn_children!
-- DynChildren -> Contents? ChildElements?
 - Make EachFn consistent with Button.
 - close dialog warnings
 
@@ -26,6 +23,5 @@
 
 # Questions
 
-- how to do contextual inheritance in a world of dyn_children?
 - what should first-class inline template references look like?
 - capturing ids

@@ -27,7 +27,7 @@ or components of the parent entity based on that data. Take for example the `Con
 // `builder` is a DynChildBuilder
 builder.spawn((
     Node::default(),
-    dyn_children![
+    children![
         Cond::new(
             |counter: Res<Counter>| counter.count & 1 == 0, // Even or odd
             || Spawn(Text::new("Hello")),
@@ -53,12 +53,6 @@ the children from the new branch constructed.
 The condition will continue to run until the parent entity is despawned.
 
 Conditions can be nested: you can have a condition within a condition.
-
-You may have noticed that `Cond` was spawned as a child of `dyn_children![]`. The `DynChildren`
-relationship is similar to the standard Bevy `Children` relationship, except that it understands
-how to handle dynamic children, that is, children that may or may not be present based on some
-condition. This relationship will be discussed later. For now it is sufficient to note that `Cond`
-and other control-flow nodes like `For` and `Switch` can only work within a `DynChildren` list.
 
 **Efficiency considerations**: Because the predicate function is called every frame, you should
 probably avoid doing any really expensive calculations within it.

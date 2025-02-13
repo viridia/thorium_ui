@@ -6,8 +6,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    computations, Cond, CreateCallback, CreateMemo, CreateMutable, DynChildOf, IntoSignal, Invoke,
-    Calc, Signal, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, Calc, Cond, CreateCallback, CreateMemo, CreateMutable, IntoSignal, Invoke,
+    Signal, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 
 use crate::{
@@ -234,7 +234,7 @@ impl Template for SpinBox {
             false,
         );
 
-        spinbox.with_related::<DynChildOf>(|builder| {
+        spinbox.with_related::<ChildOf>(|builder| {
             builder.spawn(Cond::new(
                 move || true,
                 move || {

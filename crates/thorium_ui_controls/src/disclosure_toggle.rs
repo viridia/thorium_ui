@@ -13,8 +13,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    computations, CreateMemo, DynChildren, IntoSignal, InvokeWith, Calc, Signal, StyleHandle,
-    StyleTuple, Styles, Template, TemplateContext,
+    computations, Calc, CreateMemo, IntoSignal, InvokeWith, Signal, StyleHandle, StyleTuple,
+    Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{hover::IsHovering, CoreCheckbox};
 
@@ -152,7 +152,7 @@ impl Template for DisclosureToggle {
                     },
                 )
             ],
-            DynChildren::spawn(InvokeWith(move |tc| {
+            Children::spawn(InvokeWith(move |tc| {
                 let icon_color = tc.create_memo(
                     move |world: DeferredWorld| {
                         let is_disabled = disabled.get(&world);

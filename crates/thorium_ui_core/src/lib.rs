@@ -2,9 +2,9 @@ mod calc;
 mod callback;
 mod computations;
 mod cond;
-mod dyn_children;
 mod effect_cell;
 mod foreach;
+mod fragment;
 mod insert_when;
 mod lcs;
 mod memo;
@@ -15,19 +15,14 @@ mod style;
 mod switch;
 mod template;
 
-use bevy::{
-    app::{App, Plugin, PostUpdate, Update},
-    prelude::IntoSystemConfigs,
-};
+use bevy::app::{App, Plugin, PostUpdate, Update};
 pub use calc::Calc;
 pub use callback::CreateCallback;
 pub use computations::{ComputationOf, Computations};
 pub use cond::Cond;
-pub use dyn_children::{
-    DynChildOf, DynChildSpawner, DynChildSpawnerCommands, DynChildren, Fragment,
-};
 use effect_cell::update_effects;
 pub use foreach::{For, ListItems};
+pub use fragment::Fragment;
 pub use insert_when::InsertWhen;
 pub use memo::{CreateMemo, Memo, ReadMemo};
 pub use mutable::{CreateMutable, Mutable, ReadMutable, WriteMutable};
@@ -42,13 +37,6 @@ pub struct ThoriumUiCorePlugin;
 impl Plugin for ThoriumUiCorePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, update_effects);
-        app.add_systems(
-            PostUpdate,
-            (
-                dyn_children::mark_children_changed,
-                dyn_children::flatten_dyn_children,
-            )
-                .chain(),
-        );
+        app.add_systems(PostUpdate, fragment::mark_children_changed);
     }
 }

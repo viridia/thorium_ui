@@ -11,8 +11,8 @@ use bevy::{
     winit::cursor::CursorIcon,
 };
 use thorium_ui_core::{
-    computations, dyn_children, Calc, Cond, DynChildOf, DynChildren, InsertWhen, IntoSignal,
-    Signal, SpawnArc, SpawnableListGen, StyleHandle, StyleTuple, Styles, Template, TemplateContext,
+    computations, Calc, Cond, InsertWhen, IntoSignal, Signal, SpawnArc, SpawnableListGen,
+    StyleHandle, StyleTuple, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::{
     hover::{Hovering, IsHovering},
@@ -197,7 +197,7 @@ impl Template for Checkbox {
             }
         }
 
-        checkbox.with_related::<DynChildOf>(|builder| {
+        checkbox.with_related::<ChildOf>(|builder| {
             builder.spawn((
                 Node { ..default() },
                 Name::new("Checkbox::Border"),
@@ -235,7 +235,7 @@ impl Template for Checkbox {
                         },
                     ),
                 ],
-                dyn_children![Cond::new(
+                children![Cond::new(
                     move |world: DeferredWorld| checked.get(&world),
                     move || Spawn((
                         ImageNode {
@@ -267,7 +267,7 @@ impl Template for Checkbox {
                             });
                     },
                 ),],
-                DynChildren::spawn(SpawnArc(self.label.clone())),
+                Children::spawn(SpawnArc(self.label.clone())),
             ));
         });
     }

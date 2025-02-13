@@ -8,8 +8,7 @@ use bevy::{
     ui::{self},
 };
 use thorium_ui_core::{
-    computations, dyn_children, Calc, Cond, DynChildren, Signal, SpawnArc, SpawnableListGen,
-    Styles, Template, TemplateContext,
+    computations, Calc, Cond, Signal, SpawnArc, SpawnableListGen, Styles, Template, TemplateContext,
 };
 use thorium_ui_headless::CoreBarrier;
 
@@ -191,7 +190,7 @@ impl Template for Dialog {
                             );
                         },
                     )],
-                    dyn_children!((
+                    children!((
                         Node::default(),
                         Name::new("Dialog"),
                         Styles((
@@ -228,7 +227,7 @@ impl Template for Dialog {
                                 );
                             },
                         )],
-                        DynChildren::spawn(SpawnArc(contents.clone())),
+                        Children::spawn(SpawnArc(contents.clone())),
                     )),
                 ))
             },
@@ -281,7 +280,7 @@ impl Template for DialogHeader {
         builder.spawn((
             Node::default(),
             Styles(style_dialog_header),
-            DynChildren::spawn(SpawnArc(self.contents.clone())),
+            Children::spawn(SpawnArc(self.contents.clone())),
         ));
     }
 }
@@ -322,7 +321,7 @@ impl Template for DialogBody {
         builder.spawn((
             Node::default(),
             Styles(style_dialog_body),
-            DynChildren::spawn(SpawnArc(self.contents.clone())),
+            Children::spawn(SpawnArc(self.contents.clone())),
         ));
     }
 }
@@ -364,7 +363,7 @@ impl Template for DialogFooter {
         builder.spawn((
             Node::default(),
             Styles(style_dialog_footer),
-            DynChildren::spawn(SpawnArc(self.contents.clone())),
+            Children::spawn(SpawnArc(self.contents.clone())),
         ));
     }
 }

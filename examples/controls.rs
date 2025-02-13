@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use thorium_ui::{
-    CreateCallback, CreateMutable, DynChildren, Invoke, Signal, Styles, Template, TemplateContext,
+    CreateCallback, CreateMutable, Invoke, Signal, Styles, Template, TemplateContext,
     ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
@@ -65,13 +65,13 @@ fn setup_view_root(mut commands: Commands) {
         Styles(style_test),
         UiTargetCamera(camera),
         TabGroup::default(),
-        DynChildren::spawn((
+        Children::spawn((
             (
                 Spawn((Text::new("Swatch"), UseInheritedTextStyles)),
                 Spawn((
                     Node::default(),
                     Styles(style_row),
-                    DynChildren::spawn((
+                    Children::spawn((
                         Invoke(Swatch::new(palettes::css::GOLDENROD)),
                         Invoke(Swatch::new(palettes::css::LIME)),
                         Invoke(Swatch::new(palettes::css::RED)),
@@ -85,7 +85,7 @@ fn setup_view_root(mut commands: Commands) {
                 Spawn((
                     Node::default(),
                     Styles(style_row),
-                    DynChildren::spawn(Invoke(SwatchGridDemo)),
+                    Children::spawn(Invoke(SwatchGridDemo)),
                 )),
             ),
             (
@@ -93,7 +93,7 @@ fn setup_view_root(mut commands: Commands) {
                 Spawn((
                     Node::default(),
                     Styles(style_column),
-                    DynChildren::spawn(Invoke(CheckboxDemo)),
+                    Children::spawn(Invoke(CheckboxDemo)),
                 )),
             ),
             (
@@ -105,7 +105,7 @@ fn setup_view_root(mut commands: Commands) {
                             node.align_items = ui::AlignItems::Stretch;
                         });
                     })),
-                    DynChildren::spawn(Invoke(SliderDemo)),
+                    Children::spawn(Invoke(SliderDemo)),
                 )),
             ),
             (
@@ -117,7 +117,7 @@ fn setup_view_root(mut commands: Commands) {
                             node.align_items = ui::AlignItems::Stretch;
                         });
                     })),
-                    DynChildren::spawn(Invoke(GradientSliderDemo)),
+                    Children::spawn(Invoke(GradientSliderDemo)),
                 )),
             ),
             (
@@ -129,7 +129,7 @@ fn setup_view_root(mut commands: Commands) {
                             node.align_items = ui::AlignItems::Stretch;
                         });
                     })),
-                    DynChildren::spawn(Invoke(SpinBoxDemo)),
+                    Children::spawn(Invoke(SpinBoxDemo)),
                 )),
             ),
             Spawn((Text::new("DisclosureToggle"), UseInheritedTextStyles)),
@@ -224,7 +224,7 @@ impl Template for SliderDemo {
                     node.align_items = ui::AlignItems::Stretch;
                 });
             })),
-            DynChildren::spawn((
+            Children::spawn((
                 Invoke(
                     Slider::new()
                         .min(0.)
@@ -301,7 +301,7 @@ impl Template for DisclosureToggleDemo {
 
         tc.spawn((
             Node::default(),
-            DynChildren::spawn(Invoke(
+            Children::spawn(Invoke(
                 DisclosureToggle::new()
                     .expanded(expanded)
                     .on_change(on_change),

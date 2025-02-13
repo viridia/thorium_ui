@@ -1,7 +1,7 @@
 //! Example which uses states and a switch view.
 
 use bevy::{color::palettes::css, prelude::*, ui};
-use thorium_ui::{dyn_children, Switch, ThoriumUiCorePlugin};
+use thorium_ui::{Switch, ThoriumUiCorePlugin};
 
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum GameState {
@@ -39,7 +39,7 @@ fn setup_view_root(mut commands: Commands) {
         },
         BorderColor(css::ALICE_BLUE.into()),
         UiTargetCamera(camera),
-        dyn_children![
+        children![
             Text::new("Game State: "),
             Switch::new(
                 |state: Res<State<GameState>>| *state.get(),

@@ -9,7 +9,7 @@ use bevy::{
     },
     ui,
 };
-use thorium_ui::{Cond, DynChildren, Invoke, Template, TemplateContext, ThoriumUiCorePlugin};
+use thorium_ui::{Cond, Invoke, Template, TemplateContext, ThoriumUiCorePlugin};
 
 fn main() {
     App::new()
@@ -43,7 +43,7 @@ fn setup_view_root(mut commands: Commands) {
             ..default()
         },
         BorderColor(css::ALICE_BLUE.into()),
-        DynChildren::spawn((
+        Children::spawn((
             Invoke(Hello),
             Invoke(Conditional),
             Invoke(Subject),

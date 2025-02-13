@@ -5,13 +5,14 @@ use bevy::{
         world::DeferredWorld,
     },
     prelude::*,
+    ui::experimental::GhostNode,
 };
 
 use crate::{
-    dyn_children::Fragment,
     effect_cell::{AnyEffect, EffectCell},
+    fragment::Fragment,
     owner::Owned,
-    Computations, DynChildren, SpawnableListGen,
+    Computations, SpawnableListGen,
 };
 
 pub struct Cond<
@@ -104,7 +105,7 @@ impl<
                 neg: self.neg,
                 marker: std::marker::PhantomData::<M>,
             }),
-            // GhostNode::default(),
+            GhostNode,
             Fragment,
         ));
     }
@@ -129,8 +130,7 @@ impl<M, Pos: SpawnableListGen, Neg: SpawnableListGen> AnyEffect for CondEffect<M
                 self.first = false;
                 self.state = test;
                 let mut entt = world.entity_mut(entity);
-                entt.remove::<Children>();
-                entt.despawn_related::<DynChildren>();
+                entt.despawn_related::<Children>();
                 entt.despawn_related::<Computations>();
                 entt.despawn_related::<Owned>();
                 if test {

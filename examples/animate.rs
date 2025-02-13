@@ -5,8 +5,8 @@ use bevy::{
 use thorium_ui::{
     computations,
     hover::{Hovering, IsHovering},
-    Calc, CreateCallback, CreateMemo, CreateMutable, DynChildren, Invoke, InvokeWith, Styles,
-    Template, ThoriumUiCorePlugin,
+    Calc, CreateCallback, CreateMemo, CreateMutable, Invoke, InvokeWith, Styles, Template,
+    ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     animation::{BistableTransition, BistableTransitionState},
@@ -56,7 +56,7 @@ fn setup_view_root(mut commands: Commands) {
         UiTargetCamera(camera),
         TabGroup::default(),
         Styles(style_test),
-        DynChildren::spawn((
+        Children::spawn((
             Spawn((Text::new("bistable_transition"), UseInheritedTextStyles)),
             InvokeWith(|builder| {
                 let mut row = builder.spawn((
@@ -90,7 +90,7 @@ fn setup_view_root(mut commands: Commands) {
                                 });
                         },
                     )],
-                    DynChildren::spawn(Invoke(Swatch::new(color).style(
+                    Children::spawn(Invoke(Swatch::new(color).style(
                         |ec: &mut EntityCommands| {
                             ec.entry::<Node>().and_modify(|mut node| {
                                 node.width = ui::Val::Px(64.);
@@ -102,7 +102,7 @@ fn setup_view_root(mut commands: Commands) {
             Spawn((Text::new("DisclosureToggle"), UseInheritedTextStyles)),
             Spawn((
                 Node::default(),
-                DynChildren::spawn(InvokeWith(|builder| {
+                Children::spawn(InvokeWith(|builder| {
                     let expanded = builder.create_mutable(false);
                     let on_change = builder.create_callback_arg(
                         move |value: In<bool>, mut world: DeferredWorld| {
@@ -117,7 +117,7 @@ fn setup_view_root(mut commands: Commands) {
                 })),
             )),
             Spawn((Text::new("Dialog"), UseInheritedTextStyles)),
-            Spawn((Node::default(), DynChildren::spawn(Invoke(DialogDemo)))),
+            Spawn((Node::default(), Children::spawn(Invoke(DialogDemo)))),
             Spawn((Text::new("Text"), UseInheritedTextStyles)),
             Spawn((
                 TextLayout::default(),
@@ -126,7 +126,7 @@ fn setup_view_root(mut commands: Commands) {
                     ec.insert(InheritableFontSize(32.));
                     ec.insert(InheritableFontColor(palettes::css::GRAY.into()));
                 })),
-                DynChildren::spawn((
+                Children::spawn((
                     Spawn((
                         Text("The quick brown fox jumps over the ".to_string()),
                         TextColor::default(),

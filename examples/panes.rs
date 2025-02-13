@@ -2,8 +2,7 @@
 
 use bevy::{ecs::world::DeferredWorld, input_focus::tab_navigation::TabGroup, prelude::*, ui};
 use thorium_ui::{
-    computations, CreateCallback, CreateMemo, DynChildren, Invoke, Calc, Styles, Template,
-    ThoriumUiCorePlugin,
+    computations, Calc, CreateCallback, CreateMemo, Invoke, Styles, Template, ThoriumUiCorePlugin,
 };
 use thorium_ui_controls::{
     colors, InheritableFontColor, Splitter, SplitterDirection, ThoriumUiControlsPlugin,
@@ -58,7 +57,7 @@ fn setup_view_root(mut commands: Commands) {
         UiTargetCamera(camera),
         TabGroup::default(),
         Styles(style_test),
-        DynChildren::spawn(Invoke(SplitterDemo)),
+        Children::spawn(Invoke(SplitterDemo)),
     ));
 }
 
